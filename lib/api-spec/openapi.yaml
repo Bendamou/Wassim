@@ -3,20 +3,29 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Wassem – On-Demand Grooming Marketplace API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: users
+    description: User operations
+  - name: jobs
+    description: Job operations
+  - name: bids
+    description: Bid operations
+  - name: dashboard
+    description: Dashboard operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +33,291 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterBody"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /professionals:
+    get:
+      operationId: listProfessionals
+      tags: [users]
+      summary: List professionals (top barbers)
+      responses:
+        "200":
+          description: List of professionals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Professional"
+
+  /professionals/{id}:
+    get:
+      operationId: getProfessional
+      tags: [users]
+      summary: Get professional trust profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Professional profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Professional"
+
+  /jobs:
+    get:
+      operationId: listJobs
+      tags: [jobs]
+      summary: List jobs (open jobs for professionals, own jobs for clients)
+      responses:
+        "200":
+          description: List of jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+    post:
+      operationId: createJob
+      tags: [jobs]
+      summary: Create a new job (client)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateJobBody"
+      responses:
+        "201":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  /jobs/{id}:
+    get:
+      operationId: getJob
+      tags: [jobs]
+      summary: Get a job by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  /jobs/{id}/status:
+    patch:
+      operationId: updateJobStatus
+      tags: [jobs]
+      summary: Update job status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateJobStatusBody"
+      responses:
+        "200":
+          description: Updated job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  /jobs/{id}/bids:
+    get:
+      operationId: getJobBids
+      tags: [bids]
+      summary: Get all bids for a job (bidding room polling)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of bids for job
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bid"
+
+  /bids:
+    get:
+      operationId: listMyBids
+      tags: [bids]
+      summary: List professional's own bids
+      responses:
+        "200":
+          description: List of bids
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bid"
+    post:
+      operationId: createBid
+      tags: [bids]
+      summary: Send a bid on a job (professional)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBidBody"
+      responses:
+        "201":
+          description: Bid created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bid"
+
+  /bids/{id}/status:
+    patch:
+      operationId: updateBidStatus
+      tags: [bids]
+      summary: Accept or reject a bid (client)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBidStatusBody"
+      responses:
+        "200":
+          description: Updated bid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bid"
+
+  /dashboard/client:
+    get:
+      operationId: getClientDashboard
+      tags: [dashboard]
+      summary: Client dashboard summary
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientDashboard"
+
+  /dashboard/professional:
+    get:
+      operationId: getProfessionalDashboard
+      tags: [dashboard]
+      summary: Professional dashboard summary
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfessionalDashboard"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +328,265 @@ components:
       required:
         - status
 
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    RegisterBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [client, professional]
+        location:
+          type: string
+        bio:
+          type: string
+      required:
+        - name
+        - email
+        - password
+        - role
+
+    LoginBody:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+      required:
+        - user
+        - token
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [client, professional]
+        location:
+          type: string
+        bio:
+          type: string
+        isVerified:
+          type: boolean
+        rating:
+          type: number
+        avatar:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - name
+        - email
+        - role
+        - isVerified
+
+    Professional:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        location:
+          type: string
+        bio:
+          type: string
+        isVerified:
+          type: boolean
+        rating:
+          type: number
+        avatar:
+          type: string
+        totalBids:
+          type: integer
+        acceptedBids:
+          type: integer
+      required:
+        - id
+        - name
+        - email
+        - isVerified
+
+    Job:
+      type: object
+      properties:
+        id:
+          type: integer
+        clientId:
+          type: integer
+        client:
+          $ref: "#/components/schemas/User"
+        service:
+          type: string
+          enum: [haircut, beard, nails, full_grooming]
+        budget:
+          type: number
+        location:
+          type: string
+        scheduledTime:
+          type: string
+        status:
+          type: string
+          enum: [open, in_progress, completed, cancelled]
+        bidsCount:
+          type: integer
+        createdAt:
+          type: string
+      required:
+        - id
+        - clientId
+        - service
+        - budget
+        - location
+        - status
+
+    CreateJobBody:
+      type: object
+      properties:
+        service:
+          type: string
+          enum: [haircut, beard, nails, full_grooming]
+        budget:
+          type: number
+        location:
+          type: string
+        scheduledTime:
+          type: string
+      required:
+        - service
+        - budget
+        - location
+
+    UpdateJobStatusBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [open, in_progress, completed, cancelled]
+      required:
+        - status
+
+    Bid:
+      type: object
+      properties:
+        id:
+          type: integer
+        jobId:
+          type: integer
+        professionalId:
+          type: integer
+        professional:
+          $ref: "#/components/schemas/Professional"
+        price:
+          type: number
+        estimatedArrival:
+          type: string
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+        createdAt:
+          type: string
+      required:
+        - id
+        - jobId
+        - professionalId
+        - price
+        - status
+
+    CreateBidBody:
+      type: object
+      properties:
+        jobId:
+          type: integer
+        price:
+          type: number
+        estimatedArrival:
+          type: string
+      required:
+        - jobId
+        - price
+
+    UpdateBidStatusBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [accepted, rejected]
+      required:
+        - status
+
+    ClientDashboard:
+      type: object
+      properties:
+        activeJobs:
+          type: integer
+        totalJobs:
+          type: integer
+        pendingBids:
+          type: integer
+        topProfessionals:
+          type: array
+          items:
+            $ref: "#/components/schemas/Professional"
+        recentJobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+      required:
+        - activeJobs
+        - totalJobs
+        - pendingBids
+        - topProfessionals
+        - recentJobs
+
+    ProfessionalDashboard:
+      type: object
+      properties:
+        availableJobs:
+          type: integer
+        myBids:
+          type: integer
+        acceptedBids:
+          type: integer
+        recentJobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+      required:
+        - availableJobs
+        - myBids
+        - acceptedBids
+        - recentJobs

@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Wassem – On-Demand Grooming Marketplace"
+version = "1.0.0"
+id = "artifacts/wassem"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19639
+
+[services.development]
+run = "pnpm --filter @workspace/wassem run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/wassem", "run", "build" ]
+publicDir = "artifacts/wassem/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19639"
+BASE_PATH = "/"
