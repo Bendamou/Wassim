@@ -1,187 +1,189 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useRegister, useLogin } from "@workspace/api-client-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { Scissors } from "lucide-react";
+import { Phone, User, Scissors, ChevronRight, ArrowLeft } from "lucide-react";
 
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
+const API_BASE = "/api";
 
-const registerSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(6),
-  role: z.enum(["client", "professional"]),
-});
+type Step = "phone" | "name" | "role";
 
 export default function AuthPage() {
+  const [step, setStep] = useState<Step>("phone");
+  const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
+  const [role, setRole] = useState<"client" | "professional">("client");
+  const [loading, setLoading] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(false);
+
   const [, setLocation] = useLocation();
   const { login } = useAuth();
   const { toast } = useToast();
-  
-  const loginMutation = useLogin();
-  const registerMutation = useRegister();
 
-  const loginForm = useForm<z.infer<typeof loginSchema>>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
-  });
-
-  const registerForm = useForm<z.infer<typeof registerSchema>>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: { name: "", email: "", password: "", role: "client" },
-  });
-
-  const onLogin = (data: z.infer<typeof loginSchema>) => {
-    loginMutation.mutate({ data }, {
-      onSuccess: (res) => {
-        login(res.user, res.token);
-        setLocation(res.user.role === "client" ? "/client/dashboard" : "/professional/dashboard");
-        toast({ title: "Welcome back!" });
-      },
-      onError: (err: any) => {
-        toast({ 
-          title: "Login failed", 
-          description: err?.data?.message || "Invalid credentials", 
-          variant: "destructive" 
-        });
-      }
-    });
+  const formatPhone = (val: string) => {
+    const digits = val.replace(/\D/g, "");
+    return digits.startsWith("0") ? `+212${digits.slice(1)}` : `+${digits}`;
   };
 
-  const onRegister = (data: z.infer<typeof registerSchema>) => {
-    registerMutation.mutate({ data }, {
-      onSuccess: (res) => {
-        login(res.user, res.token);
-        setLocation(res.user.role === "client" ? "/client/dashboard" : "/professional/dashboard");
-        toast({ title: "Account created!" });
-      },
-      onError: (err: any) => {
-        toast({ 
-          title: "Registration failed", 
-          description: err?.data?.message || "Could not create account", 
-          variant: "destructive" 
-        });
+  const handlePhoneSubmit = async () => {
+    if (phone.length < 8) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/auth/phone-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: formatPhone(phone) }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        login(data.user, data.token);
+        setLocation(data.user.role === "client" ? "/" : "/pro/requests");
+      } else if (res.status === 404) {
+        setIsNewUser(true);
+        setStep("name");
+      } else {
+        toast({ title: "Error", description: "Something went wrong", variant: "destructive" });
       }
-    });
+    } catch {
+      toast({ title: "Network error", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async (selectedRole: "client" | "professional") => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/auth/phone-register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: formatPhone(phone), name, role: selectedRole }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        login(data.user, data.token);
+        setLocation(selectedRole === "client" ? "/" : "/pro/requests");
+      } else {
+        const err = await res.json();
+        toast({ title: "Error", description: err.message || "Registration failed", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Network error", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col items-center justify-center p-4 bg-background relative overflow-hidden">
-      {/* Decorative neon elements */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-[100px] pointer-events-none" />
-      
-      <div className="mb-8 flex flex-col items-center relative z-10">
-        <div className="w-16 h-16 bg-gradient-to-tr from-primary to-secondary rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(0,193,255,0.3)] mb-4">
-          <Scissors className="text-white w-8 h-8" />
+    <div className="min-h-[100dvh] bg-[#0A0A0A] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#00C1FF]/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[400px] h-[300px] bg-[#FF00FF]/10 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="w-full max-w-sm z-10">
+        {/* Logo */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-[#00C1FF] to-[#FF00FF] shadow-[0_0_40px_rgba(0,193,255,0.4)] mb-6">
+            <Scissors className="text-white" size={36} />
+          </div>
+          <h1 className="text-5xl font-black text-white tracking-tight">WASSEM</h1>
+          <p className="text-[#00C1FF] font-bold mt-2 text-lg">On-demand grooming</p>
         </div>
-        <h1 className="text-4xl font-extrabold tracking-tight text-white">WASSEM</h1>
-        <p className="text-muted-foreground mt-2 text-center max-w-sm">On-demand grooming. Fast, local, competitive.</p>
+
+        {/* Step: Phone */}
+        {step === "phone" && (
+          <div className="space-y-6">
+            <div>
+              <p className="text-white text-2xl font-black mb-1">Your phone number</p>
+              <p className="text-gray-500 text-sm">We'll find or create your account</p>
+            </div>
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-4 focus-within:border-[#00C1FF] transition-colors">
+              <Phone size={20} className="text-[#00C1FF] flex-shrink-0" />
+              <input
+                type="tel"
+                placeholder="0612 345 678"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handlePhoneSubmit()}
+                className="bg-transparent text-white text-xl font-bold flex-1 outline-none placeholder:text-gray-600"
+                autoFocus
+              />
+            </div>
+            <button
+              onClick={handlePhoneSubmit}
+              disabled={phone.length < 8 || loading}
+              className="w-full bg-[#00C1FF] hover:bg-[#00a8e0] disabled:opacity-40 text-black font-black text-xl rounded-2xl py-5 transition-all shadow-[0_0_30px_rgba(0,193,255,0.4)] flex items-center justify-center gap-2"
+            >
+              {loading ? "..." : <>Continue <ChevronRight size={22} /></>}
+            </button>
+          </div>
+        )}
+
+        {/* Step: Name */}
+        {step === "name" && (
+          <div className="space-y-6">
+            <button onClick={() => setStep("phone")} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-2">
+              <ArrowLeft size={18} /> Back
+            </button>
+            <div>
+              <p className="text-white text-2xl font-black mb-1">What's your name?</p>
+              <p className="text-gray-500 text-sm">Just your first name is fine</p>
+            </div>
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-4 focus-within:border-[#00C1FF] transition-colors">
+              <User size={20} className="text-[#00C1FF] flex-shrink-0" />
+              <input
+                type="text"
+                placeholder="Ahmed"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && name.length >= 2 && setStep("role")}
+                className="bg-transparent text-white text-xl font-bold flex-1 outline-none placeholder:text-gray-600"
+                autoFocus
+              />
+            </div>
+            <button
+              onClick={() => setStep("role")}
+              disabled={name.length < 2 || loading}
+              className="w-full bg-[#00C1FF] hover:bg-[#00a8e0] disabled:opacity-40 text-black font-black text-xl rounded-2xl py-5 transition-all shadow-[0_0_30px_rgba(0,193,255,0.4)] flex items-center justify-center gap-2"
+            >
+              Continue <ChevronRight size={22} />
+            </button>
+          </div>
+        )}
+
+        {/* Step: Role */}
+        {step === "role" && (
+          <div className="space-y-6">
+            <button onClick={() => setStep("name")} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-2">
+              <ArrowLeft size={18} /> Back
+            </button>
+            <div>
+              <p className="text-white text-2xl font-black mb-1">I am a...</p>
+              <p className="text-gray-500 text-sm">Choose how you want to use Wassem</p>
+            </div>
+            <div className="space-y-3">
+              <button
+                onClick={() => handleRegister("client")}
+                disabled={loading}
+                className="w-full bg-white/5 hover:bg-[#00C1FF]/20 border-2 border-white/10 hover:border-[#00C1FF] text-left rounded-2xl p-5 transition-all group"
+              >
+                <div className="text-3xl mb-2">💈</div>
+                <p className="text-white text-xl font-black group-hover:text-[#00C1FF]">I need a cut</p>
+                <p className="text-gray-500 text-sm">Request grooming services at your price</p>
+              </button>
+              <button
+                onClick={() => handleRegister("professional")}
+                disabled={loading}
+                className="w-full bg-white/5 hover:bg-[#FF00FF]/20 border-2 border-white/10 hover:border-[#FF00FF] text-left rounded-2xl p-5 transition-all group"
+              >
+                <div className="text-3xl mb-2">✂️</div>
+                <p className="text-white text-xl font-black group-hover:text-[#FF00FF]">I'm a professional</p>
+                <p className="text-gray-500 text-sm">Accept jobs and set your own terms</p>
+              </button>
+            </div>
+            {loading && <p className="text-center text-gray-400 text-sm">Creating account...</p>}
+          </div>
+        )}
       </div>
-
-      <Card className="w-full max-w-md border-card-border bg-card/80 backdrop-blur-xl shadow-2xl z-10 relative">
-        <Tabs defaultValue="login" className="w-full">
-          <CardHeader className="pb-4">
-            <TabsList className="grid w-full grid-cols-2 rounded-full bg-black/50 p-1">
-              <TabsTrigger value="login" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Login</TabsTrigger>
-              <TabsTrigger value="register" className="rounded-full data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground">Register</TabsTrigger>
-            </TabsList>
-          </CardHeader>
-          
-          <CardContent>
-            <TabsContent value="login" className="mt-0">
-              <Form {...loginForm}>
-                <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
-                  <FormField control={loginForm.control} name="email" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl><Input placeholder="you@example.com" {...field} className="rounded-full bg-black/50 border-input focus-visible:ring-primary" /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={loginForm.control} name="password" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl><Input type="password" placeholder="••••••••" {...field} className="rounded-full bg-black/50 border-input focus-visible:ring-primary" /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <Button type="submit" className="w-full rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-[0_0_20px_rgba(0,193,255,0.4)]" disabled={loginMutation.isPending}>
-                    {loginMutation.isPending ? "Logging in..." : "Login"}
-                  </Button>
-                </form>
-              </Form>
-            </TabsContent>
-
-            <TabsContent value="register" className="mt-0">
-              <Form {...registerForm}>
-                <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-4">
-                  <FormField control={registerForm.control} name="role" render={({ field }) => (
-                    <FormItem className="space-y-3">
-                      <FormLabel>I am a...</FormLabel>
-                      <FormControl>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div 
-                            className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${field.value === "client" ? "border-primary bg-primary/10 text-white" : "border-card-border bg-black/30 text-muted-foreground hover:border-primary/50"}`}
-                            onClick={() => field.onChange("client")}
-                          >
-                            <span className="font-bold">Client</span>
-                            <span className="text-xs opacity-70 mt-1">Need a cut</span>
-                          </div>
-                          <div 
-                            className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${field.value === "professional" ? "border-secondary bg-secondary/10 text-white" : "border-card-border bg-black/30 text-muted-foreground hover:border-secondary/50"}`}
-                            onClick={() => field.onChange("professional")}
-                          >
-                            <span className="font-bold">Professional</span>
-                            <span className="text-xs opacity-70 mt-1">Find clients</span>
-                          </div>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={registerForm.control} name="name" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl><Input placeholder="John Doe" {...field} className="rounded-full bg-black/50 border-input focus-visible:ring-primary" /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={registerForm.control} name="email" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl><Input placeholder="you@example.com" {...field} className="rounded-full bg-black/50 border-input focus-visible:ring-primary" /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={registerForm.control} name="password" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl><Input type="password" placeholder="••••••••" {...field} className="rounded-full bg-black/50 border-input focus-visible:ring-primary" /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <Button type="submit" className={`w-full rounded-full font-bold shadow-lg ${registerForm.watch("role") === "professional" ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-[0_0_20px_rgba(255,0,255,0.4)]" : "bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_20px_rgba(0,193,255,0.4)]"}`} disabled={registerMutation.isPending}>
-                    {registerMutation.isPending ? "Creating account..." : "Create Account"}
-                  </Button>
-                </form>
-              </Form>
-            </TabsContent>
-          </CardContent>
-        </Tabs>
-      </Card>
     </div>
   );
 }

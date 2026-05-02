@@ -95,6 +95,52 @@ router.post("/auth/login", async (req, res) => {
   });
 });
 
+router.post("/auth/phone-register", async (req, res) => {
+  const { phone, name, role } = req.body;
+  if (!phone || !name || !role) {
+    res.status(400).json({ message: "phone, name and role are required" });
+    return;
+  }
+  const email = `${phone.replace(/\+/g, "")}@wassem.app`;
+  const existing = await db.select().from(usersTable).where(eq(usersTable.phone, phone)).limit(1);
+  if (existing.length > 0) {
+    res.status(409).json({ message: "Phone already registered" });
+    return;
+  }
+  const [user] = await db.insert(usersTable).values({
+    name,
+    email,
+    phone,
+    passwordHash: hashPassword(phone),
+    role: role as "client" | "professional",
+    isVerified: false,
+    rating: 0,
+  }).returning();
+  const token = makeToken(user.id);
+  res.status(201).json({
+    user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, location: user.location, bio: user.bio, isVerified: user.isVerified, rating: user.rating, avatar: user.avatar, createdAt: user.createdAt },
+    token,
+  });
+});
+
+router.post("/auth/phone-login", async (req, res) => {
+  const { phone } = req.body;
+  if (!phone) {
+    res.status(400).json({ message: "phone is required" });
+    return;
+  }
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.phone, phone)).limit(1);
+  if (!user) {
+    res.status(404).json({ message: "User not found" });
+    return;
+  }
+  const token = makeToken(user.id);
+  res.json({
+    user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, location: user.location, bio: user.bio, isVerified: user.isVerified, rating: user.rating, avatar: user.avatar, createdAt: user.createdAt },
+    token,
+  });
+});
+
 router.post("/auth/logout", (req, res) => {
   res.json({ message: "Logged out" });
 });

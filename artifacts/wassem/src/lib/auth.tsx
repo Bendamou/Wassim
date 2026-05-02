@@ -5,6 +5,7 @@ export interface AuthUser {
   id: number;
   name: string;
   email: string;
+  phone?: string | null;
   role: "client" | "professional";
   location?: string | null;
   bio?: string | null;
@@ -61,8 +62,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 };
