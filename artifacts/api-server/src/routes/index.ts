@@ -5,6 +5,7 @@ import professionalsRouter from "./professionals";
 import jobsRouter from "./jobs";
 import bidsRouter from "./bids";
 import dashboardRouter from "./dashboard";
+import salonsRouter from "./salons";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(professionalsRouter);
 router.use(jobsRouter);
 router.use(bidsRouter);
 router.use(dashboardRouter);
+router.use(salonsRouter);
 
 export default router;

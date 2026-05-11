@@ -51,7 +51,7 @@ export default function AuthPage() {
     }
   };
 
-  const handleRegister = async (selectedRole: "client" | "professional") => {
+  const handleRegister = async (selectedRole: "client" | "professional" | "salon_owner") => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/auth/phone-register`, {
@@ -62,7 +62,9 @@ export default function AuthPage() {
       if (res.ok) {
         const data = await res.json();
         login(data.user, data.token);
-        setLocation(selectedRole === "client" ? "/" : "/pro/requests");
+        if (selectedRole === "client") setLocation("/");
+        else if (selectedRole === "salon_owner") setLocation("/salon/dashboard");
+        else setLocation("/pro/requests");
       } else {
         const err = await res.json();
         toast({ title: "Error", description: err.message || "Registration failed", variant: "destructive" });
@@ -176,8 +178,17 @@ export default function AuthPage() {
                 className="w-full bg-white/5 hover:bg-[#FF00FF]/20 border-2 border-white/10 hover:border-[#FF00FF] text-left rounded-2xl p-5 transition-all group"
               >
                 <div className="text-3xl mb-2">✂️</div>
-                <p className="text-white text-xl font-black group-hover:text-[#FF00FF]">I'm a professional</p>
+                <p className="text-white text-xl font-black group-hover:text-[#FF00FF]">I'm a barber</p>
                 <p className="text-gray-500 text-sm">Accept jobs and set your own terms</p>
+              </button>
+              <button
+                onClick={() => handleRegister("salon_owner")}
+                disabled={loading}
+                className="w-full bg-white/5 hover:bg-yellow-500/20 border-2 border-white/10 hover:border-yellow-500 text-left rounded-2xl p-5 transition-all group"
+              >
+                <div className="text-3xl mb-2">🏠</div>
+                <p className="text-white text-xl font-black group-hover:text-yellow-400">I own a salon</p>
+                <p className="text-gray-500 text-sm">Manage chairs, services & product sales</p>
               </button>
             </div>
             {loading && <p className="text-center text-gray-400 text-sm">Creating account...</p>}

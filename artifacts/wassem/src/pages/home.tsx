@@ -1,34 +1,51 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { Scissors } from "lucide-react";
+import { Scissors, Navigation } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import "leaflet/dist/leaflet.css";
 
-const CASABLANCA = [33.5731, -7.5898] as [number, number];
+const CASABLANCA: [number, number] = [33.5731, -7.5898];
+
+type Salon = {
+  id: number; name: string; address: string; lat: number; lng: number;
+  free_chairs: number; total_chairs: number; header_image: string;
+};
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const { user } = useAuth();
+  const [salons, setSalons] = useState<Salon[]>([]);
+  const [nearbyCount, setNearbyCount] = useState(0);
+  const [freeSalons, setFreeSalons] = useState(0);
+  const [geoGranted, setGeoGranted] = useState(false);
+
+  // Fetch salons
+  useEffect(() => {
+    fetch("/api/salons")
+      .then(r => r.json())
+      .then((data: Salon[]) => {
+        setSalons(data);
+        setNearbyCount(data.length);
+        setFreeSalons(data.filter(s => Number(s.free_chairs) > 0).length);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
-    let L: any;
+    let map: any;
+
     import("leaflet").then((leaflet) => {
-      L = leaflet.default;
+      const L = leaflet.default;
 
       delete (L.Icon.Default.prototype as any)._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-      });
 
-      const map = L.map(mapRef.current!, {
+      map = L.map(mapRef.current!, {
         center: CASABLANCA,
-        zoom: 14,
+        zoom: 13,
         zoomControl: false,
         attributionControl: false,
       });
@@ -37,95 +54,177 @@ export default function Home() {
         maxZoom: 19,
       }).addTo(map);
 
-      const customIcon = L.divIcon({
-        html: `<div style="width:44px;height:44px;background:linear-gradient(135deg,#00C1FF,#FF00FF);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(0,193,255,0.6);border:3px solid rgba(255,255,255,0.3)">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
-          </svg>
-        </div>`,
-        className: "",
-        iconSize: [44, 44],
-        iconAnchor: [22, 44],
-      });
-
-      L.marker(CASABLANCA, { icon: customIcon }).addTo(map);
-
-      const proPositions: [number, number][] = [
-        [33.5811, -7.5998],
-        [33.5651, -7.5798],
-        [33.5731, -7.6098],
-        [33.5631, -7.5698],
-        [33.5851, -7.5698],
-      ];
-
-      proPositions.forEach((pos) => {
-        const proIcon = L.divIcon({
-          html: `<div style="width:32px;height:32px;background:#1a1a1a;border:2px solid #00C1FF;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 12px rgba(0,193,255,0.4)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="#00C1FF">
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-            </svg>
-          </div>`,
-          className: "",
-          iconSize: [32, 32],
-          iconAnchor: [16, 32],
-        });
-        L.marker(pos, { icon: proIcon }).addTo(map);
-      });
-
       mapInstanceRef.current = map;
+
+      // Try geolocation
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            setGeoGranted(true);
+            map.setView([latitude, longitude], 14);
+
+            // User location pin
+            const userIcon = L.divIcon({
+              html: `<div style="width:44px;height:44px;background:linear-gradient(135deg,#00C1FF,#FF00FF);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 24px rgba(0,193,255,0.7);border:3px solid rgba(255,255,255,0.4)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                  <circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+                </svg>
+              </div>`,
+              className: "",
+              iconSize: [44, 44],
+              iconAnchor: [22, 22],
+            });
+            L.marker([latitude, longitude], { icon: userIcon }).addTo(map)
+              .bindPopup("<b style='color:#00C1FF'>You are here</b>");
+          },
+          () => {
+            // Geolocation denied — use Casablanca default
+          }
+        );
+      }
+
+      // Add salon markers
+      const renderSalonMarkers = (salonList: Salon[]) => {
+        salonList.forEach((salon) => {
+          if (!salon.lat || !salon.lng) return;
+          const free = Number(salon.free_chairs);
+          const hasFree = free > 0;
+
+          const salonIcon = L.divIcon({
+            html: hasFree
+              ? `<div style="position:relative;width:52px;height:52px">
+                  <div style="position:absolute;inset:0;background:rgba(74,222,128,0.15);border-radius:50%;animation:ping 1.5s ease-out infinite;"></div>
+                  <div style="width:52px;height:52px;background:#0A0A0A;border:3px solid #4ade80;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(74,222,128,0.7)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#4ade80">
+                      <path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3z"/>
+                    </svg>
+                  </div>
+                  <div style="position:absolute;top:-6px;right:-6px;background:#4ade80;color:#0A0A0A;font-weight:900;font-size:10px;padding:2px 5px;border-radius:20px;font-family:sans-serif">${free} free</div>
+                </div>`
+              : `<div style="width:40px;height:40px;background:#0A0A0A;border:2px solid rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#555">
+                    <path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3z"/>
+                  </svg>
+                </div>`,
+            className: "",
+            iconSize: hasFree ? [52, 52] : [40, 40],
+            iconAnchor: hasFree ? [26, 26] : [20, 20],
+          });
+
+          L.marker([salon.lat, salon.lng], { icon: salonIcon })
+            .addTo(map)
+            .bindPopup(`
+              <div style="font-family:sans-serif;min-width:160px">
+                <b style="color:${hasFree ? '#4ade80' : '#aaa'};font-size:14px">${salon.name}</b>
+                <p style="color:#888;font-size:11px;margin:2px 0">${salon.address || ''}</p>
+                ${hasFree
+                  ? `<p style="color:#4ade80;font-size:12px;font-weight:700">${free} chair${free > 1 ? 's' : ''} free now!</p>`
+                  : `<p style="color:#666;font-size:12px">All chairs occupied</p>`}
+              </div>
+            `)
+            .on("click", () => setLocation(`/salon/${salon.id}`));
+        });
+      };
+
+      // Render with current salons (they may be loaded by now)
+      (window as any).__renderSalonMarkers = renderSalonMarkers;
     });
 
     return () => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
+        delete (window as any).__renderSalonMarkers;
       }
     };
   }, []);
 
+  // Render salon markers whenever salons are loaded
+  useEffect(() => {
+    if (salons.length > 0 && (window as any).__renderSalonMarkers && mapInstanceRef.current) {
+      (window as any).__renderSalonMarkers(salons);
+    }
+  }, [salons]);
+
+  const isPro = user?.role === "professional";
+  const isSalonOwner = user?.role === "salon_owner";
+
   return (
     <div className="relative h-[100dvh] w-full overflow-hidden bg-[#0A0A0A]">
-      {/* Map — 80% */}
+      {/* Map */}
       <div ref={mapRef} className="absolute inset-0 z-0" style={{ bottom: "160px" }} />
 
-      {/* Gradient overlay at top */}
-      <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#0A0A0A]/80 to-transparent z-10 pointer-events-none" />
+      {/* Top gradient */}
+      <div className="absolute top-0 left-0 right-0 h-28 bg-gradient-to-b from-[#0A0A0A]/90 to-transparent z-10 pointer-events-none" />
 
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-5 pt-safe-top pt-4">
+      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-5 pt-12">
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00C1FF] to-[#FF00FF] flex items-center justify-center shadow-[0_0_15px_rgba(0,193,255,0.5)]">
             <Scissors size={18} className="text-white" />
           </div>
           <span className="text-white font-black text-xl">WASSEM</span>
         </div>
-        <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-full px-3 py-1.5">
-          <span className="text-[#00C1FF] text-xs font-bold">📍 Casablanca</span>
+        <div className="flex items-center gap-2">
+          {freeSalons > 0 && (
+            <div className="flex items-center gap-1.5 bg-green-500/20 border border-green-500/40 rounded-full px-3 py-1.5">
+              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+              <span className="text-green-400 text-xs font-bold">{freeSalons} salons open</span>
+            </div>
+          )}
+          <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-full px-3 py-1.5 flex items-center gap-1.5">
+            <Navigation size={12} className={geoGranted ? "text-[#00C1FF]" : "text-gray-500"} />
+            <span className="text-gray-300 text-xs font-bold">
+              {geoGranted ? "Near you" : "Casablanca"}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Pulse ring on map center */}
-      <div className="absolute left-1/2 -translate-x-1/2 pointer-events-none z-10" style={{ bottom: "calc(160px + 45%)" }}>
-        <div className="w-24 h-24 rounded-full border-2 border-[#00C1FF]/30 animate-ping" />
-      </div>
-
-      {/* Bottom Panel — 20% (160px) */}
+      {/* Bottom Panel */}
       <div className="absolute bottom-0 left-0 right-0 z-20 bg-[#0A0A0A] border-t border-white/5" style={{ height: "160px" }}>
         <div className="flex flex-col items-center justify-center h-full px-5 gap-3">
-          <div className="flex items-center gap-2 text-gray-400 text-sm">
-            <div className="w-2 h-2 rounded-full bg-[#00C1FF] animate-pulse" />
-            <span className="font-medium">5 barbers nearby</span>
-          </div>
-          <button
-            onClick={() => setLocation(user?.role === "professional" ? "/pro/requests" : "/request")}
-            className="w-full max-w-sm bg-[#00C1FF] hover:bg-[#00b0e8] active:scale-[0.97] text-black font-black text-xl rounded-2xl py-5 transition-all shadow-[0_0_30px_rgba(0,193,255,0.5)] flex items-center justify-center gap-2"
-          >
-            {user?.role === "professional" ? (
-              <>✂️ See Nearby Requests</>
-            ) : (
-              <>💈 Request Service</>
+          {/* Status row */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-[#00C1FF] animate-pulse" />
+              <span className="text-gray-400 text-xs font-medium">{nearbyCount} salons nearby</span>
+            </div>
+            {freeSalons > 0 && (
+              <>
+                <span className="text-gray-700">·</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                  <span className="text-green-400 text-xs font-bold">{freeSalons} with free spots</span>
+                </div>
+              </>
             )}
-          </button>
+          </div>
+
+          {/* CTA Button */}
+          {isSalonOwner ? (
+            <button
+              onClick={() => setLocation("/salon/dashboard")}
+              className="w-full max-w-sm bg-gradient-to-r from-[#00C1FF] to-[#FF00FF] active:scale-[0.97] text-black font-black text-xl rounded-2xl py-5 transition-all shadow-[0_0_30px_rgba(0,193,255,0.4)] flex items-center justify-center gap-2"
+            >
+              🏠 Manage My Salon
+            </button>
+          ) : isPro ? (
+            <button
+              onClick={() => setLocation("/pro/requests")}
+              className="w-full max-w-sm bg-[#FF00FF] hover:bg-[#e000e0] active:scale-[0.97] text-black font-black text-xl rounded-2xl py-5 transition-all shadow-[0_0_30px_rgba(255,0,255,0.4)] flex items-center justify-center gap-2"
+            >
+              ✂️ See Nearby Requests
+            </button>
+          ) : (
+            <button
+              onClick={() => setLocation("/request")}
+              className="w-full max-w-sm bg-[#00C1FF] hover:bg-[#00b0e8] active:scale-[0.97] text-black font-black text-xl rounded-2xl py-5 transition-all shadow-[0_0_30px_rgba(0,193,255,0.5)] flex items-center justify-center gap-2"
+            >
+              💈 Request Service
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -12,6 +12,8 @@ import MatchScreen from "@/pages/match";
 import ProRequests from "@/pages/pro/requests";
 import ProBid from "@/pages/pro/bid";
 import Profile from "@/pages/profile";
+import SalonProfile from "@/pages/salon/profile";
+import SalonDashboard from "@/pages/salon/dashboard";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -41,6 +43,12 @@ function Router() {
         </Route>
         <Route path="/pro/bid/:jobId">
           <Guard><ProBid /></Guard>
+        </Route>
+        <Route path="/salon/dashboard">
+          <Guard><SalonDashboard /></Guard>
+        </Route>
+        <Route path="/salon/:id">
+          <Guard><SalonProfile /></Guard>
         </Route>
         <Route path="/profile">
           <Guard><Profile /></Guard>

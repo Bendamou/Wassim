@@ -1,6 +1,6 @@
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/lib/auth";
-import { Home, Briefcase, User } from "lucide-react";
+import { Home, Briefcase, User, LayoutDashboard } from "lucide-react";
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -11,8 +11,15 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   }
 
   const isClient = user.role === "client";
+  const isSalonOwner = user.role === "salon_owner";
 
-  const navItems = isClient
+  const navItems = isSalonOwner
+    ? [
+        { href: "/", label: "Map", icon: Home },
+        { href: "/salon/dashboard", label: "My Salon", icon: LayoutDashboard },
+        { href: "/profile", label: "Profile", icon: User },
+      ]
+    : isClient
     ? [
         { href: "/", label: "Home", icon: Home },
         { href: "/request", label: "Request", icon: Briefcase },
@@ -31,10 +38,8 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="min-h-[100dvh] bg-[#0A0A0A] relative">
-      {/* Main content */}
       <div className="pb-20">{children}</div>
 
-      {/* Bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-xl border-t border-white/5 pb-safe-bottom">
         <div className="flex justify-around items-center h-16 px-4 max-w-md mx-auto">
           {navItems.map((item) => {
@@ -48,10 +53,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                       ? "bg-gradient-to-br from-[#00C1FF]/20 to-[#FF00FF]/20 shadow-[0_0_15px_rgba(0,193,255,0.2)]"
                       : ""
                   }`}>
-                    <Icon
-                      size={22}
-                      className={active ? "text-[#00C1FF]" : "text-gray-600"}
-                    />
+                    <Icon size={22} className={active ? "text-[#00C1FF]" : "text-gray-600"} />
                   </div>
                   <span className={`text-[10px] font-bold ${active ? "text-[#00C1FF]" : "text-gray-600"}`}>
                     {item.label}

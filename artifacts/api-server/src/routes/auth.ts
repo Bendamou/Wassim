@@ -112,7 +112,7 @@ router.post("/auth/phone-register", async (req, res) => {
     email,
     phone,
     passwordHash: hashPassword(phone),
-    role: role as "client" | "professional",
+    role: role as "client" | "professional" | "salon_owner",
     isVerified: false,
     rating: 0,
   }).returning();
