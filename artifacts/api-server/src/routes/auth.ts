@@ -96,7 +96,7 @@ router.post("/auth/login", async (req, res) => {
 });
 
 router.post("/auth/phone-register", async (req, res) => {
-  const { phone, name, role } = req.body;
+  const { phone, name, role, gender_pref } = req.body;
   if (!phone || !name || !role) {
     res.status(400).json({ message: "phone, name and role are required" });
     return;
@@ -107,6 +107,10 @@ router.post("/auth/phone-register", async (req, res) => {
     res.status(409).json({ message: "Phone already registered" });
     return;
   }
+
+  const { sql: rawSql } = await import("drizzle-orm");
+  const validPref = ["men", "women", "all"].includes(gender_pref) ? gender_pref : "all";
+
   const [user] = await db.insert(usersTable).values({
     name,
     email,
@@ -116,9 +120,13 @@ router.post("/auth/phone-register", async (req, res) => {
     isVerified: false,
     rating: 0,
   }).returning();
+
+  // Set gender_pref via raw SQL since it may not be in the Drizzle schema yet
+  await db.execute(rawSql`UPDATE users SET gender_pref = ${validPref} WHERE id = ${user.id}`);
+
   const token = makeToken(user.id);
   res.status(201).json({
-    user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, location: user.location, bio: user.bio, isVerified: user.isVerified, rating: user.rating, avatar: user.avatar, createdAt: user.createdAt },
+    user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, location: user.location, bio: user.bio, isVerified: user.isVerified, rating: user.rating, avatar: user.avatar, gender_pref: validPref, createdAt: user.createdAt },
     token,
   });
 });

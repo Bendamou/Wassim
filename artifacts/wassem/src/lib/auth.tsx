@@ -6,12 +6,13 @@ export interface AuthUser {
   name: string;
   email: string;
   phone?: string | null;
-  role: "client" | "professional";
+  role: "client" | "professional" | "salon_owner";
   location?: string | null;
   bio?: string | null;
   isVerified: boolean;
   rating?: number | null;
   avatar?: string | null;
+  gender_pref?: "men" | "women" | "all" | null;
   createdAt?: string | null;
 }
 

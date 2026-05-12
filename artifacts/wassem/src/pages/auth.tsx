@@ -2,19 +2,18 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { Phone, User, Scissors, ChevronRight, ArrowLeft } from "lucide-react";
+import { Phone, User, ChevronRight, ArrowLeft } from "lucide-react";
 
 const API_BASE = "/api";
-
-type Step = "phone" | "name" | "role";
+type Step = "phone" | "name" | "role" | "pref";
 
 export default function AuthPage() {
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
-  const [role, setRole] = useState<"client" | "professional">("client");
+  const [selectedRole, setSelectedRole] = useState<"client" | "professional" | "salon_owner" | null>(null);
+  const [genderPref, setGenderPref] = useState<"men" | "women" | "all">("all");
   const [loading, setLoading] = useState(false);
-  const [isNewUser, setIsNewUser] = useState(false);
 
   const [, setLocation] = useLocation();
   const { login } = useAuth();
@@ -37,9 +36,10 @@ export default function AuthPage() {
       if (res.ok) {
         const data = await res.json();
         login(data.user, data.token);
-        setLocation(data.user.role === "client" ? "/" : "/pro/requests");
+        if (data.user.role === "client") setLocation("/");
+        else if (data.user.role === "salon_owner") setLocation("/salon/dashboard");
+        else setLocation("/pro/requests");
       } else if (res.status === 404) {
-        setIsNewUser(true);
         setStep("name");
       } else {
         toast({ title: "Error", description: "Something went wrong", variant: "destructive" });
@@ -51,19 +51,28 @@ export default function AuthPage() {
     }
   };
 
-  const handleRegister = async (selectedRole: "client" | "professional" | "salon_owner") => {
+  const handleRoleSelect = (role: "client" | "professional" | "salon_owner") => {
+    setSelectedRole(role);
+    if (role === "client") {
+      setStep("pref"); // clients get gender pref step
+    } else {
+      handleRegister(role, "all");
+    }
+  };
+
+  const handleRegister = async (role: "client" | "professional" | "salon_owner", pref: "men" | "women" | "all") => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/auth/phone-register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: formatPhone(phone), name, role: selectedRole }),
+        body: JSON.stringify({ phone: formatPhone(phone), name, role, gender_pref: pref }),
       });
       if (res.ok) {
         const data = await res.json();
         login(data.user, data.token);
-        if (selectedRole === "client") setLocation("/");
-        else if (selectedRole === "salon_owner") setLocation("/salon/dashboard");
+        if (role === "client") setLocation("/");
+        else if (role === "salon_owner") setLocation("/salon/dashboard");
         else setLocation("/pro/requests");
       } else {
         const err = await res.json();
@@ -83,17 +92,17 @@ export default function AuthPage() {
 
       <div className="w-full max-w-sm z-10">
         {/* Logo */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-[#00C1FF] to-[#FF00FF] shadow-[0_0_40px_rgba(0,193,255,0.4)] mb-6">
-            <Scissors className="text-white" size={36} />
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-[#00C1FF] to-[#FF00FF] shadow-[0_0_40px_rgba(0,193,255,0.4)] mb-5">
+            <span className="text-4xl">✂️</span>
           </div>
           <h1 className="text-5xl font-black text-white tracking-tight">WASSEM</h1>
-          <p className="text-[#00C1FF] font-bold mt-2 text-lg">On-demand grooming</p>
+          <p className="text-[#00C1FF] font-bold mt-1 text-base">On-demand grooming</p>
         </div>
 
-        {/* Step: Phone */}
+        {/* ── Step: Phone ── */}
         {step === "phone" && (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <div>
               <p className="text-white text-2xl font-black mb-1">Your phone number</p>
               <p className="text-gray-500 text-sm">We'll find or create your account</p>
@@ -101,11 +110,9 @@ export default function AuthPage() {
             <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-4 focus-within:border-[#00C1FF] transition-colors">
               <Phone size={20} className="text-[#00C1FF] flex-shrink-0" />
               <input
-                type="tel"
-                placeholder="0612 345 678"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handlePhoneSubmit()}
+                type="tel" placeholder="0612 345 678" value={phone}
+                onChange={e => setPhone(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handlePhoneSubmit()}
                 className="bg-transparent text-white text-xl font-bold flex-1 outline-none placeholder:text-gray-600"
                 autoFocus
               />
@@ -113,17 +120,17 @@ export default function AuthPage() {
             <button
               onClick={handlePhoneSubmit}
               disabled={phone.length < 8 || loading}
-              className="w-full bg-[#00C1FF] hover:bg-[#00a8e0] disabled:opacity-40 text-black font-black text-xl rounded-2xl py-5 transition-all shadow-[0_0_30px_rgba(0,193,255,0.4)] flex items-center justify-center gap-2"
+              className="w-full bg-[#00C1FF] disabled:opacity-40 text-black font-black text-xl rounded-2xl py-5 transition-all shadow-[0_0_30px_rgba(0,193,255,0.4)] flex items-center justify-center gap-2"
             >
               {loading ? "..." : <>Continue <ChevronRight size={22} /></>}
             </button>
           </div>
         )}
 
-        {/* Step: Name */}
+        {/* ── Step: Name ── */}
         {step === "name" && (
-          <div className="space-y-6">
-            <button onClick={() => setStep("phone")} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-2">
+          <div className="space-y-5">
+            <button onClick={() => setStep("phone")} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
               <ArrowLeft size={18} /> Back
             </button>
             <div>
@@ -133,29 +140,27 @@ export default function AuthPage() {
             <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-4 focus-within:border-[#00C1FF] transition-colors">
               <User size={20} className="text-[#00C1FF] flex-shrink-0" />
               <input
-                type="text"
-                placeholder="Ahmed"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && name.length >= 2 && setStep("role")}
+                type="text" placeholder="Ahmed" value={name}
+                onChange={e => setName(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && name.length >= 2 && setStep("role")}
                 className="bg-transparent text-white text-xl font-bold flex-1 outline-none placeholder:text-gray-600"
                 autoFocus
               />
             </div>
             <button
               onClick={() => setStep("role")}
-              disabled={name.length < 2 || loading}
-              className="w-full bg-[#00C1FF] hover:bg-[#00a8e0] disabled:opacity-40 text-black font-black text-xl rounded-2xl py-5 transition-all shadow-[0_0_30px_rgba(0,193,255,0.4)] flex items-center justify-center gap-2"
+              disabled={name.length < 2}
+              className="w-full bg-[#00C1FF] disabled:opacity-40 text-black font-black text-xl rounded-2xl py-5 transition-all shadow-[0_0_30px_rgba(0,193,255,0.4)] flex items-center justify-center gap-2"
             >
               Continue <ChevronRight size={22} />
             </button>
           </div>
         )}
 
-        {/* Step: Role */}
+        {/* ── Step: Role ── */}
         {step === "role" && (
-          <div className="space-y-6">
-            <button onClick={() => setStep("name")} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-2">
+          <div className="space-y-5">
+            <button onClick={() => setStep("name")} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
               <ArrowLeft size={18} /> Back
             </button>
             <div>
@@ -164,34 +169,93 @@ export default function AuthPage() {
             </div>
             <div className="space-y-3">
               <button
-                onClick={() => handleRegister("client")}
+                onClick={() => handleRoleSelect("client")}
                 disabled={loading}
                 className="w-full bg-white/5 hover:bg-[#00C1FF]/20 border-2 border-white/10 hover:border-[#00C1FF] text-left rounded-2xl p-5 transition-all group"
               >
                 <div className="text-3xl mb-2">💈</div>
-                <p className="text-white text-xl font-black group-hover:text-[#00C1FF]">I need a cut</p>
-                <p className="text-gray-500 text-sm">Request grooming services at your price</p>
+                <p className="text-white text-xl font-black group-hover:text-[#00C1FF]">I need a service</p>
+                <p className="text-gray-500 text-sm">Book grooming at your price</p>
               </button>
               <button
-                onClick={() => handleRegister("professional")}
+                onClick={() => handleRoleSelect("professional")}
                 disabled={loading}
                 className="w-full bg-white/5 hover:bg-[#FF00FF]/20 border-2 border-white/10 hover:border-[#FF00FF] text-left rounded-2xl p-5 transition-all group"
               >
                 <div className="text-3xl mb-2">✂️</div>
-                <p className="text-white text-xl font-black group-hover:text-[#FF00FF]">I'm a barber</p>
+                <p className="text-white text-xl font-black group-hover:text-[#FF00FF]">I'm a barber / stylist</p>
                 <p className="text-gray-500 text-sm">Accept jobs and set your own terms</p>
               </button>
               <button
-                onClick={() => handleRegister("salon_owner")}
+                onClick={() => handleRoleSelect("salon_owner")}
                 disabled={loading}
                 className="w-full bg-white/5 hover:bg-yellow-500/20 border-2 border-white/10 hover:border-yellow-500 text-left rounded-2xl p-5 transition-all group"
               >
                 <div className="text-3xl mb-2">🏠</div>
-                <p className="text-white text-xl font-black group-hover:text-yellow-400">I own a salon</p>
-                <p className="text-gray-500 text-sm">Manage chairs, services & product sales</p>
+                <p className="text-white text-xl font-black group-hover:text-yellow-400">I own a salon / spa</p>
+                <p className="text-gray-500 text-sm">Manage chairs, services & products</p>
               </button>
             </div>
             {loading && <p className="text-center text-gray-400 text-sm">Creating account...</p>}
+          </div>
+        )}
+
+        {/* ── Step: Gender Preference (clients only) ── */}
+        {step === "pref" && (
+          <div className="space-y-5">
+            <button onClick={() => setStep("role")} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+              <ArrowLeft size={18} /> Back
+            </button>
+            <div>
+              <p className="text-white text-2xl font-black mb-1">Your grooming preference</p>
+              <p className="text-gray-500 text-sm">We'll personalise your feed and map</p>
+            </div>
+            <div className="space-y-3">
+              {[
+                {
+                  key: "men" as const,
+                  emoji: "💈",
+                  label: "Men's Grooming",
+                  sub: "Barbers, fades, beard care",
+                  color: "#00C1FF",
+                  hover: "hover:bg-[#00C1FF]/20 hover:border-[#00C1FF]",
+                  text: "group-hover:text-[#00C1FF]",
+                },
+                {
+                  key: "women" as const,
+                  emoji: "💅",
+                  label: "Women's Beauty",
+                  sub: "Nails, skincare, massage, styling",
+                  color: "#FF00FF",
+                  hover: "hover:bg-[#FF00FF]/20 hover:border-[#FF00FF]",
+                  text: "group-hover:text-[#FF00FF]",
+                },
+                {
+                  key: "all" as const,
+                  emoji: "✨",
+                  label: "All Services",
+                  sub: "Show me everything",
+                  color: "#a855f7",
+                  hover: "hover:bg-purple-500/20 hover:border-purple-500",
+                  text: "group-hover:text-purple-400",
+                },
+              ].map(opt => (
+                <button
+                  key={opt.key}
+                  onClick={() => {
+                    setGenderPref(opt.key);
+                    handleRegister("client", opt.key);
+                  }}
+                  disabled={loading}
+                  className={`w-full bg-white/5 ${opt.hover} border-2 border-white/10 text-left rounded-2xl p-5 transition-all group`}
+                >
+                  <div className="text-3xl mb-2">{opt.emoji}</div>
+                  <p className={`text-white text-xl font-black ${opt.text}`}>{opt.label}</p>
+                  <p className="text-gray-500 text-sm">{opt.sub}</p>
+                </button>
+              ))}
+            </div>
+            {loading && <p className="text-center text-gray-400 text-sm">Setting up your feed...</p>}
           </div>
         )}
       </div>

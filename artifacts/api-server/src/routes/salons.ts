@@ -164,4 +164,84 @@ router.post("/salons/:id/reviews", async (req, res) => {
   res.status(201).json(enriched);
 });
 
+// --- GET /api/flash-offers/active  (currently active offers for map display) ---
+router.get("/flash-offers/active", async (req, res) => {
+  try {
+    const now = new Date();
+    const hour = now.getHours();
+    const dow = now.getDay();
+
+    const offers = (await db.execute(sql`
+      SELECT fo.*, s.name AS salon_name, s.lat, s.lng
+      FROM flash_offers fo
+      JOIN salons s ON s.id = fo.salon_id
+      WHERE fo.is_active = true
+        AND fo.start_hour <= ${hour}
+        AND fo.end_hour > ${hour}
+        AND (fo.day_of_week IS NULL OR fo.day_of_week = ${dow})
+    `)).rows;
+    res.json(offers);
+  } catch (err) {
+    req.log.error({ err }, "GET /flash-offers/active failed");
+    res.status(500).json({ message: "Internal error" });
+  }
+});
+
+// --- GET /api/salons/:id/flash-offers ---
+router.get("/salons/:id/flash-offers", async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) { res.status(400).json({ message: "Invalid ID" }); return; }
+  try {
+    const offers = (await db.execute(sql`
+      SELECT * FROM flash_offers WHERE salon_id = ${id} ORDER BY created_at DESC
+    `)).rows;
+    res.json(offers);
+  } catch (err) {
+    res.status(500).json({ message: "Internal error" });
+  }
+});
+
+// --- POST /api/salons/:id/flash-offers ---
+router.post("/salons/:id/flash-offers", async (req, res) => {
+  const salonId = parseInt(req.params.id, 10);
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  const user = await getUserFromToken(token);
+  if (!user) { res.status(401).json({ message: "Unauthorized" }); return; }
+
+  const { title, discount_pct, day_of_week, start_hour, end_hour } = req.body;
+  if (!title || !discount_pct || start_hour == null || end_hour == null) {
+    res.status(400).json({ message: "title, discount_pct, start_hour, end_hour required" }); return;
+  }
+
+  try {
+    const [offer] = (await db.execute(sql`
+      INSERT INTO flash_offers (salon_id, title, discount_pct, day_of_week, start_hour, end_hour, is_active)
+      VALUES (${salonId}, ${title}, ${discount_pct}, ${day_of_week ?? null}, ${start_hour}, ${end_hour}, true)
+      RETURNING *
+    `)).rows;
+    res.status(201).json(offer);
+  } catch (err) {
+    req.log.error({ err }, "POST /flash-offers failed");
+    res.status(500).json({ message: "Internal error" });
+  }
+});
+
+// --- PATCH /api/flash-offers/:id ---
+router.patch("/flash-offers/:id", async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  const user = await getUserFromToken(token);
+  if (!user) { res.status(401).json({ message: "Unauthorized" }); return; }
+
+  const { is_active } = req.body;
+  try {
+    const [offer] = (await db.execute(sql`
+      UPDATE flash_offers SET is_active = ${is_active} WHERE id = ${id} RETURNING *
+    `)).rows;
+    res.json(offer);
+  } catch (err) {
+    res.status(500).json({ message: "Internal error" });
+  }
+});
+
 export default router;

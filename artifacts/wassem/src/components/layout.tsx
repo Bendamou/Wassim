@@ -1,34 +1,33 @@
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/lib/auth";
-import { Home, Briefcase, User, LayoutDashboard } from "lucide-react";
+import { Home, Briefcase, User, LayoutDashboard, TrendingUp } from "lucide-react";
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const [location] = useLocation();
 
-  if (!user) {
-    return <div className="min-h-[100dvh] bg-[#0A0A0A]">{children}</div>;
-  }
+  if (!user) return <div className="min-h-[100dvh] bg-[#0A0A0A]">{children}</div>;
 
-  const isClient = user.role === "client";
   const isSalonOwner = user.role === "salon_owner";
+  const isClient = user.role === "client";
 
   const navItems = isSalonOwner
     ? [
-        { href: "/", label: "Map", icon: Home },
-        { href: "/salon/dashboard", label: "My Salon", icon: LayoutDashboard },
-        { href: "/profile", label: "Profile", icon: User },
+        { href: "/",                label: "Map",       icon: Home },
+        { href: "/salon/dashboard", label: "Salon",     icon: LayoutDashboard },
+        { href: "/salon/analytics", label: "Revenue",   icon: TrendingUp },
+        { href: "/profile",         label: "Profile",   icon: User },
       ]
     : isClient
     ? [
-        { href: "/", label: "Home", icon: Home },
+        { href: "/",        label: "Home",    icon: Home },
         { href: "/request", label: "Request", icon: Briefcase },
         { href: "/profile", label: "Profile", icon: User },
       ]
     : [
-        { href: "/", label: "Home", icon: Home },
+        { href: "/",             label: "Home",     icon: Home },
         { href: "/pro/requests", label: "Requests", icon: Briefcase },
-        { href: "/profile", label: "Profile", icon: User },
+        { href: "/profile",      label: "Profile",  icon: User },
       ];
 
   const isActive = (href: string) => {
@@ -36,26 +35,33 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     return location.startsWith(href);
   };
 
+  // Color per role
+  const accentColor = isSalonOwner ? "#FFDD00" : isClient ? "#00C1FF" : "#FF00FF";
+
   return (
     <div className="min-h-[100dvh] bg-[#0A0A0A] relative">
       <div className="pb-20">{children}</div>
-
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-xl border-t border-white/5 pb-safe-bottom">
-        <div className="flex justify-around items-center h-16 px-4 max-w-md mx-auto">
-          {navItems.map((item) => {
+        <div className="flex justify-around items-center h-16 px-2 max-w-md mx-auto">
+          {navItems.map(item => {
             const active = isActive(item.href);
             const Icon = item.icon;
             return (
               <Link key={item.href} href={item.href}>
-                <div className="flex flex-col items-center gap-1 w-16 cursor-pointer">
-                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all ${
-                    active
-                      ? "bg-gradient-to-br from-[#00C1FF]/20 to-[#FF00FF]/20 shadow-[0_0_15px_rgba(0,193,255,0.2)]"
-                      : ""
-                  }`}>
-                    <Icon size={22} className={active ? "text-[#00C1FF]" : "text-gray-600"} />
+                <div className="flex flex-col items-center gap-1 px-2 cursor-pointer">
+                  <div
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center transition-all"
+                    style={active ? {
+                      background: `${accentColor}18`,
+                      boxShadow: `0 0 12px ${accentColor}30`,
+                    } : {}}
+                  >
+                    <Icon size={22} style={{ color: active ? accentColor : "#4b5563" }} />
                   </div>
-                  <span className={`text-[10px] font-bold ${active ? "text-[#00C1FF]" : "text-gray-600"}`}>
+                  <span
+                    className="text-[10px] font-bold transition-colors"
+                    style={{ color: active ? accentColor : "#4b5563" }}
+                  >
                     {item.label}
                   </span>
                 </div>
