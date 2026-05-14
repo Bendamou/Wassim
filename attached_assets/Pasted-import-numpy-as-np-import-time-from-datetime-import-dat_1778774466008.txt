@@ -1,0 +1,71 @@
+import numpy as np
+import time
+from datetime import datetime
+
+class PulseGuardEngine:
+    def __init__(self, user_id, sensitivity=20):
+        self.user_id = user_id
+        self.sensitivity = sensitivity  # نسبة الانحراف المسموح بها
+        self.heart_rate_history = []
+        self.is_running = True
+
+    def get_sensor_data(self):
+        """
+        محاكاة لجلب البيانات من الحساس. 
+        في الواقع، هنا يتم الربط مع API الساعة الذكية.
+        """
+        # توليد نبض طبيعي مع تذبذب عشوائي
+        base = np.random.randint(70, 75)
+        # محاكاة انحراف عشوائي كل فترة لاختبار النظام
+        if np.random.random() > 0.95:
+            return base + 50  # نبض مرتفع مفاجئ
+        return base
+
+    def analyze_patterns(self, current_pulse):
+        """الذكاء الاصطناعي لرصد الشذوذ"""
+        self.heart_rate_history.append(current_pulse)
+        
+        # نحتاج على الأقل 10 قراءات لبناء نمط (Baseline)
+        if len(self.heart_rate_history) < 10:
+            return "CALIBRATING", 0
+
+        # حساب المتوسط المتحرك والانحراف المعياري
+        recent_data = self.heart_rate_history[-10:]
+        moving_avg = np.mean(recent_data[:-1])
+        std_dev = np.std(recent_data[:-1])
+        
+        # اكتشاف الانحراف: إذا ابتعدت النبضة الحالية عن المتوسط بمقدار ضخم
+        deviation = abs(current_pulse - moving_avg)
+        
+        if deviation > self.sensitivity:
+            return "ANOMALY_DETECTED", deviation
+        return "NORMAL", deviation
+
+    def trigger_alert(self, pulse, dev):
+        """نظام التنبيه الذكي"""
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        print(f"🚨 [ALERT {timestamp}] - Unstable Pattern!")
+        print(f"   >>> Heart Rate: {pulse} bpm (Deviation: {dev:.2f})")
+        print(f"   >>> Action: Sending notification to user & emergency contact.\n")
+
+    def start_monitoring(self):
+        print(f"--- PulseGuard AI Initialized for User: {self.user_id} ---")
+        try:
+            while self.is_running:
+                pulse = self.get_sensor_data()
+                status, dev = self.analyze_patterns(pulse)
+                
+                if status == "ANOMALY_DETECTED":
+                    self.trigger_alert(pulse, dev)
+                else:
+                    print(f"[{datetime.now().strftime('%H:%M:%S')}] Pulse: {pulse} bpm | Status: {status}")
+                
+                time.sleep(1) # قراءة كل ثانية
+        except KeyboardInterrupt:
+            print("\nMonitoring stopped by user.")
+
+# تشغيل النظام باحترافية
+if __name__ == "__main__":
+    # إنشاء نسخة للمستخدم محمد (مثلاً) بتحديد حساسية 15 درجة
+    guardian = PulseGuardEngine(user_id="Mohamed_001", sensitivity=15)
+    guardian.start_monitoring()
