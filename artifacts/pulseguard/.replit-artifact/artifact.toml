@@ -1,0 +1,39 @@
+kind = "web"
+previewPath = "/pulseguard/"
+title = "PulseGuard – AI Heart Rate Monitor"
+version = "1.0.0"
+id = "artifacts/pulseguard"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/pulseguard/" ]
+localPort = 21970
+
+[services.development]
+run = "pnpm --filter @workspace/pulseguard run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/pulseguard", "run", "build" ]
+publicDir = "artifacts/pulseguard/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21970"
+BASE_PATH = "/pulseguard/"
+
+[[services]]
+name = "pulseguard-api"
+paths = [ "/pulseguard-api/" ]
+localPort = 8000
+
+[services.development]
+run = "cd /home/runner/workspace/pulseguard && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
