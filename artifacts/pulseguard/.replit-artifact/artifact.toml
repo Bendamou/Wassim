@@ -33,7 +33,7 @@ BASE_PATH = "/pulseguard/"
 [[services]]
 name = "pulseguard-api"
 paths = [ "/pulseguard-api/" ]
-localPort = 8000
+localPort = 8099
 
 [services.development]
-run = "cd /home/runner/workspace/pulseguard && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+run = "cd /home/runner/workspace/pulseguard && uvicorn main:app --host 0.0.0.0 --port 8099 --reload"
