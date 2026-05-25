@@ -327,6 +327,49 @@ export const UpdateBidStatusResponse = zod.object({
 });
 
 /**
+ * @summary Get public app configuration (API keys, feature flags)
+ */
+export const GetAppConfigResponse = zod.object({
+  googleMapsApiKey: zod.string(),
+});
+
+/**
+ * @summary Update current user's GPS location for a job
+ */
+export const UpdateJobLocationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateJobLocationBody = zod.object({
+  lat: zod.number(),
+  lng: zod.number(),
+});
+
+export const UpdateJobLocationResponse = zod.object({
+  ok: zod.boolean(),
+});
+
+/**
+ * @summary Get real-time tracking state for a job (both positions)
+ */
+export const GetJobTrackingParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetJobTrackingResponse = zod.object({
+  jobId: zod.number(),
+  clientId: zod.number(),
+  status: zod.string(),
+  clientLat: zod.number().nullish(),
+  clientLng: zod.number().nullish(),
+  proLat: zod.number().nullish(),
+  proLng: zod.number().nullish(),
+  professionalId: zod.number().nullish(),
+  professionalName: zod.string().nullish(),
+  clientName: zod.string().nullish(),
+});
+
+/**
  * @summary Client dashboard summary
  */
 export const GetClientDashboardResponse = zod.object({

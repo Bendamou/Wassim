@@ -15,6 +15,10 @@ export const jobsTable = pgTable("jobs", {
   scheduledTime: timestamp("scheduled_time"),
   status: jobStatusEnum("status").notNull().default("open"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  clientLat: real("client_lat"),
+  clientLng: real("client_lng"),
+  proLat: real("pro_lat"),
+  proLng: real("pro_lng"),
 });
 
 export const insertJobSchema = createInsertSchema(jobsTable).omit({ id: true, createdAt: true });

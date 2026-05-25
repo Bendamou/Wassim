@@ -34,8 +34,8 @@ export default function MatchScreen() {
       { id: bidId, data: { status: "accepted" } },
       {
         onSuccess: () => {
-          toast({ title: "✅ Barber accepted!", description: "They're on their way to you." });
-          setLocation("/");
+          toast({ title: "✅ Barber accepted!", description: "Track their live location now." });
+          setLocation(`/tracking/${jobId}`);
         },
         onError: () => toast({ title: "Failed", variant: "destructive" }),
       }

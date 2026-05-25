@@ -20,6 +20,8 @@ tags:
     description: Bid operations
   - name: dashboard
     description: Dashboard operations
+  - name: config
+    description: App configuration
 paths:
   /healthz:
     get:
@@ -291,6 +293,75 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Bid"
+
+  /config:
+    get:
+      operationId: getAppConfig
+      tags: [config]
+      summary: Get public app configuration (API keys, feature flags)
+      responses:
+        "200":
+          description: App config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppConfig"
+
+  /jobs/{id}/location:
+    patch:
+      operationId: updateJobLocation
+      tags: [jobs]
+      summary: Update current user's GPS location for a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationUpdate"
+      responses:
+        "200":
+          description: Location updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /jobs/{id}/tracking:
+    get:
+      operationId: getJobTracking
+      tags: [jobs]
+      summary: Get real-time tracking state for a job (both positions)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Tracking state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrackingState"
+        "404":
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
 
   /dashboard/client:
     get:
@@ -571,6 +642,68 @@ components:
         - pendingBids
         - topProfessionals
         - recentJobs
+
+    AppConfig:
+      type: object
+      properties:
+        googleMapsApiKey:
+          type: string
+      required:
+        - googleMapsApiKey
+
+    LocationUpdate:
+      type: object
+      properties:
+        lat:
+          type: number
+        lng:
+          type: number
+      required:
+        - lat
+        - lng
+
+    OkResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+      required:
+        - ok
+
+    TrackingState:
+      type: object
+      properties:
+        jobId:
+          type: integer
+        clientId:
+          type: integer
+        status:
+          type: string
+        clientLat:
+          type: number
+          nullable: true
+        clientLng:
+          type: number
+          nullable: true
+        proLat:
+          type: number
+          nullable: true
+        proLng:
+          type: number
+          nullable: true
+        professionalId:
+          type: integer
+          nullable: true
+        professionalName:
+          type: string
+          nullable: true
+        clientName:
+          type: string
+          nullable: true
+      required:
+        - jobId
+        - clientId
+        - status
 
     ProfessionalDashboard:
       type: object

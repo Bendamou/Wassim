@@ -1,6 +1,6 @@
-import { useListJobs, getListJobsQueryKey } from "@workspace/api-client-react";
+import { useListJobs, getListJobsQueryKey, useListMyBids, getListMyBidsQueryKey } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
-import { MapPin, Clock, ChevronRight, Zap, RefreshCw } from "lucide-react";
+import { MapPin, Clock, ChevronRight, Zap, RefreshCw, Navigation } from "lucide-react";
 
 const SERVICE_EMOJI: Record<string, string> = {
   haircut: "💇",
@@ -18,9 +18,14 @@ const SERVICE_LABEL: Record<string, string> = {
 
 export default function ProRequests() {
   const [, setLocation] = useLocation();
-  const { data: jobs = [], isLoading, dataUpdatedAt } = useListJobs({
+  const { data: jobs = [], isLoading } = useListJobs({
     query: { queryKey: getListJobsQueryKey(), refetchInterval: 5000 },
   });
+  const { data: myBids = [] } = useListMyBids({
+    query: { queryKey: getListMyBidsQueryKey(), refetchInterval: 5000 },
+  });
+
+  const acceptedBids = myBids.filter((b) => b.status === "accepted");
 
   return (
     <div className="min-h-[100dvh] bg-[#0A0A0A] flex flex-col">
@@ -40,6 +45,29 @@ export default function ProRequests() {
           {isLoading && <RefreshCw size={18} className="text-gray-600 animate-spin" />}
         </div>
       </div>
+
+      {/* Active jobs - accepted bids */}
+      {acceptedBids.length > 0 && (
+        <div className="px-5 pt-4 pb-2 space-y-2">
+          <p className="text-xs font-bold uppercase tracking-wider text-green-400">Active Job</p>
+          {acceptedBids.map((bid) => (
+            <button
+              key={bid.id}
+              onClick={() => setLocation(`/tracking/${bid.jobId}`)}
+              className="w-full bg-green-500/10 border border-green-500/30 rounded-2xl p-4 flex items-center justify-between text-left transition-all hover:border-green-400 active:scale-[0.98]"
+            >
+              <div>
+                <p className="text-white font-black text-base">Job #{bid.jobId}</p>
+                <p className="text-green-400 text-sm font-semibold mt-0.5">✅ Bid accepted · {bid.price} MAD</p>
+              </div>
+              <div className="flex items-center gap-2 bg-green-500 rounded-xl px-4 py-2.5">
+                <Navigation size={16} className="text-white" />
+                <span className="text-white font-black text-sm">Track</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Jobs list */}
       <div className="flex-1 overflow-y-auto px-5 py-5 space-y-3 pb-28">

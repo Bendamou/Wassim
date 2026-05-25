@@ -17,6 +17,7 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AppConfig,
   AuthResponse,
   Bid,
   ClientDashboard,
@@ -24,11 +25,14 @@ import type {
   CreateJobBody,
   HealthStatus,
   Job,
+  LocationUpdate,
   LoginBody,
   MessageResponse,
+  OkResponse,
   Professional,
   ProfessionalDashboard,
   RegisterBody,
+  TrackingState,
   UpdateBidStatusBody,
   UpdateJobStatusBody,
   User,
@@ -1241,6 +1245,255 @@ export const useUpdateBidStatus = <
 > => {
   return useMutation(getUpdateBidStatusMutationOptions(options));
 };
+
+/**
+ * @summary Get public app configuration (API keys, feature flags)
+ */
+export const getGetAppConfigUrl = () => {
+  return `/api/config`;
+};
+
+export const getAppConfig = async (
+  options?: RequestInit,
+): Promise<AppConfig> => {
+  return customFetch<AppConfig>(getGetAppConfigUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetAppConfigQueryKey = () => {
+  return [`/api/config`] as const;
+};
+
+export const getGetAppConfigQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAppConfig>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getAppConfig>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetAppConfigQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAppConfig>>> = ({
+    signal,
+  }) => getAppConfig({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAppConfig>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetAppConfigQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAppConfig>>
+>;
+export type GetAppConfigQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get public app configuration (API keys, feature flags)
+ */
+
+export function useGetAppConfig<
+  TData = Awaited<ReturnType<typeof getAppConfig>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getAppConfig>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetAppConfigQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update current user's GPS location for a job
+ */
+export const getUpdateJobLocationUrl = (id: number) => {
+  return `/api/jobs/${id}/location`;
+};
+
+export const updateJobLocation = async (
+  id: number,
+  locationUpdate: LocationUpdate,
+  options?: RequestInit,
+): Promise<OkResponse> => {
+  return customFetch<OkResponse>(getUpdateJobLocationUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(locationUpdate),
+  });
+};
+
+export const getUpdateJobLocationMutationOptions = <
+  TError = ErrorType<MessageResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateJobLocation>>,
+    TError,
+    { id: number; data: BodyType<LocationUpdate> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateJobLocation>>,
+  TError,
+  { id: number; data: BodyType<LocationUpdate> },
+  TContext
+> => {
+  const mutationKey = ["updateJobLocation"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateJobLocation>>,
+    { id: number; data: BodyType<LocationUpdate> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateJobLocation(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateJobLocationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateJobLocation>>
+>;
+export type UpdateJobLocationMutationBody = BodyType<LocationUpdate>;
+export type UpdateJobLocationMutationError = ErrorType<MessageResponse>;
+
+/**
+ * @summary Update current user's GPS location for a job
+ */
+export const useUpdateJobLocation = <
+  TError = ErrorType<MessageResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateJobLocation>>,
+    TError,
+    { id: number; data: BodyType<LocationUpdate> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateJobLocation>>,
+  TError,
+  { id: number; data: BodyType<LocationUpdate> },
+  TContext
+> => {
+  return useMutation(getUpdateJobLocationMutationOptions(options));
+};
+
+/**
+ * @summary Get real-time tracking state for a job (both positions)
+ */
+export const getGetJobTrackingUrl = (id: number) => {
+  return `/api/jobs/${id}/tracking`;
+};
+
+export const getJobTracking = async (
+  id: number,
+  options?: RequestInit,
+): Promise<TrackingState> => {
+  return customFetch<TrackingState>(getGetJobTrackingUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetJobTrackingQueryKey = (id: number) => {
+  return [`/api/jobs/${id}/tracking`] as const;
+};
+
+export const getGetJobTrackingQueryOptions = <
+  TData = Awaited<ReturnType<typeof getJobTracking>>,
+  TError = ErrorType<MessageResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getJobTracking>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetJobTrackingQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getJobTracking>>> = ({
+    signal,
+  }) => getJobTracking(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getJobTracking>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetJobTrackingQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getJobTracking>>
+>;
+export type GetJobTrackingQueryError = ErrorType<MessageResponse>;
+
+/**
+ * @summary Get real-time tracking state for a job (both positions)
+ */
+
+export function useGetJobTracking<
+  TData = Awaited<ReturnType<typeof getJobTracking>>,
+  TError = ErrorType<MessageResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getJobTracking>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetJobTrackingQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Client dashboard summary

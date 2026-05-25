@@ -10,6 +10,7 @@ import Home from "@/pages/home";
 import RequestService from "@/pages/request";
 import RequestMulti from "@/pages/request-multi";
 import MatchScreen from "@/pages/match";
+import TrackingPage from "@/pages/tracking";
 import ProRequests from "@/pages/pro/requests";
 import ProBid from "@/pages/pro/bid";
 import Profile from "@/pages/profile";
@@ -35,6 +36,7 @@ function Router() {
         <Route path="/request"><Guard><RequestService /></Guard></Route>
         <Route path="/request-multi"><Guard><RequestMulti /></Guard></Route>
         <Route path="/match/:id"><Guard><MatchScreen /></Guard></Route>
+        <Route path="/tracking/:jobId"><Guard><TrackingPage /></Guard></Route>
         <Route path="/pro/requests"><Guard><ProRequests /></Guard></Route>
         <Route path="/pro/bid/:jobId"><Guard><ProBid /></Guard></Route>
         <Route path="/salon/dashboard"><Guard><SalonDashboard /></Guard></Route>

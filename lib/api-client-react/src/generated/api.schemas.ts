@@ -180,6 +180,32 @@ export interface ClientDashboard {
   recentJobs: Job[];
 }
 
+export interface AppConfig {
+  googleMapsApiKey: string;
+}
+
+export interface LocationUpdate {
+  lat: number;
+  lng: number;
+}
+
+export interface OkResponse {
+  ok: boolean;
+}
+
+export interface TrackingState {
+  jobId: number;
+  clientId: number;
+  status: string;
+  clientLat?: number | null;
+  clientLng?: number | null;
+  proLat?: number | null;
+  proLng?: number | null;
+  professionalId?: number | null;
+  professionalName?: string | null;
+  clientName?: string | null;
+}
+
 export interface ProfessionalDashboard {
   availableJobs: number;
   myBids: number;
