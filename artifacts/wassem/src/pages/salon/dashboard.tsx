@@ -551,31 +551,61 @@ export default function SalonDashboard() {
               return (
                 <div
                   key={chair.id}
-                  className={`flex items-center justify-between rounded-2xl px-4 py-3 border transition-all ${
-                    hasClaim
-                      ? "bg-[#00f2ff]/10 border-[#00f2ff]/40 shadow-[0_0_12px_rgba(0,193,255,0.1)]"
+                  className="rounded-2xl border transition-all overflow-hidden"
+                  style={{
+                    background: hasClaim
+                      ? "rgba(0,242,255,0.07)"
                       : isAvailable
-                      ? "bg-green-500/8 border-green-500/25"
-                      : "bg-white/3 border-white/8"
-                  }`}
+                      ? "rgba(74,222,128,0.06)"
+                      : "rgba(255,255,255,0.03)",
+                    borderColor: hasClaim
+                      ? "rgba(0,242,255,0.40)"
+                      : isAvailable
+                      ? "rgba(74,222,128,0.30)"
+                      : "rgba(255,255,255,0.08)",
+                    boxShadow: isAvailable
+                      ? "0 0 18px rgba(74,222,128,0.12)"
+                      : "none",
+                  }}
                 >
-                  <div>
-                    <p className="text-white font-bold">{chair.name}</p>
-                    <p className={`text-xs font-bold ${
-                      hasClaim ? "text-[#00f2ff]" : isAvailable ? "text-green-400" : "text-gray-500"
-                    }`}>
-                      {hasClaim ? "● Client en route" : isAvailable ? "✓ Available" : "● Occupied"}
-                    </p>
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      {/* Map-pin glow indicator */}
+                      <div className="relative flex-shrink-0">
+                        {isAvailable && (
+                          <div className="absolute inset-0 rounded-full animate-ping"
+                            style={{ background: hasClaim ? "#00f2ff" : "#4ade80", opacity: 0.35 }} />
+                        )}
+                        <div className="w-3 h-3 rounded-full" style={{
+                          background: hasClaim ? "#00f2ff" : isAvailable ? "#4ade80" : "#374151",
+                          boxShadow: isAvailable
+                            ? `0 0 8px ${hasClaim ? "#00f2ff" : "#4ade80"}`
+                            : "none",
+                        }} />
+                      </div>
+                      <div>
+                        <p className="text-white font-bold">{chair.name}</p>
+                        <p className="text-xs font-bold" style={{
+                          color: hasClaim ? "#00f2ff" : isAvailable ? "#4ade80" : "#6b7280",
+                        }}>
+                          {hasClaim ? "● Client en route" : isAvailable ? "✓ Live — visible on map" : "● Offline"}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => toggleChair(chair.id)}
+                      disabled={togglingId === chair.id}
+                      className="transition-opacity disabled:opacity-50"
+                    >
+                      {isAvailable
+                        ? <ToggleRight size={36} style={{ color: hasClaim ? "#00f2ff" : "#4ade80" }} />
+                        : <ToggleLeft size={36} className="text-gray-600" />}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => toggleChair(chair.id)}
-                    disabled={togglingId === chair.id}
-                    className="transition-opacity disabled:opacity-50"
-                  >
-                    {isAvailable
-                      ? <ToggleRight size={36} className="text-green-400" />
-                      : <ToggleLeft size={36} className="text-gray-600" />}
-                  </button>
+                  {isAvailable && (
+                    <div className="h-0.5 mx-4 mb-3 rounded-full"
+                      style={{ background: `linear-gradient(90deg,${hasClaim ? "#00f2ff" : "#4ade80"},transparent)` }} />
+                  )}
                 </div>
               );
             })}

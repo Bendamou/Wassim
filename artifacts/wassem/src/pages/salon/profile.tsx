@@ -253,6 +253,176 @@ function ClaimModal({
   );
 }
 
+// ── 2D Interactive Chair Map ───────────────────────────────────────────────
+function ChairMap({
+  chairs, claims, isLive, canClaim, onClaimClick,
+}: {
+  chairs: Chair[];
+  claims: any[];
+  isLive: boolean;
+  canClaim: boolean;
+  onClaimClick: () => void;
+}) {
+  const [selected, setSelected] = useState<number | null>(null);
+
+  const cols = Math.min(chairs.length, Math.ceil(Math.sqrt(chairs.length * 1.5)));
+  const rows = Math.ceil(chairs.length / cols);
+  const cellW = 100 / cols;
+  const cellH = 72;
+  const svgH = rows * cellH + 28;
+
+  const claimedNames = new Set(claims.map(c => c.chair_name));
+
+  return (
+    <div className="px-3 pb-4">
+      <svg
+        viewBox={`0 0 100 ${svgH}`}
+        preserveAspectRatio="xMidYMid meet"
+        className="w-full"
+        style={{ height: `${svgH * 3.5}px`, maxHeight: "260px" }}
+      >
+        {/* Room floor */}
+        <rect x="0" y="0" width="100" height={svgH} fill="rgba(0,0,0,0.3)" rx="2" />
+        {/* Mirror wall at top */}
+        <rect x="2" y="2" width="96" height="3" fill="#00f2ff" fillOpacity="0.15" rx="1" />
+        <text x="50" y="5.5" textAnchor="middle" fontSize="3" fill="#00f2ff" fillOpacity="0.6" fontFamily="monospace">MIRROR WALL</text>
+
+        {chairs.map((chair, i) => {
+          const col = i % cols;
+          const row = Math.floor(i / cols);
+          const cx = col * cellW + cellW / 2;
+          const cy = 14 + row * cellH + cellH / 2 - 6;
+
+          const isClaimed = claimedNames.has(chair.name);
+          const isOpen = chair.status === "available";
+          const isSelected = selected === chair.id;
+
+          const color = isClaimed ? "#00f2ff"
+            : isOpen ? "#4ade80"
+            : "#ff007f";
+
+          const glowR = isClaimed ? "rgba(0,242,255,0.25)" : isOpen ? "rgba(74,222,128,0.20)" : "rgba(255,0,127,0.10)";
+
+          return (
+            <g key={chair.id}
+              style={{ cursor: canClaim && isOpen ? "pointer" : "default" }}
+              onClick={() => {
+                if (isSelected) { setSelected(null); return; }
+                setSelected(chair.id);
+              }}>
+              {/* Glow halo */}
+              {(isOpen || isClaimed) && (
+                <ellipse cx={cx} cy={cy + 7} rx={cellW * 0.34} ry={3} fill={glowR} />
+              )}
+              {/* Chair back */}
+              <rect
+                x={cx - cellW * 0.18}
+                y={cy - 7}
+                width={cellW * 0.36}
+                height={5}
+                rx={1.5}
+                fill={color}
+                fillOpacity={isSelected ? 1 : 0.85}
+                stroke={isSelected ? "#fff" : "none"}
+                strokeWidth={0.5}
+              />
+              {/* Chair seat */}
+              <rect
+                x={cx - cellW * 0.22}
+                y={cy - 2}
+                width={cellW * 0.44}
+                height={9}
+                rx={2}
+                fill={color}
+                fillOpacity={isSelected ? 0.9 : 0.55}
+                stroke={isSelected ? "#fff" : color}
+                strokeWidth={isSelected ? 0.5 : 0.3}
+                strokeOpacity={0.6}
+              />
+              {/* Footrest */}
+              <rect
+                x={cx - cellW * 0.14}
+                y={cy + 8}
+                width={cellW * 0.28}
+                height={2.5}
+                rx={1}
+                fill={color}
+                fillOpacity={0.3}
+              />
+              {/* Status dot */}
+              <circle cx={cx} cy={cy - 10} r={2} fill={color}
+                style={isOpen ? { filter: `drop-shadow(0 0 2px ${color})` } : {}} />
+
+              {/* Label */}
+              <text
+                x={cx} y={cy + 18}
+                textAnchor="middle"
+                fontSize="2.8"
+                fill={isSelected ? "#fff" : color}
+                fillOpacity={isSelected ? 1 : 0.9}
+                fontFamily="monospace"
+                fontWeight="bold"
+              >
+                {chair.name.length > 8 ? chair.name.slice(0, 8) : chair.name}
+              </text>
+              <text
+                x={cx} y={cy + 22.5}
+                textAnchor="middle"
+                fontSize="2.3"
+                fill={color}
+                fillOpacity={0.7}
+                fontFamily="monospace"
+              >
+                {isClaimed ? "claimed" : isOpen ? "open" : "busy"}
+              </text>
+
+              {/* Selected tooltip */}
+              {isSelected && (
+                <g>
+                  <rect x={cx - 12} y={cy - 22} width={24} height={10} rx={2}
+                    fill="#1a1a2e" stroke={color} strokeWidth={0.4} />
+                  <text x={cx} y={cy - 17.5} textAnchor="middle" fontSize="2.8"
+                    fill="#fff" fontFamily="monospace" fontWeight="bold">
+                    {chair.name}
+                  </text>
+                  <text x={cx} y={cy - 14} textAnchor="middle" fontSize="2.3"
+                    fill={color} fontFamily="monospace">
+                    {isClaimed ? "● Client en route" : isOpen ? "● Tap to claim" : "✗ Not available"}
+                  </text>
+                </g>
+              )}
+            </g>
+          );
+        })}
+
+        {/* Legend bar at bottom */}
+        {isLive && (
+          <text x="50" y={svgH - 2} textAnchor="middle" fontSize="2.5"
+            fill="#4ade80" fillOpacity="0.7" fontFamily="monospace">
+            ● Salon is LIVE
+          </text>
+        )}
+      </svg>
+
+      {/* Claim CTA when a free chair is selected */}
+      {selected !== null && (() => {
+        const ch = chairs.find(c => c.id === selected);
+        const isFree = ch?.status === "available" && !claimedNames.has(ch.name);
+        if (!isFree || !canClaim) return null;
+        return (
+          <button
+            onClick={onClaimClick}
+            className="w-full mt-2 rounded-xl py-3 font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.97]"
+            style={{ background: "linear-gradient(135deg,#00f2ff,#0070FF)", color: "#000" }}
+          >
+            Claim {ch!.name} · Walk In Now
+          </button>
+        );
+      })()}
+    </div>
+  );
+}
+
 // ── Main Profile Page ──────────────────────────────────────────────────────
 export default function SalonProfile() {
   const { id } = useParams<{ id: string }>();
@@ -437,6 +607,41 @@ export default function SalonProfile() {
               <p className="text-gray-600 text-xs mt-1">Check back soon or browse services below</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── 2D INTERACTIVE CHAIR MAP ── */}
+      {salon.chairs.length > 0 && (
+        <div className="px-4 py-4">
+          <div className="rounded-2xl border overflow-hidden"
+            style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)" }}>
+            <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full animate-pulse"
+                  style={{ background: salon.is_live ? "#4ade80" : "#374151",
+                    boxShadow: salon.is_live ? "0 0 6px #4ade80" : "none" }} />
+                <p className="text-white font-black text-sm">Floor Plan</p>
+              </div>
+              <div className="flex items-center gap-3 text-[10px] font-bold text-gray-500">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-sm inline-block" style={{ background: "#4ade80" }} />Open
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-sm inline-block" style={{ background: "#ff007f" }} />Busy
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-sm inline-block" style={{ background: "#00f2ff" }} />Claimed
+                </span>
+              </div>
+            </div>
+            <ChairMap
+              chairs={salon.chairs}
+              claims={salon.activeClaims ?? []}
+              isLive={salon.is_live}
+              canClaim={!!(isClient && salon.is_live && !claimResult)}
+              onClaimClick={() => setShowClaimModal(true)}
+            />
+          </div>
         </div>
       )}
 

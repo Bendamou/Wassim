@@ -17,6 +17,7 @@ import Profile from "@/pages/profile";
 import SalonProfile from "@/pages/salon/profile";
 import SalonDashboard from "@/pages/salon/dashboard";
 import SalonAnalytics from "@/pages/salon/analytics";
+import SalonFinance from "@/pages/salon/finance";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -41,6 +42,7 @@ function Router() {
         <Route path="/pro/bid/:jobId"><Guard><ProBid /></Guard></Route>
         <Route path="/salon/dashboard"><Guard><SalonDashboard /></Guard></Route>
         <Route path="/salon/analytics"><Guard><SalonAnalytics /></Guard></Route>
+        <Route path="/salon/finance"><Guard><SalonFinance /></Guard></Route>
         <Route path="/salon/:id"><Guard><SalonProfile /></Guard></Route>
         <Route path="/profile"><Guard><Profile /></Guard></Route>
         <Route><Guard><Home /></Guard></Route>

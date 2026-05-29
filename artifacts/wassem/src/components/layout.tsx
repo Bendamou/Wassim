@@ -1,6 +1,6 @@
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/lib/auth";
-import { Home, Briefcase, User, LayoutDashboard, TrendingUp } from "lucide-react";
+import { Home, Briefcase, User, LayoutDashboard, TrendingUp, DollarSign } from "lucide-react";
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -13,10 +13,11 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
   const navItems = isSalonOwner
     ? [
-        { href: "/",                label: "Map",       icon: Home },
-        { href: "/salon/dashboard", label: "Salon",     icon: LayoutDashboard },
-        { href: "/salon/analytics", label: "Revenue",   icon: TrendingUp },
-        { href: "/profile",         label: "Profile",   icon: User },
+        { href: "/",                label: "Map",     icon: Home },
+        { href: "/salon/dashboard", label: "Salon",   icon: LayoutDashboard },
+        { href: "/salon/analytics", label: "Revenue", icon: TrendingUp },
+        { href: "/salon/finance",   label: "Finance", icon: DollarSign },
+        { href: "/profile",         label: "Profile", icon: User },
       ]
     : isClient
     ? [
