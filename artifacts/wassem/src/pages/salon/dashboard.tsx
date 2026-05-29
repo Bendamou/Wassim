@@ -60,18 +60,18 @@ function RevenueEstimator({ salon, freeChairs }: { salon: Salon; freeChairs: num
 
   if (!salon.is_live) {
     return (
-      <div className="mx-4 mb-5 rounded-3xl overflow-hidden border border-[#FF00FF]/30"
+      <div className="mx-4 mb-5 rounded-3xl overflow-hidden border border-[#ff007f]/30"
         style={{ background: "linear-gradient(135deg,#1a0010,#0f0008)" }}>
         <div className="p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-xl bg-[#FF00FF]/20 flex items-center justify-center">
-              <DollarSign size={16} className="text-[#FF00FF]" />
+            <div className="w-8 h-8 rounded-xl bg-[#ff007f]/20 flex items-center justify-center">
+              <DollarSign size={16} className="text-[#ff007f]" />
             </div>
-            <p className="text-[#FF00FF] font-black text-sm uppercase tracking-wider">Lost Revenue Estimator</p>
+            <p className="text-[#ff007f] font-black text-sm uppercase tracking-wider">Lost Revenue Estimator</p>
           </div>
           <p className="text-white/80 text-sm leading-relaxed">
             Your {salon.chairs.length} chair{salon.chairs.length !== 1 ? "s" : ""} could earn{" "}
-            <span className="text-[#FF00FF] font-black text-lg">{potentialPerHour} MAD/hr</span>{" "}
+            <span className="text-[#ff007f] font-black text-lg">{potentialPerHour} MAD/hr</span>{" "}
             when live. Every minute offline is missed revenue.
           </p>
           <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
@@ -79,8 +79,8 @@ function RevenueEstimator({ salon, freeChairs }: { salon: Salon; freeChairs: num
             <span>Based on {avgPrice} MAD avg · 2 sessions/hr/chair</span>
           </div>
         </div>
-        <div className="h-1 bg-[#FF00FF]/20">
-          <div className="h-full w-full bg-gradient-to-r from-[#FF00FF] to-transparent animate-pulse" />
+        <div className="h-1 bg-[#ff007f]/20">
+          <div className="h-full w-full bg-gradient-to-r from-[#ff007f] to-transparent animate-pulse" />
         </div>
       </div>
     );
@@ -213,11 +213,11 @@ function QueuePanel({ salonId, token }: { salonId: number; token: string }) {
         return (
           <div
             key={claim.id}
-            className="rounded-2xl border border-[#00C1FF]/20 bg-[#00C1FF]/5 p-4"
+            className="rounded-2xl border border-[#00f2ff]/20 bg-[#00f2ff]/5 p-4"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-full bg-[#00C1FF]/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-[#00C1FF] font-black text-sm">#{i + 1}</span>
+              <div className="w-8 h-8 rounded-full bg-[#00f2ff]/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-[#00f2ff] font-black text-sm">#{i + 1}</span>
               </div>
               <img
                 src={claim.client_avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(claim.client_name)}&background=0d1a2e&color=00C1FF&bold=true&size=64`}
@@ -230,7 +230,7 @@ function QueuePanel({ salonId, token }: { salonId: number; token: string }) {
                   <Clock size={10} />
                   <span>{formatTimeAgo(claim.created_at)}</span>
                   <span>·</span>
-                  <span className="text-[#00C1FF]">expires in {expiresIn}m</span>
+                  <span className="text-[#00f2ff]">expires in {expiresIn}m</span>
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
@@ -358,16 +358,16 @@ export default function SalonDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] bg-[#0A0A0A] flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-[#00C1FF] border-t-transparent animate-spin" />
+      <div className="min-h-[100dvh] bg-[#0f051d] flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full border-2 border-[#00f2ff] border-t-transparent animate-spin" />
       </div>
     );
   }
 
   if (!salon) {
     return (
-      <div className="min-h-[100dvh] bg-[#0A0A0A] flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#00C1FF] to-[#FF00FF] flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(0,193,255,0.4)]">
+      <div className="min-h-[100dvh] bg-[#0f051d] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#00f2ff] to-[#ff007f] flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(0,193,255,0.4)]">
           <Scissors size={36} className="text-white" />
         </div>
         <h2 className="text-2xl font-black text-white mb-2">No salon yet</h2>
@@ -383,10 +383,10 @@ export default function SalonDashboard() {
   const queueCount = salon.activeClaims?.length ?? 0;
 
   return (
-    <div className="min-h-[100dvh] bg-[#0A0A0A] pb-28">
+    <div className="min-h-[100dvh] bg-[#0f051d] pb-28">
       {/* Header */}
-      <div className="bg-gradient-to-b from-[#00C1FF]/8 to-transparent pt-14 pb-4 px-5">
-        <p className="text-[#00C1FF] text-xs font-bold uppercase tracking-widest mb-1">Salon Dashboard</p>
+      <div className="bg-gradient-to-b from-[#00f2ff]/8 to-transparent pt-14 pb-4 px-5">
+        <p className="text-[#00f2ff] text-xs font-bold uppercase tracking-widest mb-1">Salon Dashboard</p>
         <h1 className="text-2xl font-black text-white">{salon.name}</h1>
         <p className="text-gray-600 text-xs mt-0.5">{salon.address}</p>
       </div>
@@ -444,8 +444,8 @@ export default function SalonDashboard() {
                 <span>Live on map · 5km radius</span>
               </div>
               <div className="flex items-center gap-1.5 text-xs text-gray-500 ml-auto">
-                <Users size={12} className="text-[#00C1FF]" />
-                <span className="text-[#00C1FF] font-bold">{queueCount} in queue</span>
+                <Users size={12} className="text-[#00f2ff]" />
+                <span className="text-[#00f2ff] font-bold">{queueCount} in queue</span>
               </div>
             </div>
           )}
@@ -459,9 +459,9 @@ export default function SalonDashboard() {
       <div className="grid grid-cols-4 gap-2 px-4 mb-5">
         {[
           { label: "Free", value: freeChairs, color: "text-green-400" },
-          { label: "Queue", value: queueCount, color: "text-[#00C1FF]" },
+          { label: "Queue", value: queueCount, color: "text-[#00f2ff]" },
           { label: "Rating", value: avgRating, color: "text-yellow-400" },
-          { label: "Services", value: salon.services?.length ?? 0, color: "text-[#FF00FF]" },
+          { label: "Services", value: salon.services?.length ?? 0, color: "text-[#ff007f]" },
         ].map(stat => (
           <div key={stat.label} className="bg-white/5 border border-white/8 rounded-2xl p-3 flex flex-col items-center">
             <span className={`text-xl font-black ${stat.color}`}>{stat.value}</span>
@@ -478,13 +478,13 @@ export default function SalonDashboard() {
             onClick={() => setActiveTab(tab)}
             className={`flex-1 py-2 rounded-xl text-xs font-bold capitalize transition-all border ${
               activeTab === tab
-                ? "bg-[#00C1FF]/15 border-[#00C1FF]/50 text-[#00C1FF]"
+                ? "bg-[#00f2ff]/15 border-[#00f2ff]/50 text-[#00f2ff]"
                 : "bg-white/3 border-white/8 text-gray-500"
             }`}
           >
             {tab}
             {tab === "queue" && queueCount > 0 && (
-              <span className="ml-1 bg-[#00C1FF] text-black rounded-full text-[10px] font-black px-1.5">{queueCount}</span>
+              <span className="ml-1 bg-[#00f2ff] text-black rounded-full text-[10px] font-black px-1.5">{queueCount}</span>
             )}
           </button>
         ))}
@@ -497,7 +497,7 @@ export default function SalonDashboard() {
           {(salon.services ?? []).slice(0, 4).map((s: any) => (
             <div key={s.id} className="bg-white/5 border border-white/8 rounded-xl px-4 py-2.5 flex justify-between items-center">
               <span className="text-white text-sm font-bold">{s.name}</span>
-              <span className="text-[#00C1FF] font-black text-sm">{s.price} MAD</span>
+              <span className="text-[#00f2ff] font-black text-sm">{s.price} MAD</span>
             </div>
           ))}
           {(salon.services?.length ?? 0) === 0 && (
@@ -516,9 +516,9 @@ export default function SalonDashboard() {
             </p>
             <button
               onClick={() => setShowAddChair(v => !v)}
-              className="w-9 h-9 rounded-xl bg-[#00C1FF]/15 border border-[#00C1FF]/30 flex items-center justify-center"
+              className="w-9 h-9 rounded-xl bg-[#00f2ff]/15 border border-[#00f2ff]/30 flex items-center justify-center"
             >
-              <Plus size={18} className="text-[#00C1FF]" />
+              <Plus size={18} className="text-[#00f2ff]" />
             </button>
           </div>
 
@@ -529,12 +529,12 @@ export default function SalonDashboard() {
                 onChange={e => setNewChairName(e.target.value)}
                 placeholder="e.g. Chair A, VIP Chair"
                 onKeyDown={e => e.key === "Enter" && addChair()}
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm outline-none focus:border-[#00C1FF] placeholder:text-gray-600"
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm outline-none focus:border-[#00f2ff] placeholder:text-gray-600"
               />
               <button
                 onClick={addChair}
                 disabled={addingChair || !newChairName.trim()}
-                className="bg-[#00C1FF] disabled:opacity-40 text-black font-black text-sm px-4 rounded-xl"
+                className="bg-[#00f2ff] disabled:opacity-40 text-black font-black text-sm px-4 rounded-xl"
               >
                 Add
               </button>
@@ -553,7 +553,7 @@ export default function SalonDashboard() {
                   key={chair.id}
                   className={`flex items-center justify-between rounded-2xl px-4 py-3 border transition-all ${
                     hasClaim
-                      ? "bg-[#00C1FF]/10 border-[#00C1FF]/40 shadow-[0_0_12px_rgba(0,193,255,0.1)]"
+                      ? "bg-[#00f2ff]/10 border-[#00f2ff]/40 shadow-[0_0_12px_rgba(0,193,255,0.1)]"
                       : isAvailable
                       ? "bg-green-500/8 border-green-500/25"
                       : "bg-white/3 border-white/8"
@@ -562,7 +562,7 @@ export default function SalonDashboard() {
                   <div>
                     <p className="text-white font-bold">{chair.name}</p>
                     <p className={`text-xs font-bold ${
-                      hasClaim ? "text-[#00C1FF]" : isAvailable ? "text-green-400" : "text-gray-500"
+                      hasClaim ? "text-[#00f2ff]" : isAvailable ? "text-green-400" : "text-gray-500"
                     }`}>
                       {hasClaim ? "● Client en route" : isAvailable ? "✓ Available" : "● Occupied"}
                     </p>

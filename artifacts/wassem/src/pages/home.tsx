@@ -40,12 +40,12 @@ type BannerData = FlashOffer & { distKm: number };
 
 const CATEGORIES = [
   { key: "all",      label: "All",      emoji: "🔍", gender: "all",   color: "#a855f7" },
-  { key: "barber",   label: "Barber",   emoji: "💈", gender: "men",   color: "#00C1FF" },
-  { key: "hair",     label: "Hair",     emoji: "✂️", gender: "men",   color: "#00C1FF" },
-  { key: "nails",    label: "Nails",    emoji: "💅", gender: "women", color: "#FF00FF" },
-  { key: "skincare", label: "Skincare", emoji: "🧴", gender: "women", color: "#FF00FF" },
-  { key: "massage",  label: "Massage",  emoji: "💆", gender: "women", color: "#FF00FF" },
-  { key: "spa",      label: "Spa",      emoji: "🧖", gender: "women", color: "#FF00FF" },
+  { key: "barber",   label: "Barber",   emoji: "💈", gender: "men",   color: "#00f2ff" },
+  { key: "hair",     label: "Hair",     emoji: "✂️", gender: "men",   color: "#00f2ff" },
+  { key: "nails",    label: "Nails",    emoji: "💅", gender: "women", color: "#ff007f" },
+  { key: "skincare", label: "Skincare", emoji: "🧴", gender: "women", color: "#ff007f" },
+  { key: "massage",  label: "Massage",  emoji: "💆", gender: "women", color: "#ff007f" },
+  { key: "spa",      label: "Spa",      emoji: "🧖", gender: "women", color: "#ff007f" },
 ] as const;
 type CatKey = (typeof CATEGORIES)[number]["key"];
 
@@ -246,15 +246,15 @@ export default function Home() {
       const hasFree = free > 0;
       const activeOffer = offers.find(o => o.salon_id === salon.id && o.is_active);
       const isLiveShop = salon.is_live && hasFree;
-      const markerColor = catDef?.gender === "women" ? "#FF00FF" : "#00C1FF";
+      const markerColor = catDef?.gender === "women" ? "#ff007f" : "#00f2ff";
       const glowColor = activeOffer ? "rgba(255,221,0,0.5)" : isLiveShop ? "rgba(0,193,255,0.6)" : hasFree ? "rgba(74,222,128,0.4)" : `${markerColor}33`;
-      const borderColor = activeOffer ? "#FFDD00" : isLiveShop ? "#00C1FF" : hasFree ? "#4ade80" : markerColor;
+      const borderColor = activeOffer ? "#FFDD00" : isLiveShop ? "#00f2ff" : hasFree ? "#4ade80" : markerColor;
 
       const isLive = salon.is_live;
       const badge = activeOffer
         ? `<div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#FFDD00;color:#000;font-weight:900;font-size:9px;padding:2px 5px;border-radius:10px;white-space:nowrap;box-shadow:0 0 8px rgba(255,221,0,0.8)">⚡ -${activeOffer.discount_pct}%</div>`
         : isLive && hasFree
-        ? `<div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#00C1FF,#00ff88);color:#000;font-weight:900;font-size:8px;padding:2px 6px;border-radius:10px;white-space:nowrap;box-shadow:0 0 10px rgba(0,193,255,0.8)">● LIVE · ${free}</div>`
+        ? `<div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#00f2ff,#00ff88);color:#000;font-weight:900;font-size:8px;padding:2px 6px;border-radius:10px;white-space:nowrap;box-shadow:0 0 10px rgba(0,193,255,0.8)">● LIVE · ${free}</div>`
         : hasFree
         ? `<div style="position:absolute;top:-8px;right:-4px;background:#4ade80;color:#000;font-weight:900;font-size:9px;padding:1px 4px;border-radius:10px">${free}</div>`
         : "";
@@ -264,7 +264,7 @@ export default function Home() {
           ${hasFree || activeOffer ? `<div style="position:absolute;inset:0;background:${glowColor};border-radius:50%;animation:ping 1.5s ease-out infinite;pointer-events:none"></div>` : ""}
           <div style="width:48px;height:48px;background:#0D0D0D;border:2.5px solid ${borderColor};border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px ${glowColor};position:relative">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="${borderColor}"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3z"/></svg>
-            ${salon.is_verified ? `<div style="position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;background:#00C1FF;border-radius:50%;border:2px solid #0A0A0A;display:flex;align-items:center;justify-content:center;font-size:8px">✓</div>` : ""}
+            ${salon.is_verified ? `<div style="position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;background:#00f2ff;border-radius:50%;border:2px solid #0A0A0A;display:flex;align-items:center;justify-content:center;font-size:8px">✓</div>` : ""}
           </div>
           ${badge}
         </div>`,
@@ -301,7 +301,7 @@ export default function Home() {
           setUserLocation({ lat, lng });
           map.setView([lat, lng], 14);
           const userIcon = L.divIcon({
-            html: `<div style="width:40px;height:40px;background:linear-gradient(135deg,#00C1FF,#FF00FF);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(0,193,255,0.6);border:2px solid rgba(255,255,255,0.4)"><div style="width:12px;height:12px;background:white;border-radius:50%"></div></div>`,
+            html: `<div style="width:40px;height:40px;background:linear-gradient(135deg,#00f2ff,#ff007f);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(0,193,255,0.6);border:2px solid rgba(255,255,255,0.4)"><div style="width:12px;height:12px;background:white;border-radius:50%"></div></div>`,
             className: "", iconSize: [40, 40], iconAnchor: [20, 20],
           });
           L.marker([lat, lng], { icon: userIcon }).addTo(map);
@@ -334,7 +334,7 @@ export default function Home() {
   const activeFlashCount = flashOffers.filter(o => o.is_active).length;
 
   return (
-    <div className="relative h-[100dvh] w-full overflow-hidden bg-[#0A0A0A]">
+    <div className="relative h-[100dvh] w-full overflow-hidden bg-[#0f051d]">
       {/* Map */}
       <div ref={mapRef} className="absolute inset-0 z-0" style={{ bottom: "216px" }} />
 
@@ -345,7 +345,7 @@ export default function Home() {
       <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-12">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00C1FF] to-[#FF00FF] flex items-center justify-center shadow-[0_0_15px_rgba(0,193,255,0.5)]">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00f2ff] to-[#ff007f] flex items-center justify-center shadow-[0_0_15px_rgba(0,193,255,0.5)]">
               <Scissors size={18} className="text-white" />
             </div>
             <span className="text-white font-black text-xl">WASSEM</span>
@@ -358,9 +358,9 @@ export default function Home() {
               </div>
             )}
             {liveSalons > 0 && (
-              <div className="flex items-center gap-1 bg-[#00C1FF]/15 border border-[#00C1FF]/40 rounded-full px-2.5 py-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#00C1FF] animate-pulse" />
-                <span className="text-[#00C1FF] text-[10px] font-bold">{liveSalons} live</span>
+              <div className="flex items-center gap-1 bg-[#00f2ff]/15 border border-[#00f2ff]/40 rounded-full px-2.5 py-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#00f2ff] animate-pulse" />
+                <span className="text-[#00f2ff] text-[10px] font-bold">{liveSalons} live</span>
               </div>
             )}
             {freeSalons > 0 && liveSalons === 0 && (
@@ -370,7 +370,7 @@ export default function Home() {
               </div>
             )}
             <div className="bg-black/60 backdrop-blur border border-white/10 rounded-full px-2.5 py-1 flex items-center gap-1">
-              <Navigation size={10} className={geoGranted ? "text-[#00C1FF]" : "text-gray-600"} />
+              <Navigation size={10} className={geoGranted ? "text-[#00f2ff]" : "text-gray-600"} />
               <span className="text-gray-400 text-[10px] font-bold">{geoGranted ? "Near you" : "Casablanca"}</span>
             </div>
           </div>
@@ -419,7 +419,7 @@ export default function Home() {
       )}
 
       {/* Bottom Panel */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 bg-[#0A0A0A] border-t border-white/5" style={{ height: "216px" }}>
+      <div className="absolute bottom-0 left-0 right-0 z-20 bg-[#0f051d] border-t border-white/5" style={{ height: "216px" }}>
         <div className="flex flex-col items-center justify-center h-full px-5 gap-3">
           <div className="flex items-center gap-3 text-xs">
             <span className="font-bold" style={{ color: activeCatDef?.color ?? "#888" }}>
@@ -439,14 +439,14 @@ export default function Home() {
           {isSalonOwner ? (
             <button
               onClick={() => setLocation("/salon/dashboard")}
-              className="w-full max-w-sm bg-gradient-to-r from-[#00C1FF] to-[#FF00FF] active:scale-[0.97] text-black font-black text-lg rounded-2xl py-4 transition-all shadow-[0_0_25px_rgba(0,193,255,0.4)] flex items-center justify-center gap-2"
+              className="w-full max-w-sm bg-gradient-to-r from-[#00f2ff] to-[#ff007f] active:scale-[0.97] text-black font-black text-lg rounded-2xl py-4 transition-all shadow-[0_0_25px_rgba(0,193,255,0.4)] flex items-center justify-center gap-2"
             >
               🏠 Manage My Salon
             </button>
           ) : isPro ? (
             <button
               onClick={() => setLocation("/pro/requests")}
-              className="w-full max-w-sm bg-[#FF00FF] active:scale-[0.97] text-black font-black text-lg rounded-2xl py-4 transition-all shadow-[0_0_25px_rgba(255,0,255,0.4)] flex items-center justify-center gap-2"
+              className="w-full max-w-sm bg-[#ff007f] active:scale-[0.97] text-black font-black text-lg rounded-2xl py-4 transition-all shadow-[0_0_25px_rgba(255,0,255,0.4)] flex items-center justify-center gap-2"
             >
               ✂️ See Nearby Requests
             </button>
@@ -455,7 +455,7 @@ export default function Home() {
               onClick={() => setLocation("/request")}
               className="w-full max-w-sm active:scale-[0.97] text-black font-black text-lg rounded-2xl py-4 transition-all flex items-center justify-center gap-2"
               style={{
-                background: activeCatDef?.gender === "women" ? "#FF00FF" : "#00C1FF",
+                background: activeCatDef?.gender === "women" ? "#ff007f" : "#00f2ff",
                 boxShadow: activeCatDef?.gender === "women" ? "0 0 25px rgba(255,0,255,0.5)" : "0 0 25px rgba(0,193,255,0.5)",
               }}
             >

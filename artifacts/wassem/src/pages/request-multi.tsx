@@ -14,8 +14,8 @@ type Service = {
 type Salon = { id: number; name: string; is_verified: boolean; rating: number; services: Service[] };
 
 const CAT_COLORS: Record<string, string> = {
-  barber: "#00C1FF", hair: "#00C1FF",
-  nails: "#FF00FF", skincare: "#FF00FF", massage: "#FF00FF", spa: "#FF00FF",
+  barber: "#00f2ff", hair: "#00f2ff",
+  nails: "#ff007f", skincare: "#ff007f", massage: "#ff007f", spa: "#ff007f",
 };
 const CAT_EMOJI: Record<string, string> = {
   barber: "💈", hair: "✂️", nails: "💅", skincare: "🧴", massage: "💆", spa: "🧖",
@@ -83,23 +83,23 @@ export default function RequestMulti() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] bg-[#0A0A0A] flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-[#00C1FF] border-t-transparent animate-spin" />
+      <div className="min-h-[100dvh] bg-[#0f051d] flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full border-2 border-[#00f2ff] border-t-transparent animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[#0A0A0A] pb-32">
+    <div className="min-h-[100dvh] bg-[#0f051d] pb-32">
       {/* Header */}
-      <div className="bg-gradient-to-b from-[#FF00FF]/10 to-transparent pt-12 pb-5 px-5">
+      <div className="bg-gradient-to-b from-[#ff007f]/10 to-transparent pt-12 pb-5 px-5">
         <div className="flex items-center gap-3 mb-1">
           <button onClick={() => step === "salon" ? setLocation("/") : setStep(step === "services" ? "salon" : "services")}
             className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center">
             <ArrowLeft size={18} className="text-white" />
           </button>
           <div>
-            <p className="text-[#FF00FF] text-xs font-bold uppercase tracking-widest">Multi-Book</p>
+            <p className="text-[#ff007f] text-xs font-bold uppercase tracking-widest">Multi-Book</p>
             <h1 className="text-2xl font-black text-white">
               {step === "salon" ? "Choose a Salon" : step === "services" ? "Pick Your Services" : "Review & Book"}
             </h1>
@@ -111,12 +111,12 @@ export default function RequestMulti() {
           {["salon", "services", "confirm"].map((s, i) => (
             <div key={s} className="flex items-center gap-2">
               <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black ${
-                step === s ? "bg-[#FF00FF] text-black" :
-                ["salon","services","confirm"].indexOf(step) > i ? "bg-[#FF00FF]/30 text-[#FF00FF]" : "bg-white/10 text-gray-600"
+                step === s ? "bg-[#ff007f] text-black" :
+                ["salon","services","confirm"].indexOf(step) > i ? "bg-[#ff007f]/30 text-[#ff007f]" : "bg-white/10 text-gray-600"
               }`}>
                 {["salon","services","confirm"].indexOf(step) > i ? <Check size={12} /> : i + 1}
               </div>
-              {i < 2 && <div className={`h-0.5 w-8 ${["salon","services","confirm"].indexOf(step) > i ? "bg-[#FF00FF]/40" : "bg-white/10"}`} />}
+              {i < 2 && <div className={`h-0.5 w-8 ${["salon","services","confirm"].indexOf(step) > i ? "bg-[#ff007f]/40" : "bg-white/10"}`} />}
             </div>
           ))}
         </div>
@@ -129,16 +129,16 @@ export default function RequestMulti() {
             <button
               key={salon.id}
               onClick={() => { setSelectedSalon(salon); setSelected(new Set()); setStep("services"); }}
-              className="w-full bg-white/5 border border-white/10 hover:border-[#FF00FF]/50 rounded-2xl p-4 text-left transition-all"
+              className="w-full bg-white/5 border border-white/10 hover:border-[#ff007f]/50 rounded-2xl p-4 text-left transition-all"
             >
               <div className="flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="text-white font-bold">{salon.name}</p>
                     {salon.is_verified && (
-                      <div className="flex items-center gap-0.5 bg-[#00C1FF]/20 border border-[#00C1FF]/40 rounded-full px-1.5 py-0.5">
-                        <Check size={9} className="text-[#00C1FF]" />
-                        <span className="text-[#00C1FF] text-[9px] font-bold">Verified</span>
+                      <div className="flex items-center gap-0.5 bg-[#00f2ff]/20 border border-[#00f2ff]/40 rounded-full px-1.5 py-0.5">
+                        <Check size={9} className="text-[#00f2ff]" />
+                        <span className="text-[#00f2ff] text-[9px] font-bold">Verified</span>
                       </div>
                     )}
                   </div>
@@ -214,7 +214,7 @@ export default function RequestMulti() {
           {selected.size > 0 && (
             <button
               onClick={() => setStep("confirm")}
-              className="w-full bg-[#FF00FF] text-black font-black text-lg rounded-2xl py-4 shadow-[0_0_25px_rgba(255,0,255,0.4)] flex items-center justify-center gap-2 mt-2"
+              className="w-full bg-[#ff007f] text-black font-black text-lg rounded-2xl py-4 shadow-[0_0_25px_rgba(255,0,255,0.4)] flex items-center justify-center gap-2 mt-2"
             >
               {selected.size} service{selected.size > 1 ? "s" : ""} · {totalPrice} MAD <ChevronRight size={20} />
             </button>
@@ -244,7 +244,7 @@ export default function RequestMulti() {
             <div className="border-t border-white/10 mt-4 pt-4">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-gray-400 text-sm">Total</span>
-                <span className="text-[#FF00FF] font-black text-xl">{totalPrice} MAD</span>
+                <span className="text-[#ff007f] font-black text-xl">{totalPrice} MAD</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 text-xs">Duration</span>
@@ -253,17 +253,17 @@ export default function RequestMulti() {
             </div>
           </div>
 
-          <div className="bg-[#FF00FF]/10 border border-[#FF00FF]/30 rounded-2xl p-4 flex items-center gap-3">
-            <Zap size={18} className="text-[#FF00FF] flex-shrink-0" />
+          <div className="bg-[#ff007f]/10 border border-[#ff007f]/30 rounded-2xl p-4 flex items-center gap-3">
+            <Zap size={18} className="text-[#ff007f] flex-shrink-0" />
             <p className="text-gray-300 text-sm">
-              This is an <span className="text-[#FF00FF] font-bold">Urgent Request</span> — ghost professionals near <span className="font-bold text-white">{selectedSalon.name}</span> will start bidding immediately.
+              This is an <span className="text-[#ff007f] font-bold">Urgent Request</span> — ghost professionals near <span className="font-bold text-white">{selectedSalon.name}</span> will start bidding immediately.
             </p>
           </div>
 
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="w-full bg-[#FF00FF] disabled:opacity-50 text-black font-black text-xl rounded-2xl py-5 shadow-[0_0_30px_rgba(255,0,255,0.5)] flex items-center justify-center gap-2"
+            className="w-full bg-[#ff007f] disabled:opacity-50 text-black font-black text-xl rounded-2xl py-5 shadow-[0_0_30px_rgba(255,0,255,0.5)] flex items-center justify-center gap-2"
           >
             {submitting ? "Submitting..." : "🚀 Send Urgent Request"}
           </button>

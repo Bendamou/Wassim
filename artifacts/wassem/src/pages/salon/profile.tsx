@@ -135,7 +135,7 @@ function ClaimModal({
             </div>
             <button
               onClick={onClose}
-              className="w-full bg-[#00C1FF] text-black font-black rounded-2xl py-4 shadow-[0_0_20px_rgba(0,193,255,0.4)]"
+              className="w-full bg-[#00f2ff] text-black font-black rounded-2xl py-4 shadow-[0_0_20px_rgba(0,193,255,0.4)]"
             >
               Got it — I'm on my way!
             </button>
@@ -154,11 +154,11 @@ function ClaimModal({
             </div>
 
             {/* No-show lock info */}
-            <div className="rounded-2xl border border-[#00C1FF]/25 bg-[#00C1FF]/5 p-3.5 mb-5">
+            <div className="rounded-2xl border border-[#00f2ff]/25 bg-[#00f2ff]/5 p-3.5 mb-5">
               <div className="flex items-start gap-3">
-                <Lock size={16} className="text-[#00C1FF] flex-shrink-0 mt-0.5" />
+                <Lock size={16} className="text-[#00f2ff] flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-[#00C1FF] font-bold text-sm">No-Show Lock</p>
+                  <p className="text-[#00f2ff] font-bold text-sm">No-Show Lock</p>
                   <p className="text-gray-500 text-xs leading-relaxed mt-0.5">
                     A <span className="text-white font-bold">{depositAmount} MAD deposit</span> holds your chair and is credited toward your service ({lowestPrice}+ MAD). No-shows forfeit the deposit.
                   </p>
@@ -180,7 +180,7 @@ function ClaimModal({
                     onChange={e => handleCardNumberChange(e.target.value)}
                     placeholder="1234 5678 9012 3456"
                     maxLength={19}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pl-10 text-white text-sm outline-none focus:border-[#00C1FF] placeholder:text-gray-700 font-mono tracking-wider"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pl-10 text-white text-sm outline-none focus:border-[#00f2ff] placeholder:text-gray-700 font-mono tracking-wider"
                   />
                   <CreditCard size={16} className="absolute left-3.5 top-3.5 text-gray-600" />
                 </div>
@@ -196,7 +196,7 @@ function ClaimModal({
                     value={cardHolder}
                     onChange={e => setCardHolder(e.target.value)}
                     placeholder="Your name"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white text-sm outline-none focus:border-[#00C1FF] placeholder:text-gray-700"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white text-sm outline-none focus:border-[#00f2ff] placeholder:text-gray-700"
                   />
                 </div>
                 <div>
@@ -225,14 +225,14 @@ function ClaimModal({
               disabled={step === "processing"}
               className="mt-5 w-full rounded-2xl py-4 font-black text-lg transition-all flex items-center justify-center gap-2"
               style={{
-                background: step === "processing" ? "rgba(0,193,255,0.3)" : "linear-gradient(135deg,#00C1FF,#0099cc)",
+                background: step === "processing" ? "rgba(0,193,255,0.3)" : "linear-gradient(135deg,#00f2ff,#0099cc)",
                 boxShadow: step === "processing" ? "none" : "0 0 25px rgba(0,193,255,0.35)",
-                color: step === "processing" ? "#00C1FF" : "#000",
+                color: step === "processing" ? "#00f2ff" : "#000",
               }}
             >
               {step === "processing" ? (
                 <>
-                  <div className="w-5 h-5 rounded-full border-2 border-[#00C1FF] border-t-transparent animate-spin" />
+                  <div className="w-5 h-5 rounded-full border-2 border-[#00f2ff] border-t-transparent animate-spin" />
                   Processing payment…
                 </>
               ) : (
@@ -310,8 +310,8 @@ export default function SalonProfile() {
 
   if (!salon) {
     return (
-      <div className="min-h-[100dvh] bg-[#0A0A0A] flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-[#00C1FF] border-t-transparent animate-spin" />
+      <div className="min-h-[100dvh] bg-[#0f051d] flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full border-2 border-[#00f2ff] border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -321,8 +321,8 @@ export default function SalonProfile() {
     ? (salon.reviews.reduce((s, r) => s + r.rating, 0) / salon.reviews.length).toFixed(1)
     : "–";
   const headerGradients = [
-    "from-[#00C1FF]/40 via-[#0A0A0A]/60 to-[#0A0A0A]",
-    "from-[#FF00FF]/40 via-[#0A0A0A]/60 to-[#0A0A0A]",
+    "from-[#00f2ff]/40 via-[#0A0A0A]/60 to-[#0A0A0A]",
+    "from-[#ff007f]/40 via-[#0A0A0A]/60 to-[#0A0A0A]",
     "from-purple-600/40 via-[#0A0A0A]/60 to-[#0A0A0A]",
   ];
   const grad = headerGradients[salon.id % headerGradients.length];
@@ -330,13 +330,13 @@ export default function SalonProfile() {
   const isClient = user?.role === "client";
 
   return (
-    <div className="min-h-[100dvh] bg-[#0A0A0A] pb-36">
+    <div className="min-h-[100dvh] bg-[#0f051d] pb-36">
       {/* Cinematic Header */}
       <div className="relative h-72 overflow-hidden">
         {salon.header_image ? (
           <img src={salon.header_image} alt={salon.name} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[#00C1FF]/20 via-[#0A0A0A] to-[#FF00FF]/20 flex items-center justify-center">
+          <div className="w-full h-full bg-gradient-to-br from-[#00f2ff]/20 via-[#0A0A0A] to-[#ff007f]/20 flex items-center justify-center">
             <Scissors size={80} className="text-white/5" />
           </div>
         )}
@@ -350,7 +350,7 @@ export default function SalonProfile() {
         </button>
 
         {cartCount > 0 && (
-          <div className="absolute top-12 right-4 z-10 flex items-center gap-2 bg-[#FF00FF] rounded-full px-3 py-2">
+          <div className="absolute top-12 right-4 z-10 flex items-center gap-2 bg-[#ff007f] rounded-full px-3 py-2">
             <ShoppingCart size={16} className="text-black" />
             <span className="text-black font-black text-sm">{cartCount} · {cartTotal} MAD</span>
           </div>
@@ -385,8 +385,8 @@ export default function SalonProfile() {
               <>
                 <span className="text-gray-600">·</span>
                 <div className="flex items-center gap-1">
-                  <Users size={12} className="text-[#00C1FF]" />
-                  <span className="text-[#00C1FF] text-sm font-bold">{queueCount} waiting</span>
+                  <Users size={12} className="text-[#00f2ff]" />
+                  <span className="text-[#00f2ff] text-sm font-bold">{queueCount} waiting</span>
                 </div>
               </>
             )}
@@ -410,7 +410,7 @@ export default function SalonProfile() {
                 </div>
                 <div className="text-right">
                   <p className="text-white text-xs font-bold">Queue</p>
-                  <p className="text-[#00C1FF] font-black text-xl">#{claimResult.queue_position}</p>
+                  <p className="text-[#00f2ff] font-black text-xl">#{claimResult.queue_position}</p>
                 </div>
               </div>
               <p className="text-gray-600 text-xs mt-2 text-center">
@@ -423,7 +423,7 @@ export default function SalonProfile() {
               onClick={() => setShowClaimModal(true)}
               className="w-full rounded-2xl py-4 font-black text-xl flex items-center justify-center gap-3 transition-all active:scale-[0.97]"
               style={{
-                background: "linear-gradient(135deg,#00C1FF,#0070FF)",
+                background: "linear-gradient(135deg,#00f2ff,#0070FF)",
                 boxShadow: "0 0 30px rgba(0,193,255,0.45)",
                 color: "#000",
               }}
@@ -447,7 +447,7 @@ export default function SalonProfile() {
             key={t}
             onClick={() => setTab(t)}
             className={`flex-1 py-3 text-sm font-bold capitalize transition-colors border-b-2 ${
-              tab === t ? "border-[#00C1FF] text-[#00C1FF]" : "border-transparent text-gray-500"
+              tab === t ? "border-[#00f2ff] text-[#00f2ff]" : "border-transparent text-gray-500"
             }`}
           >
             {t === "services" && <Scissors size={14} className="inline mr-1" />}
@@ -475,11 +475,11 @@ export default function SalonProfile() {
                 </div>
               </div>
               <div className="flex flex-col items-end gap-2 ml-4">
-                <span className="text-[#00C1FF] font-black text-lg">{s.price} MAD</span>
+                <span className="text-[#00f2ff] font-black text-lg">{s.price} MAD</span>
                 {salon.is_live && isClient && !claimResult && freeChairs > 0 && (
                   <button
                     onClick={() => setShowClaimModal(true)}
-                    className="bg-[#00C1FF]/20 border border-[#00C1FF]/40 text-[#00C1FF] font-bold text-xs px-3 py-1.5 rounded-xl"
+                    className="bg-[#00f2ff]/20 border border-[#00f2ff]/40 text-[#00f2ff] font-bold text-xs px-3 py-1.5 rounded-xl"
                   >
                     Walk In
                   </button>
@@ -502,7 +502,7 @@ export default function SalonProfile() {
                 {p.photo_url ? (
                   <img src={p.photo_url} alt={p.name} className="w-full h-32 object-cover" />
                 ) : (
-                  <div className="w-full h-32 bg-gradient-to-br from-[#FF00FF]/10 to-[#00C1FF]/10 flex items-center justify-center">
+                  <div className="w-full h-32 bg-gradient-to-br from-[#ff007f]/10 to-[#00f2ff]/10 flex items-center justify-center">
                     <Package size={32} className="text-white/20" />
                   </div>
                 )}
@@ -510,15 +510,15 @@ export default function SalonProfile() {
                   <p className="text-white font-bold text-sm">{p.name}</p>
                   {p.description && <p className="text-gray-500 text-xs mt-0.5 line-clamp-2">{p.description}</p>}
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-[#FF00FF] font-black text-sm">{p.price} MAD</span>
+                    <span className="text-[#ff007f] font-black text-sm">{p.price} MAD</span>
                     <button
                       onClick={() => addToCart(p.id)}
-                      className="w-8 h-8 rounded-xl bg-[#FF00FF]/15 border border-[#FF00FF]/30 flex items-center justify-center"
+                      className="w-8 h-8 rounded-xl bg-[#ff007f]/15 border border-[#ff007f]/30 flex items-center justify-center"
                     >
-                      <span className="text-[#FF00FF] font-black text-lg leading-none">+</span>
+                      <span className="text-[#ff007f] font-black text-lg leading-none">+</span>
                     </button>
                   </div>
-                  {cart[p.id] > 0 && <div className="mt-1.5 text-xs text-[#FF00FF] font-bold">{cart[p.id]} in cart</div>}
+                  {cart[p.id] > 0 && <div className="mt-1.5 text-xs text-[#ff007f] font-bold">{cart[p.id]} in cart</div>}
                 </div>
               </div>
             ))}
@@ -544,12 +544,12 @@ export default function SalonProfile() {
                 onChange={e => setReviewComment(e.target.value)}
                 placeholder="Share your experience..."
                 rows={3}
-                className="w-full bg-white/5 border border-white/8 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-[#00C1FF] resize-none placeholder:text-gray-600"
+                className="w-full bg-white/5 border border-white/8 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-[#00f2ff] resize-none placeholder:text-gray-600"
               />
               <button
                 onClick={submitReview}
                 disabled={posting || !reviewComment.trim()}
-                className="mt-2 w-full bg-[#00C1FF] disabled:opacity-40 text-black font-black rounded-xl py-3 text-sm"
+                className="mt-2 w-full bg-[#00f2ff] disabled:opacity-40 text-black font-black rounded-xl py-3 text-sm"
               >
                 {posting ? "Posting..." : "Post Review"}
               </button>

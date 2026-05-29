@@ -142,7 +142,7 @@ export default function TrackingPage() {
           icon: {
             path: G.SymbolPath.CIRCLE,
             scale: 14,
-            fillColor: "#00C1FF",
+            fillColor: "#00f2ff",
             fillOpacity: 1,
             strokeColor: "#0A0A0A",
             strokeWeight: 3,
@@ -166,7 +166,7 @@ export default function TrackingPage() {
           icon: {
             path: G.SymbolPath.CIRCLE,
             scale: 14,
-            fillColor: "#FF00FF",
+            fillColor: "#ff007f",
             fillOpacity: 1,
             strokeColor: "#0A0A0A",
             strokeWeight: 3,
@@ -198,9 +198,9 @@ export default function TrackingPage() {
     : (tracking?.clientName ?? "Client");
 
   return (
-    <div className="min-h-[100dvh] bg-[#0A0A0A] flex flex-col">
+    <div className="min-h-[100dvh] bg-[#0f051d] flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-4 px-5 pt-safe-top pt-5 pb-4 border-b border-white/5 bg-[#0A0A0A] z-10 relative">
+      <div className="flex items-center gap-4 px-5 pt-safe-top pt-5 pb-4 border-b border-white/5 bg-[#0f051d] z-10 relative">
         <button
           onClick={() => setLocation("/")}
           className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white flex-shrink-0"
@@ -225,8 +225,8 @@ export default function TrackingPage() {
 
         {/* Loading overlay */}
         {!mapsLoaded && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0A0A0A]">
-            <div className="w-12 h-12 border-2 border-[#00C1FF] border-t-transparent rounded-full animate-spin mb-4" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0f051d]">
+            <div className="w-12 h-12 border-2 border-[#00f2ff] border-t-transparent rounded-full animate-spin mb-4" />
             <p className="text-gray-500 text-sm">Loading map…</p>
           </div>
         )}
@@ -235,13 +235,13 @@ export default function TrackingPage() {
         {mapsLoaded && (
           <div className="absolute top-4 left-4 right-4 flex justify-center pointer-events-none">
             <div className="bg-black/70 backdrop-blur-sm border border-white/10 rounded-2xl px-5 py-3 flex items-center gap-5">
-              <span className="flex items-center gap-2 text-sm font-bold text-[#00C1FF]">
-                <span className="w-3 h-3 rounded-full bg-[#00C1FF] inline-block" />
+              <span className="flex items-center gap-2 text-sm font-bold text-[#00f2ff]">
+                <span className="w-3 h-3 rounded-full bg-[#00f2ff] inline-block" />
                 Client
               </span>
               <span className="w-px h-4 bg-white/20" />
-              <span className="flex items-center gap-2 text-sm font-bold text-[#FF00FF]">
-                <span className="w-3 h-3 rounded-full bg-[#FF00FF] inline-block" />
+              <span className="flex items-center gap-2 text-sm font-bold text-[#ff007f]">
+                <span className="w-3 h-3 rounded-full bg-[#ff007f] inline-block" />
                 Barber
               </span>
             </div>
@@ -250,7 +250,7 @@ export default function TrackingPage() {
       </div>
 
       {/* Bottom status panel */}
-      <div className="bg-[#0A0A0A] border-t border-white/5 px-5 pt-4 pb-safe-bottom pb-6 space-y-3 flex-shrink-0">
+      <div className="bg-[#0f051d] border-t border-white/5 px-5 pt-4 pb-safe-bottom pb-6 space-y-3 flex-shrink-0">
         {geoError && (
           <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl px-4 py-3 flex items-start gap-3">
             <span className="text-lg">⚠️</span>
@@ -262,7 +262,7 @@ export default function TrackingPage() {
           {/* You */}
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-2">
-              <div className={`w-3 h-3 rounded-full flex-shrink-0 ${isClient ? "bg-[#00C1FF] shadow-[0_0_6px_#00C1FF]" : "bg-[#FF00FF] shadow-[0_0_6px_#FF00FF]"}`} />
+              <div className={`w-3 h-3 rounded-full flex-shrink-0 ${isClient ? "bg-[#00f2ff] shadow-[0_0_6px_#00f2ff]" : "bg-[#ff007f] shadow-[0_0_6px_#ff007f]"}`} />
               <span className="text-gray-400 text-xs font-bold uppercase tracking-wider">You</span>
             </div>
             <p className="text-white font-bold text-sm truncate">{user?.name ?? "You"}</p>
@@ -274,7 +274,7 @@ export default function TrackingPage() {
           {/* Other party */}
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-2">
-              <div className={`w-3 h-3 rounded-full flex-shrink-0 ${isClient ? "bg-[#FF00FF] shadow-[0_0_6px_#FF00FF]" : "bg-[#00C1FF] shadow-[0_0_6px_#00C1FF]"}`} />
+              <div className={`w-3 h-3 rounded-full flex-shrink-0 ${isClient ? "bg-[#ff007f] shadow-[0_0_6px_#ff007f]" : "bg-[#00f2ff] shadow-[0_0_6px_#00f2ff]"}`} />
               <span className="text-gray-400 text-xs font-bold uppercase tracking-wider">
                 {isClient ? "Barber" : "Client"}
               </span>

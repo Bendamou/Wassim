@@ -8,19 +8,22 @@ import { useAuth } from "@/lib/auth";
 
 const API = "/api";
 
-// Generate deterministic mock data
+const CYAN  = "#00f2ff";
+const PINK  = "#ff007f";
+const PURPLE_MID = "#a020ff";
+
 function seedRand(seed: number) {
   let s = seed;
   return () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return Math.abs(s) / 0xffffffff; };
 }
 
-const DAYS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+const DAYS  = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 const HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
 
 function generateWeekRevenue(salonId: number) {
   const rand = seedRand(salonId * 7);
   return Array.from({ length: 7 }, (_, i) => {
-    const base = 800 + salonId * 120;
+    const base  = 800 + salonId * 120;
     const wkend = [0, 6].includes(i) ? 1.6 : 1;
     return Math.round((base + rand() * 600) * wkend);
   });
@@ -37,16 +40,84 @@ function generateHourlyCustomers(salonId: number) {
 type FlashOffer = { id: number; title: string; discount_pct: number; is_active: boolean };
 type Salon = {
   id: number; name: string; chairs: any[]; services: any[];
-  free_chairs: number; total_chairs: number;
+  free_chairs: number; total_chairs: number; reviews?: any[];
 };
 
-function MiniBar({ value, max, color }: { value: number; max: number; color: string }) {
+// ── Gradient bar — uses a unique SVG linear-gradient per bar ───────────────
+function GradientBar({
+  value, max, isHighlight, dimmed,
+}: {
+  value: number; max: number; isHighlight?: boolean; dimmed?: boolean;
+}) {
   const pct = Math.round((value / max) * 100);
+  const id  = `g${value}${max}${isHighlight ? "h" : ""}`;
+
+  if (dimmed) {
+    return (
+      <div className="flex-1 h-full flex flex-col justify-end items-center gap-1">
+        <div
+          className="w-full rounded-t-lg transition-all"
+          style={{
+            height: `${pct}%`,
+            background: `rgba(0,242,255,0.12)`,
+            boxShadow: `0 0 4px rgba(0,242,255,0.15)`,
+          }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 h-full flex flex-col justify-end items-center gap-1">
+      <svg width="0" height="0" style={{ position: "absolute" }}>
+        <defs>
+          <linearGradient id={id} x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%"   stopColor={isHighlight ? PINK  : CYAN} />
+            <stop offset="100%" stopColor={isHighlight ? CYAN  : PINK} />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div
+        className="w-full rounded-t-lg transition-all"
+        style={{
+          height: `${pct}%`,
+          background: `url(#${id})`,
+          backgroundImage: isHighlight
+            ? `linear-gradient(to top, ${PINK}, ${CYAN})`
+            : `linear-gradient(to top, ${CYAN}, ${PINK})`,
+          boxShadow: isHighlight
+            ? `0 0 12px rgba(255,0,127,0.55), 0 0 4px rgba(0,242,255,0.3)`
+            : `0 0 12px rgba(0,242,255,0.5), 0 0 4px rgba(255,0,127,0.25)`,
+        }}
+      />
+    </div>
+  );
+}
+
+// ── Hourly bar with 3-tier coloring ──────────────────────────────────────
+function HourBar({ value, max }: { value: number; max: number }) {
+  const pct   = Math.round((value / max) * 100);
+  const ratio = value / max;
+  const isPeak = ratio >= 0.8;
+  const isBusy = ratio >= 0.5;
+
+  const bg = isPeak
+    ? `linear-gradient(to top, ${PINK}, ${PURPLE_MID})`
+    : isBusy
+    ? `linear-gradient(to top, ${CYAN}, ${PURPLE_MID})`
+    : `rgba(255,255,255,0.10)`;
+
+  const glow = isPeak
+    ? `0 0 10px rgba(255,0,127,0.6)`
+    : isBusy
+    ? `0 0 8px rgba(0,242,255,0.45)`
+    : undefined;
+
   return (
     <div className="flex-1 h-full flex flex-col justify-end items-center gap-1">
       <div
-        className="w-full rounded-t-lg transition-all"
-        style={{ height: `${pct}%`, background: color, boxShadow: `0 0 8px ${color}60` }}
+        className="w-full rounded-t-md transition-all"
+        style={{ height: `${pct}%`, background: bg, boxShadow: glow }}
       />
     </div>
   );
@@ -79,36 +150,32 @@ export default function SalonAnalytics() {
 
   if (loading || !salon) {
     return (
-      <div className="min-h-[100dvh] bg-[#0A0A0A] flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-[#00C1FF] border-t-transparent animate-spin" />
+      <div className="min-h-[100dvh] flex items-center justify-center" style={{ background: "#0f051d" }}>
+        <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: `${CYAN} transparent` }} />
       </div>
     );
   }
 
-  const weekRevenue = generateWeekRevenue(salon.id);
-  const hourlyCust = generateHourlyCustomers(salon.id);
+  const weekRevenue  = generateWeekRevenue(salon.id);
+  const hourlyCust   = generateHourlyCustomers(salon.id);
   const totalRevenue = weekRevenue.reduce((a, b) => a + b, 0);
   const totalCustomers = hourlyCust.reduce((a, b) => a + b, 0) * 7;
-  const maxRevenue = Math.max(...weekRevenue);
-  const maxHourly = Math.max(...hourlyCust);
-  const today = new Date().getDay();
-  const avgService = salon.services.length
+  const maxRevenue   = Math.max(...weekRevenue);
+  const maxHourly    = Math.max(...hourlyCust);
+  const today        = new Date().getDay();
+  const avgService   = salon.services.length
     ? Math.round(salon.services.reduce((s: number, sv: any) => s + sv.price, 0) / salon.services.length)
     : 80;
 
-  // Revenue leakage: estimate empty chair hours
-  const emptyChairs = Number(salon.total_chairs) - Number(salon.free_chairs);
-  const leakageHoursPerDay = emptyChairs * 3; // assume 3 avg empty hours/day
-  const leakage = leakageHoursPerDay * (avgService / 30) * 30 * 7; // per week
+  const emptyChairs    = Number(salon.total_chairs) - Number(salon.free_chairs);
+  const leakageHoursPerDay = emptyChairs * 3;
+  const leakage        = leakageHoursPerDay * (avgService / 30) * 30 * 7;
 
   const createOffer = async () => {
     if (!salon || !newOffer.title) return;
     setSubmitting(true);
     try {
-      const body = {
-        ...newOffer,
-        day_of_week: newOffer.day_of_week >= 0 ? newOffer.day_of_week : null,
-      };
+      const body = { ...newOffer, day_of_week: newOffer.day_of_week >= 0 ? newOffer.day_of_week : null };
       const res = await fetch(`/api/salons/${salon.id}/flash-offers`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -131,78 +198,74 @@ export default function SalonAnalytics() {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ is_active: !current }),
     });
-    if (res.ok) {
-      setFlashOffers(prev => prev.map(o => o.id === offerId ? { ...o, is_active: !current } : o));
-    }
+    if (res.ok) setFlashOffers(prev => prev.map(o => o.id === offerId ? { ...o, is_active: !current } : o));
   };
 
+  const cardBg   = "rgba(28,12,58,0.85)";
+  const cardBorder = "rgba(120,60,220,0.35)";
+
   return (
-    <div className="min-h-[100dvh] bg-[#0A0A0A] pb-28">
-      {/* Header */}
-      <div className="bg-gradient-to-b from-[#00C1FF]/10 to-transparent pt-12 pb-5 px-5">
+    <div className="min-h-[100dvh] pb-28" style={{ background: "#0f051d" }}>
+      {/* ── Header ── */}
+      <div className="pt-12 pb-5 px-5"
+        style={{ background: "linear-gradient(to bottom, rgba(0,242,255,0.07), transparent)" }}>
         <div className="flex items-center gap-3 mb-3">
-          <button onClick={() => setLocation("/salon/dashboard")} className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center">
-            <ArrowLeft size={18} className="text-white" />
+          <button
+            onClick={() => setLocation("/salon/dashboard")}
+            className="w-9 h-9 rounded-xl flex items-center justify-center"
+            style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
+          >
+            <ArrowLeft size={18} style={{ color: "#f3f1f6" }} />
           </button>
           <div>
-            <p className="text-[#00C1FF] text-xs font-bold uppercase tracking-widest">Revenue Analytics</p>
-            <h1 className="text-2xl font-black text-white">{salon.name}</h1>
+            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: CYAN }}>Revenue Analytics</p>
+            <h1 className="text-2xl font-black" style={{ color: "#f3f1f6" }}>{salon.name}</h1>
           </div>
         </div>
 
         {/* KPI cards */}
         <div className="grid grid-cols-2 gap-3 mt-4">
-          <div className="bg-white/5 border border-[#00C1FF]/20 rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <DollarSign size={16} className="text-[#00C1FF]" />
-              <span className="text-gray-500 text-xs font-bold">This Week</span>
-            </div>
-            <p className="text-3xl font-black text-white">{totalRevenue.toLocaleString()}</p>
-            <p className="text-[#00C1FF] text-xs font-bold">MAD Revenue</p>
-          </div>
-          <div className="bg-white/5 border border-[#FF00FF]/20 rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Users size={16} className="text-[#FF00FF]" />
-              <span className="text-gray-500 text-xs font-bold">Customers</span>
-            </div>
-            <p className="text-3xl font-black text-white">{totalCustomers}</p>
-            <p className="text-[#FF00FF] text-xs font-bold">This Week</p>
-          </div>
-          <div className="bg-white/5 border border-yellow-500/20 rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Star size={16} className="text-yellow-400" />
-              <span className="text-gray-500 text-xs font-bold">Avg Rating</span>
-            </div>
-            <p className="text-3xl font-black text-white">
-              {salon.reviews?.length
+          {[
+            { icon: DollarSign, label: "This Week", value: totalRevenue.toLocaleString(), unit: "MAD Revenue", color: CYAN },
+            { icon: Users,      label: "Customers",  value: totalCustomers,               unit: "This Week",   color: PINK },
+            {
+              icon: Star, label: "Avg Rating",
+              value: salon.reviews?.length
                 ? (salon.reviews.reduce((s: number, r: any) => s + r.rating, 0) / salon.reviews.length).toFixed(1)
-                : "–"}
-            </p>
-            <p className="text-yellow-400 text-xs font-bold">{salon.reviews?.length ?? 0} reviews</p>
-          </div>
-          <div className="bg-white/5 border border-green-500/20 rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingUp size={16} className="text-green-400" />
-              <span className="text-gray-500 text-xs font-bold">Services</span>
+                : "–",
+              unit: `${salon.reviews?.length ?? 0} reviews`, color: "#facc15",
+            },
+            { icon: TrendingUp, label: "Services", value: salon.services?.length ?? 0, unit: "Listed", color: "#4ade80" },
+          ].map(kpi => (
+            <div
+              key={kpi.label}
+              className="rounded-2xl p-4"
+              style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <kpi.icon size={16} style={{ color: kpi.color }} />
+                <span className="text-xs font-bold" style={{ color: "rgba(243,241,246,0.5)" }}>{kpi.label}</span>
+              </div>
+              <p className="text-3xl font-black" style={{ color: "#f3f1f6" }}>{kpi.value}</p>
+              <p className="text-xs font-bold mt-0.5" style={{ color: kpi.color }}>{kpi.unit}</p>
             </div>
-            <p className="text-3xl font-black text-white">{salon.services?.length ?? 0}</p>
-            <p className="text-green-400 text-xs font-bold">Listed</p>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Revenue Leakage Alert */}
+      {/* ── Revenue Leakage Alert ── */}
       {leakage > 0 && (
-        <div className="mx-4 mb-5 bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
+        <div className="mx-4 mb-5 rounded-2xl p-4"
+          style={{ background: "rgba(255,0,127,0.08)", border: "1px solid rgba(255,0,127,0.30)" }}>
           <div className="flex items-start gap-3">
-            <AlertTriangle size={20} className="text-red-400 flex-shrink-0 mt-0.5" />
+            <AlertTriangle size={20} style={{ color: PINK, flexShrink: 0, marginTop: 2 }} />
             <div>
-              <p className="text-red-400 font-black text-sm">Revenue Leakage Detected</p>
-              <p className="text-gray-400 text-xs mt-1">
-                {emptyChairs} chair{emptyChairs !== 1 ? 's' : ''} currently idle × ~{leakageHoursPerDay} empty hours/day.
-                That's an estimated <span className="text-red-400 font-bold">{Math.round(leakage).toLocaleString()} MAD/week</span> in lost potential.
+              <p className="font-black text-sm" style={{ color: PINK }}>Revenue Leakage Detected</p>
+              <p className="text-xs mt-1" style={{ color: "rgba(243,241,246,0.65)" }}>
+                {emptyChairs} chair{emptyChairs !== 1 ? "s" : ""} idle × ~{leakageHoursPerDay} empty hrs/day —
+                estimated <span style={{ color: PINK, fontWeight: 700 }}>{Math.round(leakage).toLocaleString()} MAD/week</span> lost.
               </p>
-              <p className="text-gray-500 text-xs mt-1.5">
+              <p className="text-xs mt-1.5" style={{ color: "rgba(243,241,246,0.4)" }}>
                 Toggle chairs 'Available' and run a Flash Offer to fill them.
               </p>
             </div>
@@ -210,120 +273,133 @@ export default function SalonAnalytics() {
         </div>
       )}
 
-      {/* 7-day Revenue Chart */}
+      {/* ── 7-day Revenue Chart ── */}
       <div className="mx-4 mb-5">
-        <p className="text-white font-black text-base mb-3">Daily Revenue (7 days)</p>
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-          <div className="flex items-end gap-1.5 h-28">
-            {weekRevenue.map((rev, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
-                <MiniBar
-                  value={rev}
-                  max={maxRevenue}
-                  color={i === today ? "#00C1FF" : "rgba(0,193,255,0.35)"}
-                />
-                <span className="text-gray-600 text-[9px] font-bold">{DAYS[(today - 6 + i + 7) % 7]}</span>
-              </div>
+        <p className="font-black text-base mb-3" style={{ color: "#f3f1f6" }}>Daily Revenue (7 days)</p>
+        <div className="rounded-2xl p-4"
+          style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
+          {/* subtle grid lines */}
+          <div className="relative">
+            {[25, 50, 75].map(pct => (
+              <div
+                key={pct}
+                className="absolute w-full"
+                style={{
+                  bottom: `${pct}%`,
+                  borderTop: "1px solid rgba(120,60,220,0.18)",
+                  zIndex: 0,
+                }}
+              />
             ))}
+            <div className="flex items-end gap-1.5 h-28 relative z-10">
+              {weekRevenue.map((rev, i) => {
+                const isToday = i === today % 7;
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+                    <GradientBar value={rev} max={maxRevenue} isHighlight={isToday} dimmed={!isToday} />
+                    <span className="text-[9px] font-bold" style={{ color: isToday ? CYAN : "rgba(243,241,246,0.35)" }}>
+                      {DAYS[(today - 6 + i + 7) % 7]}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <div className="flex justify-between mt-2">
-            <span className="text-gray-600 text-xs">Low: {Math.min(...weekRevenue).toLocaleString()} MAD</span>
-            <span className="text-[#00C1FF] text-xs font-bold">Peak: {maxRevenue.toLocaleString()} MAD</span>
+          <div className="flex justify-between mt-3 pt-2" style={{ borderTop: "1px solid rgba(120,60,220,0.2)" }}>
+            <span className="text-xs" style={{ color: "rgba(243,241,246,0.4)" }}>Low: {Math.min(...weekRevenue).toLocaleString()} MAD</span>
+            <span className="text-xs font-bold" style={{ color: CYAN }}>Peak: {maxRevenue.toLocaleString()} MAD</span>
           </div>
         </div>
       </div>
 
-      {/* Busiest Hours Heatmap */}
+      {/* ── Busiest Hours ── */}
       <div className="mx-4 mb-5">
-        <p className="text-white font-black text-base mb-3">Busiest Hours (avg clients/hour)</p>
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+        <p className="font-black text-base mb-3" style={{ color: "#f3f1f6" }}>Busiest Hours (avg clients/hr)</p>
+        <div className="rounded-2xl p-4"
+          style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
           <div className="flex items-end gap-1 h-20">
             {hourlyCust.map((count, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <MiniBar
-                  value={count}
-                  max={maxHourly}
-                  color={count >= maxHourly * 0.8 ? "#FF00FF" : count >= maxHourly * 0.5 ? "#00C1FF" : "rgba(255,255,255,0.15)"}
-                />
-                <span className="text-gray-700 text-[8px]">{HOURS[i]}h</span>
+                <HourBar value={count} max={maxHourly} />
+                <span className="text-[8px]" style={{ color: "rgba(243,241,246,0.3)" }}>{HOURS[i]}h</span>
               </div>
             ))}
           </div>
-          <div className="flex items-center gap-4 mt-2">
-            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-[#FF00FF]" /><span className="text-xs text-gray-500">Peak</span></div>
-            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-[#00C1FF]" /><span className="text-xs text-gray-500">Busy</span></div>
-            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-white/20" /><span className="text-xs text-gray-500">Slow</span></div>
+          <div className="flex items-center gap-4 mt-3">
+            {[
+              { color: PINK,               label: "Peak" },
+              { color: CYAN,               label: "Busy" },
+              { color: "rgba(255,255,255,0.20)", label: "Slow" },
+            ].map(l => (
+              <div key={l.label} className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ background: l.color }} />
+                <span className="text-xs" style={{ color: "rgba(243,241,246,0.5)" }}>{l.label}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Flash Offers Engine */}
+      {/* ── Flash Offers Engine ── */}
       <div className="mx-4 mb-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Zap size={18} className="text-yellow-400" />
-            <p className="text-white font-black text-base">Flash Offers</p>
+            <p className="font-black text-base" style={{ color: "#f3f1f6" }}>Flash Offers</p>
           </div>
           <button
             onClick={() => setShowOfferForm(v => !v)}
-            className="bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 font-bold text-xs px-3 py-1.5 rounded-xl"
+            className="font-bold text-xs px-3 py-1.5 rounded-xl"
+            style={{ background: "rgba(250,204,21,0.12)", border: "1px solid rgba(250,204,21,0.35)", color: "#facc15" }}
           >
             + New Offer
           </button>
         </div>
 
         {showOfferForm && (
-          <div className="bg-white/5 border border-yellow-500/20 rounded-2xl p-4 mb-3 space-y-3">
+          <div className="rounded-2xl p-4 mb-3 space-y-3"
+            style={{ background: cardBg, border: "1px solid rgba(250,204,21,0.2)" }}>
             <input
               value={newOffer.title}
               onChange={e => setNewOffer(p => ({ ...p, title: e.target.value }))}
               placeholder="e.g. Happy Hour 30% Off"
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm outline-none focus:border-yellow-500 placeholder:text-gray-600"
+              className="w-full rounded-xl px-3 py-2.5 text-sm outline-none"
+              style={{ background: "rgba(15,5,29,0.7)", border: "1px solid rgba(120,60,220,0.3)", color: "#f3f1f6" }}
             />
             <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: "Discount %", key: "discount_pct", type: "number", min: 5, max: 80, val: newOffer.discount_pct },
+                { label: "Start hour", key: "start_hour",   type: "number", min: 0, max: 23, val: newOffer.start_hour },
+                { label: "End hour",   key: "end_hour",     type: "number", min: 0, max: 23, val: newOffer.end_hour },
+              ].map(f => (
+                <div key={f.key}>
+                  <p className="text-xs mb-1" style={{ color: "rgba(243,241,246,0.45)" }}>{f.label}</p>
+                  <input
+                    type={f.type} min={(f as any).min} max={(f as any).max} value={f.val}
+                    onChange={e => setNewOffer(p => ({ ...p, [f.key]: parseInt(e.target.value) || 0 }))}
+                    className="w-full rounded-xl px-3 py-2 text-sm outline-none"
+                    style={{ background: "rgba(15,5,29,0.7)", border: "1px solid rgba(120,60,220,0.3)", color: "#f3f1f6" }}
+                  />
+                </div>
+              ))}
               <div>
-                <p className="text-gray-500 text-xs mb-1">Discount %</p>
-                <input
-                  type="number" min={5} max={80}
-                  value={newOffer.discount_pct}
-                  onChange={e => setNewOffer(p => ({ ...p, discount_pct: parseInt(e.target.value) || 20 }))}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-yellow-500"
-                />
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs mb-1">Day (blank = daily)</p>
+                <p className="text-xs mb-1" style={{ color: "rgba(243,241,246,0.45)" }}>Day</p>
                 <select
                   value={newOffer.day_of_week}
                   onChange={e => setNewOffer(p => ({ ...p, day_of_week: parseInt(e.target.value) }))}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-2 py-2 text-white text-sm outline-none focus:border-yellow-500"
+                  className="w-full rounded-xl px-2 py-2 text-sm outline-none"
+                  style={{ background: "rgba(15,5,29,0.7)", border: "1px solid rgba(120,60,220,0.3)", color: "#f3f1f6" }}
                 >
                   <option value={-1}>Every day</option>
                   {DAYS.map((d, i) => <option key={i} value={i}>{d}</option>)}
                 </select>
               </div>
-              <div>
-                <p className="text-gray-500 text-xs mb-1">From (hour)</p>
-                <input
-                  type="number" min={0} max={23}
-                  value={newOffer.start_hour}
-                  onChange={e => setNewOffer(p => ({ ...p, start_hour: parseInt(e.target.value) || 9 }))}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-yellow-500"
-                />
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs mb-1">Until (hour)</p>
-                <input
-                  type="number" min={0} max={23}
-                  value={newOffer.end_hour}
-                  onChange={e => setNewOffer(p => ({ ...p, end_hour: parseInt(e.target.value) || 18 }))}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-yellow-500"
-                />
-              </div>
             </div>
             <button
               onClick={createOffer}
               disabled={submitting || !newOffer.title.trim()}
-              className="w-full bg-yellow-500 disabled:opacity-40 text-black font-black rounded-xl py-3 text-sm"
+              className="w-full font-black rounded-xl py-3 text-sm disabled:opacity-40"
+              style={{ background: "#facc15", color: "#0f051d" }}
             >
               {submitting ? "Creating..." : "⚡ Publish Flash Offer"}
             </button>
@@ -331,32 +407,35 @@ export default function SalonAnalytics() {
         )}
 
         {flashOffers.length === 0 && !showOfferForm && (
-          <p className="text-gray-600 text-sm text-center py-4">No flash offers yet. Create one to fill slow hours.</p>
+          <p className="text-sm text-center py-4" style={{ color: "rgba(243,241,246,0.35)" }}>
+            No flash offers yet. Create one to fill slow hours.
+          </p>
         )}
 
         <div className="space-y-2">
           {flashOffers.map(offer => (
             <div
               key={offer.id}
-              className={`flex items-center justify-between rounded-2xl px-4 py-3 border ${
-                offer.is_active
-                  ? "bg-yellow-500/10 border-yellow-500/30"
-                  : "bg-white/5 border-white/10"
-              }`}
+              className="flex items-center justify-between rounded-2xl px-4 py-3"
+              style={{
+                background: offer.is_active ? "rgba(250,204,21,0.08)" : cardBg,
+                border: offer.is_active ? "1px solid rgba(250,204,21,0.35)" : `1px solid ${cardBorder}`,
+              }}
             >
               <div>
-                <p className={`font-bold text-sm ${offer.is_active ? "text-yellow-400" : "text-gray-500"}`}>
+                <p className="font-bold text-sm" style={{ color: offer.is_active ? "#facc15" : "rgba(243,241,246,0.45)" }}>
                   {offer.is_active ? "⚡ " : ""}{offer.title}
                 </p>
-                <p className="text-gray-600 text-xs">{offer.discount_pct}% discount</p>
+                <p className="text-xs" style={{ color: "rgba(243,241,246,0.3)" }}>{offer.discount_pct}% discount</p>
               </div>
               <button
                 onClick={() => toggleOffer(offer.id, offer.is_active)}
-                className={`text-xs font-bold px-3 py-1.5 rounded-xl border ${
-                  offer.is_active
-                    ? "bg-yellow-500/20 border-yellow-500/40 text-yellow-400"
-                    : "bg-white/5 border-white/10 text-gray-500"
-                }`}
+                className="text-xs font-bold px-3 py-1.5 rounded-xl"
+                style={{
+                  background: offer.is_active ? "rgba(250,204,21,0.15)" : "rgba(255,255,255,0.05)",
+                  border: offer.is_active ? "1px solid rgba(250,204,21,0.40)" : "1px solid rgba(255,255,255,0.10)",
+                  color: offer.is_active ? "#facc15" : "rgba(243,241,246,0.40)",
+                }}
               >
                 {offer.is_active ? "Live" : "Off"}
               </button>

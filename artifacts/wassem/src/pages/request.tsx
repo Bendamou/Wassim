@@ -42,7 +42,7 @@ export default function RequestService() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-[#0A0A0A] flex flex-col">
+    <div className="min-h-[100dvh] bg-[#0f051d] flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-4 px-5 pt-safe-top pt-5 pb-4">
         <button
@@ -68,10 +68,10 @@ export default function RequestService() {
               <button
                 key={svc.id}
                 onClick={() => handleServicePick(svc)}
-                className="bg-white/5 hover:bg-[#00C1FF]/10 border-2 border-white/10 hover:border-[#00C1FF] rounded-3xl p-6 text-left transition-all active:scale-95 group"
+                className="bg-white/5 hover:bg-[#00f2ff]/10 border-2 border-white/10 hover:border-[#00f2ff] rounded-3xl p-6 text-left transition-all active:scale-95 group"
               >
                 <div className="text-4xl mb-3">{svc.emoji}</div>
-                <p className="text-white font-black text-lg group-hover:text-[#00C1FF]">{svc.label}</p>
+                <p className="text-white font-black text-lg group-hover:text-[#00f2ff]">{svc.label}</p>
                 <p className="text-gray-500 text-sm mt-1">From {svc.basePrice} MAD</p>
               </button>
             ))}
@@ -84,7 +84,7 @@ export default function RequestService() {
               <div>
                 <p className="text-white font-black">{selectedService.label}</p>
                 <p className="text-gray-500 text-sm">Change service?{" "}
-                  <button onClick={() => setStep("service")} className="text-[#00C1FF] underline">Go back</button>
+                  <button onClick={() => setStep("service")} className="text-[#00f2ff] underline">Go back</button>
                 </p>
               </div>
             </div>
@@ -105,7 +105,7 @@ export default function RequestService() {
                 </div>
                 <button
                   onClick={() => setPrice((p) => p + 10)}
-                  className="w-14 h-14 rounded-full bg-[#00C1FF] flex items-center justify-center text-black hover:bg-[#00b0e8] active:scale-95 transition-all shadow-[0_0_20px_rgba(0,193,255,0.4)]"
+                  className="w-14 h-14 rounded-full bg-[#00f2ff] flex items-center justify-center text-black hover:bg-[#00b0e8] active:scale-95 transition-all shadow-[0_0_20px_rgba(0,193,255,0.4)]"
                 >
                   <Plus size={24} />
                 </button>
@@ -116,8 +116,8 @@ export default function RequestService() {
             {/* Location */}
             <div>
               <p className="text-gray-400 text-sm mb-2 uppercase tracking-wider font-bold">Your Location</p>
-              <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-4 focus-within:border-[#00C1FF] transition-colors">
-                <MapPin size={20} className="text-[#00C1FF] flex-shrink-0" />
+              <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-4 focus-within:border-[#00f2ff] transition-colors">
+                <MapPin size={20} className="text-[#00f2ff] flex-shrink-0" />
                 <input
                   value={location}
                   onChange={(e) => setLocation2(e.target.value)}
@@ -128,10 +128,10 @@ export default function RequestService() {
             </div>
 
             {/* Price preview */}
-            <div className="bg-gradient-to-r from-[#00C1FF]/10 to-[#FF00FF]/10 border border-[#00C1FF]/20 rounded-2xl p-4 text-center">
+            <div className="bg-gradient-to-r from-[#00f2ff]/10 to-[#ff007f]/10 border border-[#00f2ff]/20 rounded-2xl p-4 text-center">
               <p className="text-gray-400 text-sm">You're offering</p>
               <p className="text-white font-black text-2xl mt-1">
-                {selectedService.label} for <span className="text-[#00C1FF]">{price} MAD</span>
+                {selectedService.label} for <span className="text-[#00f2ff]">{price} MAD</span>
               </p>
               <p className="text-gray-500 text-xs mt-1">Barbers nearby will see this and can respond</p>
             </div>
@@ -145,7 +145,7 @@ export default function RequestService() {
           <button
             onClick={handleSubmit}
             disabled={createJob.isPending}
-            className="w-full bg-[#00C1FF] hover:bg-[#00b0e8] disabled:opacity-40 text-black font-black text-xl rounded-2xl py-5 transition-all shadow-[0_0_30px_rgba(0,193,255,0.5)] flex items-center justify-center gap-2 active:scale-[0.97]"
+            className="w-full bg-[#00f2ff] hover:bg-[#00b0e8] disabled:opacity-40 text-black font-black text-xl rounded-2xl py-5 transition-all shadow-[0_0_30px_rgba(0,193,255,0.5)] flex items-center justify-center gap-2 active:scale-[0.97]"
           >
             {createJob.isPending ? "Posting..." : <>Send Request <ChevronRight size={22} /></>}
           </button>

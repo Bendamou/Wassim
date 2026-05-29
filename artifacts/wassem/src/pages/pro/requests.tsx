@@ -28,16 +28,16 @@ export default function ProRequests() {
   const acceptedBids = myBids.filter((b) => b.status === "accepted");
 
   return (
-    <div className="min-h-[100dvh] bg-[#0A0A0A] flex flex-col">
+    <div className="min-h-[100dvh] bg-[#0f051d] flex flex-col">
       {/* Header */}
       <div className="px-5 pt-safe-top pt-5 pb-4 border-b border-white/5">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-white font-black text-2xl">Nearby Requests</h1>
-              <div className="flex items-center gap-1 bg-[#FF00FF]/10 border border-[#FF00FF]/20 rounded-full px-2 py-0.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#FF00FF] animate-pulse" />
-                <span className="text-[#FF00FF] text-xs font-bold">LIVE</span>
+              <div className="flex items-center gap-1 bg-[#ff007f]/10 border border-[#ff007f]/20 rounded-full px-2 py-0.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#ff007f] animate-pulse" />
+                <span className="text-[#ff007f] text-xs font-bold">LIVE</span>
               </div>
             </div>
             <p className="text-gray-500 text-sm mt-0.5">{jobs.length} open request{jobs.length !== 1 ? "s" : ""} right now</p>
@@ -73,8 +73,8 @@ export default function ProRequests() {
       <div className="flex-1 overflow-y-auto px-5 py-5 space-y-3 pb-28">
         {jobs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 rounded-full bg-[#FF00FF]/10 border border-[#FF00FF]/20 flex items-center justify-center mb-6">
-              <Zap size={32} className="text-[#FF00FF]" />
+            <div className="w-20 h-20 rounded-full bg-[#ff007f]/10 border border-[#ff007f]/20 flex items-center justify-center mb-6">
+              <Zap size={32} className="text-[#ff007f]" />
             </div>
             <p className="text-white font-black text-2xl mb-2">No requests yet</p>
             <p className="text-gray-500 max-w-xs">Clients are being notified. Check back in a moment.</p>
@@ -84,12 +84,12 @@ export default function ProRequests() {
             <button
               key={job.id}
               onClick={() => setLocation(`/pro/bid/${job.id}`)}
-              className="w-full bg-white/5 hover:bg-white/8 border border-white/10 hover:border-[#FF00FF]/50 rounded-3xl p-5 text-left transition-all active:scale-[0.98] group"
+              className="w-full bg-white/5 hover:bg-white/8 border border-white/10 hover:border-[#ff007f]/50 rounded-3xl p-5 text-left transition-all active:scale-[0.98] group"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-4 min-w-0">
                   {/* Service Icon */}
-                  <div className="w-14 h-14 rounded-2xl bg-[#FF00FF]/10 border border-[#FF00FF]/20 flex items-center justify-center text-2xl flex-shrink-0">
+                  <div className="w-14 h-14 rounded-2xl bg-[#ff007f]/10 border border-[#ff007f]/20 flex items-center justify-center text-2xl flex-shrink-0">
                     {SERVICE_EMOJI[job.service] || "✂️"}
                   </div>
                   <div className="min-w-0">
@@ -101,7 +101,7 @@ export default function ProRequests() {
                       )}
                     </div>
                     {(job.bidsCount || 0) > 0 ? (
-                      <p className="text-xs text-[#FF00FF] font-bold mt-2">{job.bidsCount} barber{job.bidsCount !== 1 ? "s" : ""} already bid</p>
+                      <p className="text-xs text-[#ff007f] font-bold mt-2">{job.bidsCount} barber{job.bidsCount !== 1 ? "s" : ""} already bid</p>
                     ) : (
                       <p className="text-xs text-green-400 font-bold mt-2">⚡ Be the first!</p>
                     )}
@@ -112,8 +112,8 @@ export default function ProRequests() {
                     <p className="text-4xl font-black text-white">{job.budget}</p>
                     <p className="text-gray-500 text-sm font-bold">MAD</p>
                   </div>
-                  <div className="w-9 h-9 rounded-full bg-[#FF00FF]/10 group-hover:bg-[#FF00FF] flex items-center justify-center transition-colors">
-                    <ChevronRight size={18} className="text-[#FF00FF] group-hover:text-black" />
+                  <div className="w-9 h-9 rounded-full bg-[#ff007f]/10 group-hover:bg-[#ff007f] flex items-center justify-center transition-colors">
+                    <ChevronRight size={18} className="text-[#ff007f] group-hover:text-black" />
                   </div>
                 </div>
               </div>
