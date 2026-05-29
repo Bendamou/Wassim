@@ -32,12 +32,15 @@ const STREET_LABELS = [
 function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
 
 function posAlongPath(t: number) {
+  // Clamp and sanitise — guards against NaN / out-of-range on first render
+  const safeT = Number.isFinite(t) ? Math.max(0, Math.min(1, t)) : 0;
+  if (safeT >= 1) return BARBER_PATH[BARBER_PATH.length - 1];
   const segs = BARBER_PATH.length - 1;
-  const raw  = t * segs;
+  const raw  = safeT * segs;
   const idx  = Math.min(Math.floor(raw), segs - 1);
   const frac = raw - idx;
   const from = BARBER_PATH[idx];
-  const to   = BARBER_PATH[idx + 1];
+  const to   = BARBER_PATH[idx + 1] ?? BARBER_PATH[segs]; // never undefined
   return { x: lerp(from.x, to.x, frac), y: lerp(from.y, to.y, frac) };
 }
 
