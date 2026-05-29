@@ -2,3 +2,4 @@ fastapi
 uvicorn
 numpy
 pydantic
+starlette>=1.0.1
