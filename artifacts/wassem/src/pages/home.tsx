@@ -28,7 +28,7 @@ function formatDist(km: number) {
 type Salon = {
   id: number; name: string; address: string; lat: number; lng: number;
   free_chairs: number; total_chairs: number; header_image: string;
-  categories: string; is_verified: boolean;
+  categories: string; is_verified: boolean; is_live: boolean;
 };
 
 type FlashOffer = {
@@ -170,11 +170,14 @@ export default function Home() {
   const seenOfferIdsRef = useRef<Set<number>>(new Set());
   const prevOfferIdsRef = useRef<Set<number>>(new Set());
 
+  const [liveSalons, setLiveSalons] = useState(0);
+
   // Load salons once
   useEffect(() => {
     fetch("/api/salons").then(r => r.json()).then((data: Salon[]) => {
       setSalons(data);
       setFreeSalons(data.filter(s => Number(s.free_chairs) > 0).length);
+      setLiveSalons(data.filter(s => s.is_live && Number(s.free_chairs) > 0).length);
     }).catch(() => {});
   }, []);
 
@@ -242,12 +245,16 @@ export default function Home() {
       const free = Number(salon.free_chairs);
       const hasFree = free > 0;
       const activeOffer = offers.find(o => o.salon_id === salon.id && o.is_active);
+      const isLiveShop = salon.is_live && hasFree;
       const markerColor = catDef?.gender === "women" ? "#FF00FF" : "#00C1FF";
-      const glowColor = activeOffer ? "rgba(255,221,0,0.5)" : hasFree ? "rgba(74,222,128,0.5)" : `${markerColor}33`;
-      const borderColor = activeOffer ? "#FFDD00" : hasFree ? "#4ade80" : markerColor;
+      const glowColor = activeOffer ? "rgba(255,221,0,0.5)" : isLiveShop ? "rgba(0,193,255,0.6)" : hasFree ? "rgba(74,222,128,0.4)" : `${markerColor}33`;
+      const borderColor = activeOffer ? "#FFDD00" : isLiveShop ? "#00C1FF" : hasFree ? "#4ade80" : markerColor;
 
+      const isLive = salon.is_live;
       const badge = activeOffer
         ? `<div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#FFDD00;color:#000;font-weight:900;font-size:9px;padding:2px 5px;border-radius:10px;white-space:nowrap;box-shadow:0 0 8px rgba(255,221,0,0.8)">⚡ -${activeOffer.discount_pct}%</div>`
+        : isLive && hasFree
+        ? `<div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#00C1FF,#00ff88);color:#000;font-weight:900;font-size:8px;padding:2px 6px;border-radius:10px;white-space:nowrap;box-shadow:0 0 10px rgba(0,193,255,0.8)">● LIVE · ${free}</div>`
         : hasFree
         ? `<div style="position:absolute;top:-8px;right:-4px;background:#4ade80;color:#000;font-weight:900;font-size:9px;padding:1px 4px;border-radius:10px">${free}</div>`
         : "";
@@ -350,7 +357,13 @@ export default function Home() {
                 <span className="text-yellow-400 text-[10px] font-bold">{activeFlashCount} deals</span>
               </div>
             )}
-            {freeSalons > 0 && (
+            {liveSalons > 0 && (
+              <div className="flex items-center gap-1 bg-[#00C1FF]/15 border border-[#00C1FF]/40 rounded-full px-2.5 py-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#00C1FF] animate-pulse" />
+                <span className="text-[#00C1FF] text-[10px] font-bold">{liveSalons} live</span>
+              </div>
+            )}
+            {freeSalons > 0 && liveSalons === 0 && (
               <div className="flex items-center gap-1 bg-green-500/20 border border-green-500/40 rounded-full px-2.5 py-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
                 <span className="text-green-400 text-[10px] font-bold">{freeSalons} open</span>

@@ -5,10 +5,9 @@ import { logger } from "../lib/logger";
 
 const router = Router();
 
-// Raw SQL helpers via the pg pool from drizzle's driver
 import { sql } from "drizzle-orm";
 
-// --- GET /api/salons  (list, with available chair count) ---
+// ── GET /api/salons ──────────────────────────────────────────────────────────
 router.get("/salons", async (req, res) => {
   try {
     const rows = await db.execute(sql`
@@ -17,12 +16,14 @@ router.get("/salons", async (req, res) => {
         u.name AS owner_name,
         u.avatar AS owner_avatar,
         COUNT(c.id) FILTER (WHERE c.status = 'available') AS free_chairs,
-        COUNT(c.id) AS total_chairs
+        COUNT(c.id) AS total_chairs,
+        COUNT(cc.id) FILTER (WHERE cc.status IN ('pending','confirmed')) AS active_claims
       FROM salons s
       LEFT JOIN users u ON u.id = s.owner_id
       LEFT JOIN chairs c ON c.salon_id = s.id
+      LEFT JOIN chair_claims cc ON cc.salon_id = s.id AND cc.expires_at > now()
       GROUP BY s.id, u.name, u.avatar
-      ORDER BY free_chairs DESC, s.name ASC
+      ORDER BY s.is_live DESC, free_chairs DESC, s.name ASC
     `);
     res.json(rows.rows);
   } catch (err) {
@@ -31,7 +32,52 @@ router.get("/salons", async (req, res) => {
   }
 });
 
-// --- GET /api/salons/:id  (full detail) ---
+// ── GET /api/salons/nearby  (geofenced, live shops only within radius km) ────
+router.get("/salons/nearby", async (req, res) => {
+  const lat  = parseFloat(req.query.lat as string);
+  const lng  = parseFloat(req.query.lng as string);
+  const radius = parseFloat((req.query.radius as string) ?? "5");
+
+  if (isNaN(lat) || isNaN(lng)) {
+    res.status(400).json({ message: "lat and lng required" }); return;
+  }
+
+  try {
+    const rows = await db.execute(sql`
+      SELECT
+        s.*,
+        u.name AS owner_name,
+        COUNT(c.id) FILTER (WHERE c.status = 'available') AS free_chairs,
+        COUNT(c.id) AS total_chairs,
+        COUNT(cc.id) FILTER (WHERE cc.status IN ('pending','confirmed')) AS active_claims,
+        (6371 * acos(
+          cos(radians(${lat})) * cos(radians(s.lat)) *
+          cos(radians(s.lng) - radians(${lng})) +
+          sin(radians(${lat})) * sin(radians(s.lat))
+        )) AS distance_km
+      FROM salons s
+      LEFT JOIN users u ON u.id = s.owner_id
+      LEFT JOIN chairs c ON c.salon_id = s.id
+      LEFT JOIN chair_claims cc ON cc.salon_id = s.id AND cc.expires_at > now()
+      WHERE s.lat IS NOT NULL AND s.lng IS NOT NULL
+        AND s.is_live = true
+        AND (6371 * acos(
+          cos(radians(${lat})) * cos(radians(s.lat)) *
+          cos(radians(s.lng) - radians(${lng})) +
+          sin(radians(${lat})) * sin(radians(s.lat))
+        )) <= ${radius}
+      GROUP BY s.id, u.name
+      HAVING COUNT(c.id) FILTER (WHERE c.status = 'available') > 0
+      ORDER BY distance_km ASC
+    `);
+    res.json(rows.rows);
+  } catch (err) {
+    req.log.error({ err }, "GET /salons/nearby failed");
+    res.status(500).json({ message: "Internal error" });
+  }
+});
+
+// ── GET /api/salons/:id ──────────────────────────────────────────────────────
 router.get("/salons/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ message: "Invalid ID" }); return; }
@@ -58,15 +104,24 @@ router.get("/salons/:id", async (req, res) => {
       FROM reviews r LEFT JOIN users u ON u.id = r.client_id
       WHERE r.salon_id = ${id} ORDER BY r.created_at DESC
     `)).rows;
+    const activeClaims = (await db.execute(sql`
+      SELECT cc.*, u.name AS client_name, u.avatar AS client_avatar
+      FROM chair_claims cc
+      LEFT JOIN users u ON u.id = cc.client_id
+      WHERE cc.salon_id = ${id}
+        AND cc.status IN ('pending','confirmed')
+        AND cc.expires_at > now()
+      ORDER BY cc.created_at ASC
+    `)).rows;
 
-    res.json({ ...salonRow, chairs, services, products, reviews });
+    res.json({ ...salonRow, chairs, services, products, reviews, activeClaims });
   } catch (err) {
     req.log.error({ err }, "GET /salons/:id failed");
     res.status(500).json({ message: "Internal error" });
   }
 });
 
-// --- POST /api/salons  (create salon, salon_owner only) ---
+// ── POST /api/salons  (create) ───────────────────────────────────────────────
 router.post("/salons", async (req, res) => {
   const token = req.headers.authorization?.replace("Bearer ", "");
   const user = await getUserFromToken(token);
@@ -91,7 +146,185 @@ router.post("/salons", async (req, res) => {
   }
 });
 
-// --- PATCH /api/salons/:id/chairs/:chairId  (toggle chair status) ---
+// ── POST /api/salons/:id/go-live  (toggle is_live) ───────────────────────────
+router.post("/salons/:id/go-live", async (req, res) => {
+  const salonId = parseInt(req.params.id, 10);
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  const user = await getUserFromToken(token);
+  if (!user) { res.status(401).json({ message: "Unauthorized" }); return; }
+
+  try {
+    const [existing] = (await db.execute(sql`SELECT * FROM salons WHERE id = ${salonId}`)).rows as any[];
+    if (!existing) { res.status(404).json({ message: "Salon not found" }); return; }
+    if (Number(existing.owner_id) !== Number(user.id)) {
+      res.status(403).json({ message: "Only the salon owner can go live" }); return;
+    }
+
+    const nowLive = !existing.is_live;
+    const [updated] = (await db.execute(sql`
+      UPDATE salons
+      SET is_live = ${nowLive},
+          live_since = ${nowLive ? sql`now()` : sql`NULL`}
+      WHERE id = ${salonId}
+      RETURNING *
+    `)).rows;
+
+    res.json(updated);
+  } catch (err) {
+    req.log.error({ err }, "POST /salons/:id/go-live failed");
+    res.status(500).json({ message: "Internal error" });
+  }
+});
+
+// ── PATCH /api/salons/:id  (update avg_service_price or other fields) ────────
+router.patch("/salons/:id", async (req, res) => {
+  const salonId = parseInt(req.params.id, 10);
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  const user = await getUserFromToken(token);
+  if (!user) { res.status(401).json({ message: "Unauthorized" }); return; }
+
+  const { avg_service_price } = req.body;
+  try {
+    const [updated] = (await db.execute(sql`
+      UPDATE salons SET avg_service_price = ${avg_service_price ?? 80} WHERE id = ${salonId} RETURNING *
+    `)).rows;
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: "Internal error" });
+  }
+});
+
+// ── POST /api/salons/:id/claim-chair  (client claims a walk-in slot) ─────────
+router.post("/salons/:id/claim-chair", async (req, res) => {
+  const salonId = parseInt(req.params.id, 10);
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  const user = await getUserFromToken(token);
+  if (!user) { res.status(401).json({ message: "Unauthorized" }); return; }
+
+  const { card_last4, card_holder, deposit_amount } = req.body;
+  if (!card_last4 || card_last4.length !== 4 || !/^\d+$/.test(card_last4)) {
+    res.status(400).json({ message: "card_last4 must be 4 digits" }); return;
+  }
+
+  try {
+    const [salon] = (await db.execute(sql`
+      SELECT s.*, COUNT(c.id) FILTER (WHERE c.status='available') AS free_chairs
+      FROM salons s LEFT JOIN chairs c ON c.salon_id = s.id
+      WHERE s.id = ${salonId} AND s.is_live = true
+      GROUP BY s.id
+    `)).rows as any[];
+
+    if (!salon) {
+      res.status(404).json({ message: "Salon is not currently live" }); return;
+    }
+    if (Number(salon.free_chairs) === 0) {
+      res.status(409).json({ message: "No available chairs right now" }); return;
+    }
+
+    // Check if client already has an active claim here
+    const [existing] = (await db.execute(sql`
+      SELECT id FROM chair_claims
+      WHERE salon_id = ${salonId} AND client_id = ${user.id}
+        AND status IN ('pending','confirmed') AND expires_at > now()
+    `)).rows as any[];
+    if (existing) {
+      res.status(409).json({ message: "You already have an active claim at this salon" }); return;
+    }
+
+    // Auto-assign first available chair
+    const [chair] = (await db.execute(sql`
+      SELECT * FROM chairs WHERE salon_id = ${salonId} AND status = 'available' LIMIT 1
+    `)).rows as any[];
+
+    const [claim] = (await db.execute(sql`
+      INSERT INTO chair_claims (salon_id, chair_id, client_id, status, deposit_amount, card_last4, card_holder)
+      VALUES (${salonId}, ${chair?.id ?? null}, ${user.id}, 'confirmed',
+              ${deposit_amount ?? 20}, ${card_last4}, ${card_holder ?? null})
+      RETURNING *
+    `)).rows;
+
+    // Count queue position
+    const [{ count }] = (await db.execute(sql`
+      SELECT COUNT(*) FROM chair_claims
+      WHERE salon_id = ${salonId} AND status IN ('pending','confirmed') AND expires_at > now()
+    `)).rows as any[];
+
+    res.status(201).json({ ...claim, queue_position: Number(count), salon_name: salon.name });
+  } catch (err) {
+    req.log.error({ err }, "POST /salons/:id/claim-chair failed");
+    res.status(500).json({ message: "Internal error" });
+  }
+});
+
+// ── GET /api/salons/:id/queue  (barber sees their live queue) ────────────────
+router.get("/salons/:id/queue", async (req, res) => {
+  const salonId = parseInt(req.params.id, 10);
+  try {
+    const rows = (await db.execute(sql`
+      SELECT cc.*, u.name AS client_name, u.avatar AS client_avatar,
+             c.name AS chair_name
+      FROM chair_claims cc
+      LEFT JOIN users u ON u.id = cc.client_id
+      LEFT JOIN chairs c ON c.id = cc.chair_id
+      WHERE cc.salon_id = ${salonId}
+        AND cc.status IN ('pending','confirmed')
+        AND cc.expires_at > now()
+      ORDER BY cc.created_at ASC
+    `)).rows;
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: "Internal error" });
+  }
+});
+
+// ── PATCH /api/claims/:id  (mark no-show, complete, cancel) ──────────────────
+router.patch("/claims/:id", async (req, res) => {
+  const claimId = parseInt(req.params.id, 10);
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  const user = await getUserFromToken(token);
+  if (!user) { res.status(401).json({ message: "Unauthorized" }); return; }
+
+  const { status } = req.body;
+  const allowed = ["completed", "noshow", "cancelled"];
+  if (!allowed.includes(status)) {
+    res.status(400).json({ message: `status must be one of ${allowed.join(", ")}` }); return;
+  }
+
+  try {
+    const [claim] = (await db.execute(sql`
+      UPDATE chair_claims SET status = ${status} WHERE id = ${claimId} RETURNING *
+    `)).rows;
+    res.json(claim);
+  } catch (err) {
+    res.status(500).json({ message: "Internal error" });
+  }
+});
+
+// ── GET /api/claims/mine  (client's active claims) ────────────────────────────
+router.get("/claims/mine", async (req, res) => {
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  const user = await getUserFromToken(token);
+  if (!user) { res.status(401).json({ message: "Unauthorized" }); return; }
+
+  try {
+    const rows = (await db.execute(sql`
+      SELECT cc.*, s.name AS salon_name, s.address AS salon_address,
+             c.name AS chair_name
+      FROM chair_claims cc
+      JOIN salons s ON s.id = cc.salon_id
+      LEFT JOIN chairs c ON c.id = cc.chair_id
+      WHERE cc.client_id = ${user.id}
+        AND cc.status IN ('pending','confirmed')
+        AND cc.expires_at > now()
+      ORDER BY cc.created_at DESC
+    `)).rows;
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: "Internal error" });
+  }
+});
+
+// ── PATCH /api/salons/:id/chairs/:chairId ────────────────────────────────────
 router.patch("/salons/:id/chairs/:chairId", async (req, res) => {
   const salonId  = parseInt(req.params.id, 10);
   const chairId  = parseInt(req.params.chairId, 10);
@@ -111,7 +344,7 @@ router.patch("/salons/:id/chairs/:chairId", async (req, res) => {
   res.json(updated);
 });
 
-// --- POST /api/salons/:id/chairs  (add chair) ---
+// ── POST /api/salons/:id/chairs ──────────────────────────────────────────────
 router.post("/salons/:id/chairs", async (req, res) => {
   const salonId = parseInt(req.params.id, 10);
   const token = req.headers.authorization?.replace("Bearer ", "");
@@ -127,7 +360,7 @@ router.post("/salons/:id/chairs", async (req, res) => {
   res.status(201).json(chair);
 });
 
-// --- GET /api/salons/:id/reviews ---
+// ── GET /api/salons/:id/reviews ──────────────────────────────────────────────
 router.get("/salons/:id/reviews", async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const reviews = (await db.execute(sql`
@@ -138,7 +371,7 @@ router.get("/salons/:id/reviews", async (req, res) => {
   res.json(reviews);
 });
 
-// --- POST /api/salons/:id/reviews ---
+// ── POST /api/salons/:id/reviews ─────────────────────────────────────────────
 router.post("/salons/:id/reviews", async (req, res) => {
   const salonId = parseInt(req.params.id, 10);
   const token = req.headers.authorization?.replace("Bearer ", "");
@@ -156,15 +389,10 @@ router.post("/salons/:id/reviews", async (req, res) => {
     RETURNING *
   `)).rows;
 
-  const enriched = {
-    ...review,
-    client_name: user.name,
-    client_avatar: user.avatar,
-  };
-  res.status(201).json(enriched);
+  res.status(201).json({ ...review, client_name: user.name, client_avatar: user.avatar });
 });
 
-// --- GET /api/flash-offers/active  (currently active offers for map display) ---
+// ── GET /api/flash-offers/active ─────────────────────────────────────────────
 router.get("/flash-offers/active", async (req, res) => {
   try {
     const now = new Date();
@@ -187,7 +415,7 @@ router.get("/flash-offers/active", async (req, res) => {
   }
 });
 
-// --- GET /api/salons/:id/flash-offers ---
+// ── GET /api/salons/:id/flash-offers ─────────────────────────────────────────
 router.get("/salons/:id/flash-offers", async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ message: "Invalid ID" }); return; }
@@ -201,7 +429,7 @@ router.get("/salons/:id/flash-offers", async (req, res) => {
   }
 });
 
-// --- POST /api/salons/:id/flash-offers ---
+// ── POST /api/salons/:id/flash-offers ────────────────────────────────────────
 router.post("/salons/:id/flash-offers", async (req, res) => {
   const salonId = parseInt(req.params.id, 10);
   const token = req.headers.authorization?.replace("Bearer ", "");
@@ -226,7 +454,7 @@ router.post("/salons/:id/flash-offers", async (req, res) => {
   }
 });
 
-// --- PATCH /api/flash-offers/:id ---
+// ── PATCH /api/flash-offers/:id ──────────────────────────────────────────────
 router.patch("/flash-offers/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const token = req.headers.authorization?.replace("Bearer ", "");
