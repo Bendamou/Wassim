@@ -358,7 +358,7 @@ export default function SalonDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] bg-[#1a0b2e] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[#36013F] flex items-center justify-center">
         <div className="w-10 h-10 rounded-full border-2 border-[#00f2ff] border-t-transparent animate-spin" />
       </div>
     );
@@ -366,7 +366,7 @@ export default function SalonDashboard() {
 
   if (!salon) {
     return (
-      <div className="min-h-[100dvh] bg-[#1a0b2e] flex flex-col items-center justify-center p-6 text-center">
+      <div className="min-h-[100dvh] bg-[#36013F] flex flex-col items-center justify-center p-6 text-center">
         <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#00f2ff] to-[#ff007f] flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(0,193,255,0.4)]">
           <Scissors size={36} className="text-white" />
         </div>
@@ -383,7 +383,7 @@ export default function SalonDashboard() {
   const queueCount = salon.activeClaims?.length ?? 0;
 
   return (
-    <div className="min-h-[100dvh] bg-[#1a0b2e] pb-28">
+    <div className="min-h-[100dvh] bg-[#36013F] pb-28">
       {/* Header */}
       <div className="bg-gradient-to-b from-[#00f2ff]/8 to-transparent pt-14 pb-4 px-5">
         <p className="text-[#00f2ff] text-xs font-bold uppercase tracking-widest mb-1">Salon Dashboard</p>

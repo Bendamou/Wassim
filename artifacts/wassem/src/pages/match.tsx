@@ -45,7 +45,7 @@ export default function MatchScreen() {
   const pendingBids = bids.filter((b) => b.status === "pending");
 
   return (
-    <div className="min-h-[100dvh] bg-[#1a0b2e] flex flex-col">
+    <div className="min-h-[100dvh] bg-[#36013F] flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-4 px-5 pt-safe-top pt-5 pb-4 border-b border-white/5">
         <button

@@ -150,7 +150,7 @@ export default function SalonAnalytics() {
 
   if (loading || !salon) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center" style={{ background: "#1a0b2e" }}>
+      <div className="min-h-[100dvh] flex items-center justify-center" style={{ background: "#36013F" }}>
         <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: `${CYAN} transparent` }} />
       </div>
     );
@@ -205,7 +205,7 @@ export default function SalonAnalytics() {
   const cardBorder = "rgba(120,60,220,0.35)";
 
   return (
-    <div className="min-h-[100dvh] pb-28" style={{ background: "#1a0b2e" }}>
+    <div className="min-h-[100dvh] pb-28" style={{ background: "#36013F" }}>
       {/* ── Header ── */}
       <div className="pt-12 pb-5 px-5"
         style={{ background: "linear-gradient(to bottom, rgba(0,242,255,0.07), transparent)" }}>
@@ -399,7 +399,7 @@ export default function SalonAnalytics() {
               onClick={createOffer}
               disabled={submitting || !newOffer.title.trim()}
               className="w-full font-black rounded-xl py-3 text-sm disabled:opacity-40"
-              style={{ background: "#facc15", color: "#1a0b2e" }}
+              style={{ background: "#facc15", color: "#36013F" }}
             >
               {submitting ? "Creating..." : "⚡ Publish Flash Offer"}
             </button>

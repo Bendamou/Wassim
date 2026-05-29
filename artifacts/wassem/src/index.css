@@ -74,46 +74,46 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  /* Background: #241442 — Galaxy Purple mid-tone */
-  --background: 261 53% 17%;
+  /* Background: #36013F — deep violet edge of spotlight */
+  --background: 291 97% 13%;
   /* Foreground: #f3f1f6 — crisp off-white */
   --foreground: 260 22% 96%;
-  /* Border: vibrant purple-tinted */
-  --border: 263 45% 28%;
-  /* Card: #311a5a — lighter than galaxy BG for pop */
-  --card: 263 55% 23%;
+  /* Border */
+  --border: 270 40% 32%;
+  /* Card: #4a2866 — mid-spotlight purple, pops above edge */
+  --card: 270 50% 28%;
   --card-foreground: 260 22% 96%;
-  --card-border: 265 50% 32%;
-  /* Sidebar: slightly darker than BG */
-  --sidebar: 263 58% 13%;
+  --card-border: 270 45% 38%;
+  /* Sidebar: darkest violet */
+  --sidebar: 291 97% 10%;
   --sidebar-foreground: 260 22% 96%;
-  --sidebar-border: 263 45% 22%;
+  --sidebar-border: 270 40% 24%;
   --sidebar-primary: 177 100% 50%;
-  --sidebar-primary-foreground: 261 53% 17%;
-  --sidebar-accent: 263 50% 26%;
+  --sidebar-primary-foreground: 291 97% 13%;
+  --sidebar-accent: 270 45% 32%;
   --sidebar-accent-foreground: 260 22% 96%;
   --sidebar-ring: 177 100% 50%;
   /* Popover */
-  --popover: 263 55% 23%;
+  --popover: 270 50% 28%;
   --popover-foreground: 260 22% 96%;
-  --popover-border: 265 50% 32%;
+  --popover-border: 270 45% 38%;
   /* Primary: #00f2ff — Neon Cyan */
   --primary: 177 100% 50%;
-  --primary-foreground: 261 53% 17%;
+  --primary-foreground: 291 97% 13%;
   /* Secondary: #ff007f — Neon Pink */
   --secondary: 330 100% 50%;
-  --secondary-foreground: 261 53% 17%;
+  --secondary-foreground: 291 97% 13%;
   /* Muted */
-  --muted: 263 45% 24%;
-  --muted-foreground: 263 25% 62%;
+  --muted: 270 40% 26%;
+  --muted-foreground: 263 20% 65%;
   /* Accent */
-  --accent: 263 50% 28%;
+  --accent: 270 45% 32%;
   --accent-foreground: 260 22% 96%;
   /* Destructive */
   --destructive: 0 72% 51%;
   --destructive-foreground: 260 22% 96%;
   /* Input */
-  --input: 263 50% 26%;
+  --input: 270 45% 30%;
   --ring: 177 100% 50%;
   /* Charts: cyan → pink spectrum */
   --chart-1: 177 100% 50%;
@@ -154,7 +154,7 @@
 
   body {
     @apply font-sans antialiased;
-    background: linear-gradient(135deg, #1a0b2e 0%, #2d124d 55%, #241442 100%);
+    background: radial-gradient(ellipse 110% 90% at 50% 35%, #58427C 0%, #36013F 65%, #2a0132 100%);
     background-attachment: fixed;
     min-height: 100dvh;
     color: #f3f1f6;
