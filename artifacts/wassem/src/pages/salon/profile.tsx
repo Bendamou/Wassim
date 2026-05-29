@@ -310,7 +310,7 @@ export default function SalonProfile() {
 
   if (!salon) {
     return (
-      <div className="min-h-[100dvh] bg-[#0f051d] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[#1a0b2e] flex items-center justify-center">
         <div className="w-10 h-10 rounded-full border-2 border-[#00f2ff] border-t-transparent animate-spin" />
       </div>
     );
@@ -330,7 +330,7 @@ export default function SalonProfile() {
   const isClient = user?.role === "client";
 
   return (
-    <div className="min-h-[100dvh] bg-[#0f051d] pb-36">
+    <div className="min-h-[100dvh] bg-[#1a0b2e] pb-36">
       {/* Cinematic Header */}
       <div className="relative h-72 overflow-hidden">
         {salon.header_image ? (

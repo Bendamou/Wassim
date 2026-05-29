@@ -28,7 +28,7 @@ export default function ProRequests() {
   const acceptedBids = myBids.filter((b) => b.status === "accepted");
 
   return (
-    <div className="min-h-[100dvh] bg-[#0f051d] flex flex-col">
+    <div className="min-h-[100dvh] bg-[#1a0b2e] flex flex-col">
       {/* Header */}
       <div className="px-5 pt-safe-top pt-5 pb-4 border-b border-white/5">
         <div className="flex items-center justify-between">

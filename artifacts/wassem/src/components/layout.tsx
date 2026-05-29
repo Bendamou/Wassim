@@ -6,7 +6,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const [location] = useLocation();
 
-  if (!user) return <div className="min-h-[100dvh] bg-[#0f051d]">{children}</div>;
+  if (!user) return <div className="min-h-[100dvh] bg-[#1a0b2e]">{children}</div>;
 
   const isSalonOwner = user.role === "salon_owner";
   const isClient = user.role === "client";
@@ -39,9 +39,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const accentColor = isSalonOwner ? "#FFDD00" : isClient ? "#00f2ff" : "#ff007f";
 
   return (
-    <div className="min-h-[100dvh] bg-[#0f051d] relative">
+    <div className="min-h-[100dvh] bg-[#1a0b2e] relative">
       <div className="pb-20">{children}</div>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0f051d]/95 backdrop-blur-xl border-t border-white/5 pb-safe-bottom">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#1a0b2e]/95 backdrop-blur-xl border-t border-white/5 pb-safe-bottom">
         <div className="flex justify-around items-center h-16 px-2 max-w-md mx-auto">
           {navItems.map(item => {
             const active = isActive(item.href);

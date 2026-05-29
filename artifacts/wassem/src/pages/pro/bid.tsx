@@ -45,14 +45,14 @@ export default function ProBid() {
 
   if (isLoading || !job) {
     return (
-      <div className="min-h-[100dvh] bg-[#0f051d] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[#1a0b2e] flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-[#ff007f] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[#0f051d] flex flex-col">
+    <div className="min-h-[100dvh] bg-[#1a0b2e] flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-4 px-5 pt-safe-top pt-5 pb-4">
         <button

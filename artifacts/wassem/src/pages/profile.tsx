@@ -15,7 +15,7 @@ export default function Profile() {
   const isClient = user?.role === "client";
 
   return (
-    <div className="min-h-[100dvh] bg-[#0f051d] flex flex-col">
+    <div className="min-h-[100dvh] bg-[#1a0b2e] flex flex-col">
       {/* Header */}
       <div className="px-5 pt-safe-top pt-5 pb-6 border-b border-white/5">
         <h1 className="text-white font-black text-2xl">Profile</h1>

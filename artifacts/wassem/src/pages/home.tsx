@@ -334,7 +334,7 @@ export default function Home() {
   const activeFlashCount = flashOffers.filter(o => o.is_active).length;
 
   return (
-    <div className="relative h-[100dvh] w-full overflow-hidden bg-[#0f051d]">
+    <div className="relative h-[100dvh] w-full overflow-hidden bg-[#1a0b2e]">
       {/* Map */}
       <div ref={mapRef} className="absolute inset-0 z-0" style={{ bottom: "216px" }} />
 
@@ -419,7 +419,7 @@ export default function Home() {
       )}
 
       {/* Bottom Panel */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 bg-[#0f051d] border-t border-white/5" style={{ height: "216px" }}>
+      <div className="absolute bottom-0 left-0 right-0 z-20 bg-[#1a0b2e] border-t border-white/5" style={{ height: "216px" }}>
         <div className="flex flex-col items-center justify-center h-full px-5 gap-3">
           <div className="flex items-center gap-3 text-xs">
             <span className="font-bold" style={{ color: activeCatDef?.color ?? "#888" }}>

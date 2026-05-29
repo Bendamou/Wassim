@@ -13,7 +13,7 @@ Full-stack MVP marketplace where clients post grooming jobs and verified profess
 - React 18, Vite, Wouter (routing), React Query, Zod, react-hook-form
 - Express, Drizzle ORM, Pino logger
 - Tailwind CSS v4, shadcn/ui components
-- **Cyber Purple theme**: Neon Cyan `#00f2ff` + Neon Pink `#ff007f` on deep purple `#0f051d` (cards `#1c0c3a`, text `#f3f1f6`)
+- **Galaxy Purple theme**: gradient bg `#1a0b2e → #2d124d → #241442` (fixed), cards `#311a5a`, Neon Cyan `#00f2ff`, Neon Pink `#ff007f`, text `#f3f1f6`
 
 ## Key Files
 | File | Purpose |

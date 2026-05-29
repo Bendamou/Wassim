@@ -83,14 +83,14 @@ export default function RequestMulti() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] bg-[#0f051d] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[#1a0b2e] flex items-center justify-center">
         <div className="w-10 h-10 rounded-full border-2 border-[#00f2ff] border-t-transparent animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[#0f051d] pb-32">
+    <div className="min-h-[100dvh] bg-[#1a0b2e] pb-32">
       {/* Header */}
       <div className="bg-gradient-to-b from-[#ff007f]/10 to-transparent pt-12 pb-5 px-5">
         <div className="flex items-center gap-3 mb-1">
