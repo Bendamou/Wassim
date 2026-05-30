@@ -22,7 +22,7 @@ export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({ className = "", si
   return (
     <div
       className={`relative inline-flex items-center justify-center text-primary ${sizeMap[size]} ${className}`}
-      title="Verified by Wassem"
+      title="Verified by Tawoss"
     >
       <Shield className="absolute inset-0 w-full h-full fill-primary/20 stroke-primary" strokeWidth={2} />
       <Check size={iconSizeMap[size]} className="relative text-white stroke-[3px]" />

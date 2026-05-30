@@ -46,7 +46,7 @@ export default function ProfessionalProfile() {
                 <VerifiedBadge size="md" />
               </div>
               <div>
-                <p className="font-bold text-primary">Verified by Wassem</p>
+                <p className="font-bold text-primary">Verified by Tawoss</p>
                 <p className="text-xs text-muted-foreground">Your profile has been verified. Clients trust you more.</p>
               </div>
             </div>

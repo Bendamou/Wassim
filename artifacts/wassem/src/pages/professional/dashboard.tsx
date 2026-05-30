@@ -39,7 +39,7 @@ export default function ProfessionalDashboard() {
                 {user?.isVerified && (
                   <div className="flex items-center gap-1 bg-primary/20 border border-primary/30 rounded-full px-2 py-0.5">
                     <VerifiedBadge size="sm" />
-                    <span className="text-xs text-primary font-bold">Verified by Wassem</span>
+                    <span className="text-xs text-primary font-bold">Verified by Tawoss</span>
                   </div>
                 )}
               </div>
