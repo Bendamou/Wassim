@@ -201,7 +201,7 @@ router.post("/salons/:id/claim-chair", async (req, res) => {
   const user = await getUserFromToken(token);
   if (!user) { res.status(401).json({ message: "Unauthorized" }); return; }
 
-  const { card_last4, card_holder, deposit_amount } = req.body;
+  const { card_last4, card_holder, deposit_amount, service_name } = req.body;
   if (!card_last4 || card_last4.length !== 4 || !/^\d+$/.test(card_last4)) {
     res.status(400).json({ message: "card_last4 must be 4 digits" }); return;
   }
@@ -237,9 +237,9 @@ router.post("/salons/:id/claim-chair", async (req, res) => {
     `)).rows as any[];
 
     const [claim] = (await db.execute(sql`
-      INSERT INTO chair_claims (salon_id, chair_id, client_id, status, deposit_amount, card_last4, card_holder)
+      INSERT INTO chair_claims (salon_id, chair_id, client_id, status, deposit_amount, card_last4, card_holder, service_name)
       VALUES (${salonId}, ${chair?.id ?? null}, ${user.id}, 'confirmed',
-              ${deposit_amount ?? 20}, ${card_last4}, ${card_holder ?? null})
+              ${deposit_amount ?? 20}, ${card_last4}, ${card_holder ?? null}, ${service_name ?? null})
       RETURNING *
     `)).rows;
 
@@ -267,7 +267,7 @@ router.get("/salons/:id/queue", async (req, res) => {
       LEFT JOIN users u ON u.id = cc.client_id
       LEFT JOIN chairs c ON c.id = cc.chair_id
       WHERE cc.salon_id = ${salonId}
-        AND cc.status IN ('pending','confirmed')
+        AND cc.status IN ('pending','confirmed','en_route')
         AND cc.expires_at > now()
       ORDER BY cc.created_at ASC
     `)).rows;
@@ -285,7 +285,7 @@ router.patch("/claims/:id", async (req, res) => {
   if (!user) { res.status(401).json({ message: "Unauthorized" }); return; }
 
   const { status } = req.body;
-  const allowed = ["completed", "noshow", "cancelled"];
+  const allowed = ["completed", "noshow", "cancelled", "en_route"];
   if (!allowed.includes(status)) {
     res.status(400).json({ message: `status must be one of ${allowed.join(", ")}` }); return;
   }

@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import {
   ArrowLeft, Star, ShoppingCart, Clock, Scissors, Package,
   MessageSquare, CheckCircle, Radio, CreditCard, X, Lock,
-  Users, Zap, AlertCircle,
+  Users, Zap, AlertCircle, MapPin, Navigation,
 } from "lucide-react";
+import "leaflet/dist/leaflet.css";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -52,15 +53,59 @@ function ClaimModal({
   token: string;
   userId: number;
 }) {
-  const [step, setStep] = useState<"form" | "processing" | "done">("form");
+  const [step, setStep] = useState<"pick" | "form" | "processing" | "done">(
+    salon.services.length > 0 ? "pick" : "form"
+  );
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [cardLast4, setCardLast4] = useState("");
   const [cardHolder, setCardHolder] = useState("");
-  const [cardNumber, setCardNumber] = useState(""); // display only (masked)
+  const [cardNumber, setCardNumber] = useState("");
   const [error, setError] = useState("");
+  const [claimData, setClaimData] = useState<ClaimResult | null>(null);
+  const [enRoute, setEnRoute] = useState(false);
+  const [sendingRoute, setSendingRoute] = useState(false);
+  const miniMapRef = useRef<HTMLDivElement>(null);
+  const miniMapInstanceRef = useRef<any>(null);
   const depositAmount = 20;
-  const lowestPrice = salon.services.length > 0
-    ? Math.min(...salon.services.map(s => s.price))
-    : salon.avg_service_price ?? 80;
+
+  useEffect(() => {
+    if (step !== "done") return;
+    const el = miniMapRef.current;
+    if (!el || miniMapInstanceRef.current) return;
+    import("leaflet").then(leaflet => {
+      const L = leaflet.default;
+      delete (L.Icon.Default.prototype as any)._getIconUrl;
+      const map = L.map(el, {
+        center: [salon.lat, salon.lng] as [number, number],
+        zoom: 14, zoomControl: false, attributionControl: false,
+        dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
+      });
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(map);
+      const salonIcon = L.divIcon({
+        html: `<div style="width:22px;height:22px;background:#00f2ff;border-radius:50%;border:3px solid #fff;box-shadow:0 0 12px rgba(0,242,255,0.8)"></div>`,
+        className: "", iconSize: [22, 22], iconAnchor: [11, 11],
+      });
+      L.marker([salon.lat, salon.lng], { icon: salonIcon }).addTo(map);
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          const clientPos: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+          const clientIcon = L.divIcon({
+            html: `<div style="width:16px;height:16px;background:#ff007f;border-radius:50%;border:3px solid #fff;box-shadow:0 0 8px rgba(255,0,127,0.8)"></div>`,
+            className: "", iconSize: [16, 16], iconAnchor: [8, 8],
+          });
+          L.marker(clientPos, { icon: clientIcon }).addTo(map);
+          L.polyline([clientPos, [salon.lat, salon.lng]], {
+            color: "#00f2ff", weight: 2.5, dashArray: "6,9", opacity: 0.85,
+          }).addTo(map);
+          map.fitBounds(L.latLngBounds([clientPos, [salon.lat, salon.lng]]), { padding: [28, 28] });
+        }, () => { map.setView([salon.lat, salon.lng], 15); });
+      }
+      miniMapInstanceRef.current = map;
+    });
+    return () => {
+      if (miniMapInstanceRef.current) { miniMapInstanceRef.current.remove(); miniMapInstanceRef.current = null; }
+    };
+  }, [step, salon.lat, salon.lng]);
 
   const handleCardNumberChange = (v: string) => {
     const digits = v.replace(/\D/g, "").slice(0, 16);
@@ -74,27 +119,41 @@ function ClaimModal({
     if (!cardHolder.trim()) { setError("Enter cardholder name"); return; }
     setError("");
     setStep("processing");
-
-    // Simulate 1.5s processing
     await new Promise(r => setTimeout(r, 1500));
-
     const res = await fetch(`${API}/salons/${salon.id}/claim-chair`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ card_last4: cardLast4, card_holder: cardHolder.trim(), deposit_amount: depositAmount }),
+      body: JSON.stringify({
+        card_last4: cardLast4, card_holder: cardHolder.trim(),
+        deposit_amount: depositAmount, service_name: selectedService?.name ?? null,
+      }),
     });
-
     if (!res.ok) {
       const err = await res.json();
       setError(err.message ?? "Failed to claim chair");
       setStep("form");
       return;
     }
-
     const result = await res.json();
+    setClaimData(result);
     onSuccess(result);
     setStep("done");
   };
+
+  const sendEnRoute = async () => {
+    if (!claimData || enRoute || sendingRoute) return;
+    setSendingRoute(true);
+    try {
+      await fetch(`${API}/claims/${claimData.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status: "en_route" }),
+      });
+      setEnRoute(true);
+    } finally { setSendingRoute(false); }
+  };
+
+  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${salon.lat},${salon.lng}`;
 
   return (
     <div
@@ -104,46 +163,78 @@ function ClaimModal({
     >
       <div className="w-full max-w-lg rounded-t-3xl overflow-hidden"
         style={{ background: "linear-gradient(180deg,#0f0f0f,#0A0A0A)", border: "1px solid rgba(255,255,255,0.08)" }}>
-
-        {/* Handle */}
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-white/20" />
         </div>
 
-        {step === "done" ? (
-          <div className="px-6 pb-10 pt-4 text-center">
-            <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_rgba(74,222,128,0.3)]">
-              <CheckCircle size={40} className="text-green-400" />
+        {/* ── STEP: PICK SERVICE ── */}
+        {step === "pick" && (
+          <div className="px-6 pb-8 pt-3 max-h-[72vh] overflow-y-auto">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-white font-black text-xl">Pick a Service</h2>
+                <p className="text-gray-500 text-sm mt-0.5">{salon.name} · Walk-in booking</p>
+              </div>
+              <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/8 flex items-center justify-center">
+                <X size={18} className="text-gray-400" />
+              </button>
             </div>
-            <h2 className="text-white font-black text-2xl mb-1">You're in the queue!</h2>
-            <p className="text-gray-500 text-sm mb-6">
-              Head to <span className="text-white font-bold">{salon.name}</span> — your chair is being held
-            </p>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-6 text-left space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Deposit charged</span>
-                <span className="text-green-400 font-black">{depositAmount} MAD</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Card</span>
-                <span className="text-white font-bold">•••• {cardLast4}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Expires in</span>
-                <span className="text-yellow-400 font-bold">30 minutes</span>
-              </div>
+            <div className="space-y-2 mb-4">
+              {salon.services.map(svc => {
+                const isSel = selectedService?.id === svc.id;
+                return (
+                  <button key={svc.id} onClick={() => setSelectedService(svc)}
+                    className="w-full text-left rounded-2xl p-4 border transition-all"
+                    style={{
+                      background: isSel ? "rgba(0,242,255,0.08)" : "rgba(255,255,255,0.04)",
+                      borderColor: isSel ? "rgba(0,242,255,0.55)" : "rgba(255,255,255,0.08)",
+                      boxShadow: isSel ? "0 0 14px rgba(0,242,255,0.15)" : "none",
+                    }}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-bold text-sm">{svc.name}</p>
+                        {svc.description && <p className="text-gray-500 text-xs mt-0.5 leading-relaxed">{svc.description}</p>}
+                        <div className="flex items-center gap-1 mt-1.5 text-gray-600 text-xs">
+                          <Clock size={10} /><span>{svc.duration_mins} min</span>
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-[#00f2ff] font-black text-xl">{svc.price}</p>
+                        <p className="text-gray-600 text-xs">MAD</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-            <button
-              onClick={onClose}
-              className="w-full bg-[#00f2ff] text-black font-black rounded-2xl py-4 shadow-[0_0_20px_rgba(0,193,255,0.4)]"
-            >
-              Got it — I'm on my way!
+            <button onClick={() => setStep("form")} disabled={!selectedService}
+              className="w-full rounded-2xl py-4 font-black text-base transition-all active:scale-[0.97] disabled:opacity-30"
+              style={{
+                background: selectedService ? "linear-gradient(135deg,#00f2ff,#0070FF)" : "rgba(255,255,255,0.06)",
+                color: selectedService ? "#000" : "#555",
+                boxShadow: selectedService ? "0 0 22px rgba(0,193,255,0.4)" : "none",
+              }}>
+              {selectedService ? `Book ${selectedService.name} — ${selectedService.price} MAD` : "Select a service to continue"}
+            </button>
+            <button onClick={() => setStep("form")}
+              className="w-full mt-2 text-center text-gray-600 text-xs py-2 hover:text-gray-400 transition-colors">
+              Skip — just hold a chair →
             </button>
           </div>
-        ) : (
+        )}
+
+        {/* ── STEP: PROCESSING ── */}
+        {step === "processing" && (
+          <div className="px-6 pb-14 pt-8 flex flex-col items-center gap-4">
+            <div className="w-16 h-16 rounded-full border-4 border-[#00f2ff] border-t-transparent animate-spin" />
+            <p className="text-gray-400 text-sm">Processing payment...</p>
+          </div>
+        )}
+
+        {/* ── STEP: FORM ── */}
+        {step === "form" && (
           <div className="px-6 pb-10 pt-4">
-            {/* Header */}
-            <div className="flex items-start justify-between mb-5">
+            <div className="flex items-start justify-between mb-4">
               <div>
                 <h2 className="text-white font-black text-xl">Claim a Chair</h2>
                 <p className="text-gray-500 text-sm mt-0.5">{salon.name} · {salon.free_chairs} open now</p>
@@ -152,100 +243,108 @@ function ClaimModal({
                 <X size={18} className="text-gray-400" />
               </button>
             </div>
-
-            {/* No-show lock info */}
+            {selectedService && (
+              <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-xl border border-[#00f2ff]/30 bg-[#00f2ff]/8">
+                <Scissors size={13} className="text-[#00f2ff] flex-shrink-0" />
+                <span className="text-[#00f2ff] text-sm font-bold flex-1">{selectedService.name}</span>
+                <span className="text-gray-500 text-xs">{selectedService.price} MAD · {selectedService.duration_mins}min</span>
+              </div>
+            )}
             <div className="rounded-2xl border border-[#00f2ff]/25 bg-[#00f2ff]/5 p-3.5 mb-5">
               <div className="flex items-start gap-3">
                 <Lock size={16} className="text-[#00f2ff] flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-[#00f2ff] font-bold text-sm">No-Show Lock</p>
                   <p className="text-gray-500 text-xs leading-relaxed mt-0.5">
-                    A <span className="text-white font-bold">{depositAmount} MAD deposit</span> holds your chair and is credited toward your service ({lowestPrice}+ MAD). No-shows forfeit the deposit.
+                    A <span className="text-white font-bold">{depositAmount} MAD deposit</span> holds your chair and is credited toward your service. No-shows forfeit the deposit.
                   </p>
                 </div>
               </div>
             </div>
-
-            {/* Card form */}
             <div className="space-y-3">
               <div>
-                <label className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1.5 block">
-                  Card Number
-                </label>
+                <label className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1.5 block">Card Number</label>
                 <div className="relative">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={cardNumber}
-                    onChange={e => handleCardNumberChange(e.target.value)}
-                    placeholder="1234 5678 9012 3456"
-                    maxLength={19}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pl-10 text-white text-sm outline-none focus:border-[#00f2ff] placeholder:text-gray-700 font-mono tracking-wider"
-                  />
-                  <CreditCard size={16} className="absolute left-3.5 top-3.5 text-gray-600" />
+                  <CreditCard size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-600" />
+                  <input value={cardNumber} onChange={e => handleCardNumberChange(e.target.value)}
+                    placeholder="1234 5678 9012 3456" inputMode="numeric" maxLength={19}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none focus:border-[#00f2ff] placeholder:text-gray-700 font-mono tracking-wider" />
                 </div>
               </div>
+              <div>
+                <label className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1.5 block">Cardholder Name</label>
+                <input value={cardHolder} onChange={e => setCardHolder(e.target.value)}
+                  placeholder="Your name on card"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#00f2ff] placeholder:text-gray-700" />
+              </div>
+            </div>
+            {error && <div className="mt-3 flex items-center gap-2 text-red-400 text-sm"><AlertCircle size={14} /><span>{error}</span></div>}
+            <button onClick={handleSubmit}
+              className="w-full mt-5 rounded-2xl py-4 font-black text-base flex items-center justify-center gap-2 active:scale-[0.97] transition-all"
+              style={{ background: "linear-gradient(135deg,#00f2ff,#0070FF)", color: "#000", boxShadow: "0 0 22px rgba(0,193,255,0.4)" }}>
+              <Lock size={16} />Pay {depositAmount} MAD · Secure My Chair
+            </button>
+          </div>
+        )}
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1.5 block">
-                    Cardholder Name
-                  </label>
-                  <input
-                    type="text"
-                    value={cardHolder}
-                    onChange={e => setCardHolder(e.target.value)}
-                    placeholder="Your name"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white text-sm outline-none focus:border-[#00f2ff] placeholder:text-gray-700"
-                  />
+        {/* ── STEP: DONE ── */}
+        {step === "done" && claimData && (
+          <div className="px-6 pb-8 pt-4">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-3 shadow-[0_0_25px_rgba(74,222,128,0.3)]">
+                <CheckCircle size={32} className="text-green-400" />
+              </div>
+              <h2 className="text-white font-black text-xl">#{claimData.queue_position} in queue!</h2>
+              <p className="text-gray-500 text-sm mt-0.5">Head to <span className="text-white font-bold">{salon.name}</span></p>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5 mb-4 space-y-2">
+              {selectedService && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Service</span>
+                  <span className="text-[#00f2ff] font-bold">{selectedService.name}</span>
                 </div>
-                <div>
-                  <label className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1.5 block">
-                    Expiry / CVV
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="12/28 · 123"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white text-sm outline-none focus:border-white/20 placeholder:text-gray-700"
-                  />
-                </div>
+              )}
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Deposit</span>
+                <span className="text-green-400 font-black">{depositAmount} MAD</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Card</span>
+                <span className="text-white font-bold">•••• {cardLast4}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Hold expires</span>
+                <span className="text-yellow-400 font-bold">30 minutes</span>
               </div>
             </div>
 
-            {error && (
-              <div className="mt-3 flex items-center gap-2 text-red-400 text-sm">
-                <AlertCircle size={14} />
-                <span>{error}</span>
-              </div>
-            )}
+            {/* Mini-map: your location → salon */}
+            <div className="rounded-2xl overflow-hidden mb-4 border border-white/10" style={{ height: "150px" }}>
+              <div ref={miniMapRef} className="w-full h-full" />
+            </div>
 
-            {/* Submit */}
-            <button
-              onClick={handleSubmit}
-              disabled={step === "processing"}
-              className="mt-5 w-full rounded-2xl py-4 font-black text-lg transition-all flex items-center justify-center gap-2"
-              style={{
-                background: step === "processing" ? "rgba(0,193,255,0.3)" : "linear-gradient(135deg,#00f2ff,#0099cc)",
-                boxShadow: step === "processing" ? "none" : "0 0 25px rgba(0,193,255,0.35)",
-                color: step === "processing" ? "#00f2ff" : "#000",
-              }}
-            >
-              {step === "processing" ? (
-                <>
-                  <div className="w-5 h-5 rounded-full border-2 border-[#00f2ff] border-t-transparent animate-spin" />
-                  Processing payment…
-                </>
-              ) : (
-                <>
-                  <Lock size={18} />
-                  Secure My Chair · {depositAmount} MAD
-                </>
-              )}
+            <div className="flex gap-2 mb-3">
+              <button onClick={sendEnRoute} disabled={enRoute || sendingRoute}
+                className="flex-1 rounded-2xl py-3.5 font-black text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97]"
+                style={{
+                  background: enRoute ? "rgba(74,222,128,0.12)" : "linear-gradient(135deg,#ff007f,#cc0066)",
+                  border: enRoute ? "1px solid rgba(74,222,128,0.4)" : "none",
+                  color: enRoute ? "#4ade80" : "#fff",
+                  boxShadow: enRoute ? "none" : "0 0 16px rgba(255,0,127,0.4)",
+                  opacity: sendingRoute ? 0.7 : 1,
+                }}>
+                {enRoute ? <><CheckCircle size={14} /> Barber notified!</> : <>🏃 I'm on my way!</>}
+              </button>
+              <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
+                className="flex-1 rounded-2xl py-3.5 font-black text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97]"
+                style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff" }}>
+                <Navigation size={14} className="text-[#00f2ff]" />Directions
+              </a>
+            </div>
+            <button onClick={onClose}
+              className="w-full py-3 rounded-2xl text-gray-500 text-sm font-bold border border-white/8 hover:border-white/20 transition-colors">
+              Done
             </button>
-
-            <p className="text-center text-gray-700 text-xs mt-3">
-              🔒 Mock payment — no real charge will be made
-            </p>
           </div>
         )}
       </div>

@@ -14,6 +14,7 @@ type Claim = {
   id: number; client_name: string; client_avatar: string;
   chair_name: string; status: string; deposit_amount: number;
   card_last4: string; created_at: string; expires_at: string;
+  service_name: string | null;
 };
 type Salon = {
   id: number; name: string; description: string; address: string;
@@ -225,12 +226,26 @@ function QueuePanel({ salonId, token }: { salonId: number; token: string }) {
                 className="w-9 h-9 rounded-full"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-white font-bold text-sm truncate">{claim.client_name}</p>
-                <div className="flex items-center gap-2 text-xs text-gray-500">
+                <div className="flex items-center gap-2">
+                  <p className="text-white font-bold text-sm truncate">{claim.client_name}</p>
+                  {claim.status === "en_route" && (
+                    <span className="flex-shrink-0 text-[10px] font-black px-2 py-0.5 rounded-full"
+                      style={{ background: "rgba(255,0,127,0.18)", color: "#ff007f", border: "1px solid rgba(255,0,127,0.35)" }}>
+                      🏃 On the way
+                    </span>
+                  )}
+                </div>
+                {claim.service_name && (
+                  <p className="text-[#00f2ff] text-xs font-bold mt-0.5 flex items-center gap-1">
+                    <Scissors size={9} />
+                    {claim.service_name}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
                   <Clock size={10} />
                   <span>{formatTimeAgo(claim.created_at)}</span>
                   <span>·</span>
-                  <span className="text-[#00f2ff]">expires in {expiresIn}m</span>
+                  <span className="text-[#00f2ff]">exp {expiresIn}m</span>
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
