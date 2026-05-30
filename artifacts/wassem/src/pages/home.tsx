@@ -345,14 +345,10 @@ export default function Home() {
       <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-12">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center"
-              style={{ boxShadow: "0 0 15px rgba(201,162,39,0.5)", background: "#5B0EA6" }}>
-              <img src="/tawoss-mascot.png" alt="Tawoss" className="w-full h-full object-contain" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00f2ff] to-[#ff007f] flex items-center justify-center shadow-[0_0_15px_rgba(0,193,255,0.5)] overflow-hidden">
+              <img src="/tawoss-logo.png" alt="Tawoss" className="w-7 h-7 object-contain" />
             </div>
-            <span className="font-black text-xl tracking-wider"
-              style={{ background: "linear-gradient(135deg,#C9A227,#E8C84A)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              TAWOSS
-            </span>
+            <span className="text-white font-black text-xl">TAWOSS</span>
           </div>
           <div className="flex items-center gap-2">
             {activeFlashCount > 0 && (

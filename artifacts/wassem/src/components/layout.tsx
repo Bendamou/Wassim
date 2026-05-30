@@ -6,7 +6,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const [location] = useLocation();
 
-  if (!user) return <div className="min-h-[100dvh]" style={{ background: "radial-gradient(ellipse 120% 100% at 50% 10%, #7B1FCC 0%, #5B0EA6 40%, #2D0060 100%)" }}>{children}</div>;
+  if (!user) return <div className="min-h-[100dvh] bg-[#36013F]">{children}</div>;
 
   const isSalonOwner = user.role === "salon_owner";
   const isClient = user.role === "client";
@@ -37,13 +37,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Color per role
-  const accentColor = isSalonOwner ? "#C9A227" : isClient ? "#00f2ff" : "#ff007f";
+  const accentColor = isSalonOwner ? "#FFDD00" : isClient ? "#00f2ff" : "#ff007f";
 
   return (
-    <div className="min-h-[100dvh] relative" style={{ background: "#2D0060" }}>
+    <div className="min-h-[100dvh] bg-[#36013F] relative">
       <div className="pb-20">{children}</div>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-xl border-t border-white/5 pb-safe-bottom"
-        style={{ background: "rgba(45,0,96,0.95)" }}>
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#36013F]/95 backdrop-blur-xl border-t border-white/5 pb-safe-bottom">
         <div className="flex justify-around items-center h-16 px-2 max-w-md mx-auto">
           {navItems.map(item => {
             const active = isActive(item.href);
