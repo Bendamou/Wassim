@@ -387,7 +387,7 @@ function ChairMap({
                   </text>
                   <text x={cx} y={cy - 14} textAnchor="middle" fontSize="2.3"
                     fill={color} fontFamily="monospace">
-                    {isClaimed ? "● Client en route" : isOpen ? "● Tap to claim" : "✗ Not available"}
+                    {isClaimed ? "● Client en route" : isOpen ? (canClaim ? "● Tap to claim" : "● Available") : "✗ Not available"}
                   </text>
                 </g>
               )}
@@ -407,16 +407,28 @@ function ChairMap({
       {/* Claim CTA when a free chair is selected */}
       {selected !== null && (() => {
         const ch = chairs.find(c => c.id === selected);
-        const isFree = ch?.status === "available" && !claimedNames.has(ch.name);
-        if (!isFree || !canClaim) return null;
+        if (!ch) return null;
+        const isClaimed = claimedNames.has(ch.name);
+        const isFree = ch.status === "available" && !isClaimed;
+        if (!isFree) return null;
+        if (canClaim) {
+          return (
+            <button
+              onClick={onClaimClick}
+              className="w-full mt-2 rounded-xl py-3 font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.97]"
+              style={{ background: "linear-gradient(135deg,#00f2ff,#0070FF)", color: "#000" }}
+            >
+              Claim {ch.name} · Walk In Now
+            </button>
+          );
+        }
         return (
-          <button
-            onClick={onClaimClick}
-            className="w-full mt-2 rounded-xl py-3 font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.97]"
-            style={{ background: "linear-gradient(135deg,#00f2ff,#0070FF)", color: "#000" }}
-          >
-            Claim {ch!.name} · Walk In Now
-          </button>
+          <div className="mt-2 rounded-xl py-3 px-4 text-center border border-white/10"
+            style={{ background: "rgba(255,255,255,0.04)" }}>
+            <p className="text-gray-400 text-xs font-bold">
+              {isLive ? "Log in as a client to claim this chair" : "Walk-ins open when this salon goes Live 🟢"}
+            </p>
+          </div>
         );
       })()}
     </div>

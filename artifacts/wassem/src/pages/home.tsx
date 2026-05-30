@@ -329,6 +329,16 @@ export default function Home() {
 
   const isPro = user?.role === "professional";
   const isSalonOwner = user?.role === "salon_owner";
+
+  // Redirect non-clients away from the client map immediately
+  useEffect(() => {
+    if (!user) return;
+    if (user.role === "professional") setLocation("/pro/requests");
+    else if (user.role === "salon_owner") setLocation("/salon/dashboard");
+  }, [user, setLocation]);
+
+  if (user && user.role !== "client") return null;
+
   const activeCatDef = CATEGORIES.find(c => c.key === activeCategory);
   const visibleSalons = activeCategory === "all" ? salons : salons.filter(s => s.categories?.split(",").includes(activeCategory));
   const activeFlashCount = flashOffers.filter(o => o.is_active).length;

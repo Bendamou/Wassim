@@ -26,8 +26,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         { href: "/profile", label: "Profile", icon: User },
       ]
     : [
-        { href: "/",             label: "Home",     icon: Home },
-        { href: "/pro/requests", label: "Requests", icon: Briefcase },
+        { href: "/pro/requests", label: "Jobs",     icon: Briefcase },
         { href: "/profile",      label: "Profile",  icon: User },
       ];
 
