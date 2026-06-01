@@ -271,7 +271,20 @@ export default function AuthPage() {
             </div>
           </motion.div>
           <h1 className="text-4xl font-black text-white tracking-tight">TAWOSS</h1>
-          <p className="text-[#00B4FF] font-bold mt-1 text-sm">On-demand grooming</p>
+          <p className="text-[#00B4FF] font-bold mt-1 text-xs uppercase tracking-[0.25em]">On-demand grooming</p>
+          <div className="mt-4 space-y-0.5">
+            <p className="text-3xl font-black leading-none tracking-tight"
+              style={{
+                background: "linear-gradient(90deg,#00B4FF 0%,#FF1F8E 50%,#9B30FF 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}>
+              Look fresh.
+            </p>
+            <p className="text-3xl font-black leading-none tracking-tight text-white">
+              Book like a boss.
+            </p>
+          </div>
         </motion.div>
 
         <AnimatePresence mode="wait">
