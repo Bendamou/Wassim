@@ -96,12 +96,12 @@ router.post("/auth/login", async (req, res) => {
 });
 
 router.post("/auth/phone-register", async (req, res) => {
-  const { phone, name, role, gender_pref } = req.body;
+  const { phone, name, role, gender_pref, email: emailParam } = req.body;
   if (!phone || !name || !role) {
     res.status(400).json({ message: "phone, name and role are required" });
     return;
   }
-  const email = `${phone.replace(/\+/g, "")}@wassem.app`;
+  const email = emailParam?.trim() || `${phone.replace(/\+/g, "")}@wassem.app`;
   const existing = await db.select().from(usersTable).where(eq(usersTable.phone, phone)).limit(1);
   if (existing.length > 0) {
     res.status(409).json({ message: "Phone already registered" });
