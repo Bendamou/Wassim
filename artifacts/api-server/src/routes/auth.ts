@@ -153,6 +153,26 @@ router.post("/auth/logout", (req, res) => {
   res.json({ message: "Logged out" });
 });
 
+router.patch("/auth/profile", async (req, res) => {
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  const user = await getUserFromToken(token);
+  if (!user) { res.status(401).json({ message: "Unauthorized" }); return; }
+  const { bio, location } = req.body;
+  try {
+    const { sql: rawSql } = await import("drizzle-orm");
+    await db.execute(rawSql`
+      UPDATE users SET
+        bio      = COALESCE(${bio      ?? null}, bio),
+        location = COALESCE(${location ?? null}, location)
+      WHERE id = ${user.id}
+    `);
+    res.json({ message: "Profile updated" });
+  } catch (err) {
+    req.log.error({ err }, "PATCH /auth/profile failed");
+    res.status(500).json({ message: "Internal error" });
+  }
+});
+
 export async function getUserFromToken(token: string | undefined) {
   if (!token) return null;
   try {
