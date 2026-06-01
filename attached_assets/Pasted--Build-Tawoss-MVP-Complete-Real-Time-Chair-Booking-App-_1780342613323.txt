@@ -1,0 +1,429 @@
+# Build Tawoss MVP - Complete Real-Time Chair Booking App
+
+## Project Overview
+Build Tawoss, a real-time barber/salon booking app that eliminates 2-4 hour wait times using a LIVE CHAIR AVAILABILITY SYSTEM (like Uber for barber chairs).
+
+**Core Concept:**
+- Customers scan QR code at salon → See live map with available chairs (green = available, red = busy) → Book instantly → Arrive in 5 minutes
+- Salon owners add/remove chairs → Each chair = 1 service at a time → One switch button to toggle availability → Swipe button to mark chair as free when finished
+
+## Tech Stack
+- Frontend: React Native (Expo) with TypeScript
+- Backend: Node.js + Express with TypeScript
+- Database: PostgreSQL with Prisma ORM
+- Real-time: Socket.io (for live chair status updates)
+- Maps: Google Maps API (like Uber map view)
+- Hosting: Vercel (frontend) + Railway (backend)
+
+## DATABASE SCHEMA (Prisma)
+
+Create this complete schema.prisma:
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  phone         String    @unique
+  password      String?
+  firstName     String
+  lastName      String
+  avatar        String?
+  role          UserRole  @default(CUSTOMER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+ favorites     Favorite[]
+  bookings      Booking[]
+  reviews       Review[]
+  ownedSalons   Salon[]   @relation("SalonOwner")
+
+  @@index([email])
+  @@index([phone])
+}
+
+enum UserRole {
+  CUSTOMER
+  SALON_OWNER
+  ADMIN
+}
+
+model Salon {
+  id              String    @id @default(uuid())
+  name            String
+  description     String?
+  address         String
+  city            String
+  latitude        Float
+  longitude       Float
+  phone           String
+  email           String?
+  instagram       String?
+  facebook        String?
+  logo            String?
+  images          String[]
+  ownerId         String
+  owner           User      @relation("SalonOwner", fields: [ownerId], references: [id])
+  qrCode          String
+  isActive        Boolean   @default(true)
+  isVerified      Boolean   @default(false)
+  commissionRate  Float     @default(12.0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  chairs          Chair[]
+  services        Service[]
+  bookings        Booking[]
+  reviews         Review[]
+  availability    Availability[]
+  favorites       Favorite[]
+
+  @@index([city])
+  @@index([ownerId])
+  @@index([isActive])
+}
+
+model Chair {
+  id                  String   @id @default(uuid())
+  salonId             String
+  salon               Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  name                String   // "Chair 1", "Chair 2", or "Barber Ahmed"
+  barberName          String?  // "Ahmed", "Omar"
+  type                String?  // "Haircut", "Beard", "Both", "All Services"
+  description         String?  // "Best for haircuts", "Specializes in beard trim"
+  isActive            Boolean  @default(true)
+  isBusy              Boolean  @default(false)  // Real-time: Is chair occupied?
+  currentBookingId    String?  @unique
+  currentBooking      Booking? @relation(fields: [currentBookingId], references: [id])
+  estimatedFreeAt     DateTime? // When chair will be free (if busy)
+  positionX           Float?   // 2D/3D position in salon map
+  positionY           Float?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([salonId])
+  @@index([isActive])
+  @@index([isBusy])
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  price       Float
+  duration    Int      // minutes
+  salonId     String
+  salon       Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+
+  @@index([salonId])
+}
+
+model Booking {
+  id            String        @id @default(uuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  salonId       String
+  salon         Salon         @relation(fields: [salonId], references: [id])
+  serviceId     String
+  service       Service       @relation(fields: [serviceId], references: [id])
+  chairId       String?       // Specific chair (optional)
+  chair         Chair?        @relation(fields: [chairId], references: [id])
+  scheduledAt   DateTime
+  duration      Int
+  status        BookingStatus @default(PENDING)
+  customerName  String
+  customerPhone String
+  notes         String?
+  commission    Float
+  commissionPaid Boolean      @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([salonId])
+  @@index([chairId])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS      // NEW: Barber is currently cutting hair
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model Availability {
+  id        String   @id @default(uuid())
+  salonId   String
+  salon     Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  dayOfWeek Int      // 0=Sunday, 1=Monday, etc.
+  openTime  String   // "09:00"
+  closeTime String   // "18:00"
+  isActive  Boolean  @default(true)
+
+  @@unique([salonId, dayOfWeek])
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  salonId   String
+  salon     Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  bookingId String   @unique
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  rating    Int      // 1-5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  @@index([salonId])
+  @@index([userId])
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  salonId   String
+  salon     Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, salonId])
+  @@index([userId])
+}
+```
+
+## BACKEND API (Node.js + Express)
+
+Create complete API with these endpoints:
+
+### Authentication
+- POST /api/auth/register (email, phone, password, firstName, lastName)
+- POST /api/auth/login (email/phone, password)
+- POST /api/auth/social-auth (Google, Facebook)
+- GET /api/auth/me (get current user)
+- POST /api/auth/logout
+
+### Salons (Customer View)
+- GET /api/salons (list all salons with filters: city, available chairs only)
+- GET /api/salons/:id (get salon details + chairs + services + live availability)
+- GET /api/salons/:id/chairs (get all chairs with status: busy/available)
+- GET /api/salons/:id/services (get salon services)
+- GET /api/salons/nearby (get nearby salons with GPS)
+- GET /api/salons/available (get only salons with available chairs)
+
+### Salons (Owner View)
+- POST /api/salons (create salon)
+- PUT /api/salons/:id (update salon)
+- DELETE /api/salons/:id (delete salon)
+- GET /api/salons/owner/my-salons (get owner's salons)
+
+### Chairs (Owner View)
+- POST /api/salons/:salonId/chairs (add chair: name, type, description)
+- PUT /api/chairs/:id (update chair)
+- DELETE /api/chairs/:id (delete chair)
+- PUT /api/chairs/:id/toggle (toggle availability: switch button)
+- PUT /api/chairs/:id/finish (swipe button: mark chair as free)
+- GET /api/chairs/:id/status (get chair status: busy/available)
+
+### Bookings
+- GET /api/bookings (get user's bookings)
+- GET /api/bookings/:id (get booking details)
+- POST /api/bookings (create booking: select salon, service, chair optional)
+- PUT /api/bookings/:id (update booking)
+- DELETE /api/bookings/:id (cancel booking)
+- POST /api/bookings/:id/confirm (confirm booking, owner)
+- POST /api/bookings/:id/start (start booking: chair becomes busy, IN_PROGRESS)
+- POST /api/bookings/:id/complete (complete booking: chair becomes free)
+- GET /api/bookings/owner/today (get today's bookings, owner)
+
+### Favorites
+- GET /api/users/favorites (get user's favorite salons)
+- POST /api/users/favorites/:salonId (add favorite)
+- DELETE /api/users/favorites/:salonId (remove favorite)
+
+### Reviews
+- GET /api/salons/:id/reviews (get salon reviews)
+- POST /api/reviews (create review)
+
+### Real-time Socket.io Events
+- socket: chair-status-update (chair becomes busy/free)
+- socket: chair-availability (list of available chairs in area)
+- socket: booking-progress (barber progress: "3 min left")
+- socket: chair-ready (chair is ready, arrive now)
+- socket: booking-confirmed (booking confirmed)
+- socket: booking-cancelled (booking cancelled)
+- socket: salon-update (salon updates wait time)
+
+## MOBILE APP (React Native + Expo)
+
+### Customer Screens
+
+1. **HomeScreen (Map View - Like Uber)**
+   - Full-screen map (Google Maps)
+   - 2D/3D chair icons pop up on map:
+     - 🪑 GREEN = Available chair
+     - 🪑 RED = Busy chair
+   - Tap chair icon → See chair details → Book instantly
+   - Search bar (search by salon name, city)
+   - Filter button: "Show only available chairs"
+   - "Favorite Barbers" button (toggle to show favorites only)
+   - Bottom sheet: Salon info when chair tapped
+
+2. **SalonDetailsScreen**
+   - Salon info (name, address, phone, Instagram)
+   - Gallery (images)
+   - Live chair map (2D view of salon with chair positions)
+   - Chair list:
+     - 🪑 Chair 1 (Barber Ahmed) - GREEN = Available
+     - 🪑 Chair 2 (Barber Omar) - RED = Busy (3 min left)
+   - Services list (name, price, duration)
+   - Reviews (rating, comments)
+   - "Book Now" button
+
+3. **BookingScreen**
+   - Service selection (dropdown)
+   - Chair selection (optional: choose specific chair if available)
+   - Date picker
+   - Time slot picker (available slots)
+   - Customer info (name, phone - pre-filled)
+   - Notes field (optional)
+   - Booking summary (service, chair, time, price, commission)
+   - "Confirm Booking" button
+
+4. **MyBookingsScreen**
+   - Tabs: Upcoming | In Progress | Past
+   - BookingCard for each booking
+   - BookingCard shows:
+     - Salon name, barber name, chair number
+     - Service, time, status
+     - Progress bar: "Barber is cutting (3 min left)"
+     - Cancel button (if pending)
+     - "Arrive Now" button (if chair ready)
+
+5. **ProfileScreen**
+   - User info (name, email, phone, avatar)
+   - Edit profile button
+   - Favorite barbers list (tap to open salon)
+   - Logout button
+
+6. **FavoritesScreen**
+   - List of favorite salons
+   - Each salon: name, distance, available chairs count
+   - Tap salon → Open SalonDetailsScreen
+
+### Salon Owner Screens
+
+1. **SalonOwnerDashboardScreen**
+   - Today's stats:
+     - Total bookings: 15
+     - Completed: 12
+     - Earnings: $240 (commission paid)
+   - Live chair status:
+     - 🪑 Chair 1 (Ahmed) - GREEN = Available
+     - 🪑 Chair 2 (Omar) - RED = Busy (3 min left)
+     - 🪑 Chair 3 (Khalid) - GREEN = Available
+   - List of today's bookings
+   - Each booking:
+     - Customer name, service, chair, time
+     - Status: Pending, In Progress, Completed
+     - Actions: [Confirm], [Start], [Complete]
+
+2. **ChairManagementScreen**
+   - Add Chair button (+)
+   - List of chairs:
+     - 🪑 Chair 1 (Barber Ahmed)
+       - Type: Haircut, Beard
+       - [🟢 Toggle Available] (switch button)
+       - [💆‍♂️ Finish Now] (swipe button, only when busy)
+     - 🪑 Chair 2 (Barber Omar)
+       - Type: Both
+       - [🔴 Toggle Busy]
+       - [Swipe to Finish]
+   - Drag to reorder chairs
+   - Edit/Delete chair
+
+3. **ChairDetailScreen**
+   - Chair info (name, barber, type)
+   - Current status:
+     - GREEN = Available (toggle switch on)
+     - RED = Busy (swipe to finish)
+   - When busy:
+     - Current customer name
+     - Service being done
+     - Time started
+     - Estimated time left (3 min)
+     - [💆‍♂️ SWIPE TO FINISH] (large button)
+   - When available:
+     - [🟢 I'm Available] (toggle switch)
+     - Next booking in 5 min
+
+4. **SalonOnboardingScreen**
+   - Salon name
+   - Address (with Google Maps picker)
+   - Phone, email
+   - Instagram handle
+   - Add chairs (multiple):
+     - Chair name (Chair 1, Chair 2, or Barber name)
+     - Type (Haircut, Beard, Both)
+     - Description (optional)
+   - Working hours (Monday-Sunday)
+   - Services (name, price, duration)
+   - "Create Salon" button
+
+### Shared Components
+
+- **ChairIcon.tsx** (2D/3D chair icon on map)
+  - Green circle = Available
+  - Red circle = Busy
+  - Tap → See chair details
+- **SalonCard.tsx** (salon info, distance, available chairs count)
+- **BookingCard.tsx** (booking info, status, progress bar, actions)
+- **WaitTimeBadge.tsx** ("5-min wait", "3-min left", color-coded)
+- **QRScanner.tsx** (scan QR code at salon)
+- **ProfileHeader.tsx** (user info, edit button)
+- **ChairStatusBadge.tsx** (GREEN/RED status badge)
+- **ProgressBar.tsx** (barber progress: "3 min left")
+
+### Services (API Calls)
+
+- api.ts (axios instance, base URL)
+- auth.ts (login, register, social auth, logout)
+- bookings.ts (create, cancel, confirm, start, complete bookings)
+- salons.ts (get salons, get salon details, get nearby salons)
+- chairs.ts (get chairs, toggle availability, finish chair)
+- favorites.ts (add, remove, get favorites)
+- socket.ts (Socket.io connection, real-time events)
+
+### Hooks
+
+- useAuth.ts (auth state, login, logout)
+- useBookings.ts (bookings state, create/cancel/complete booking)
+- useSalons.ts (salons state, search salons, get nearby)
+- useChairs.ts (chairs state, toggle availability, finish chair)
+- useRealTimeWait.ts (real-time wait time from Socket.io)
+- useFavorites.ts (favorites state, add/remove favorite)
+
+### Navigation
+
+- AppNavigator.tsx (main navigator)
+- tabs/HomeTab.tsx (map view home)
+- tabs/BookingsTab.tsx (my bookings)
+- tabs/FavoritesTab.tsx (favorite salons)
+- tabs/ProfileTab.tsx (profile)
+- SalonOwnerNavigator.tsx (owner dashboard navigator)
+
+## ENVIRONMENT VARIABLES
+
+### Backend .env
