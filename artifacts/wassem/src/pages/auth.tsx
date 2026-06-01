@@ -87,9 +87,9 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-[#36013F] flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#00f2ff]/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-[400px] h-[300px] bg-[#ff007f]/10 rounded-full blur-[120px] pointer-events-none" />
+    <div className="min-h-[100dvh] bg-[#090013] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#00B4FF]/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[400px] h-[300px] bg-[#FF1F8E]/10 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="w-full max-w-sm z-10">
         {/* Logo */}
@@ -104,7 +104,7 @@ export default function AuthPage() {
             animate={{ y: [0, -6, 0], scale: [1, 1.03, 1] }}
             transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
           >
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-[#00f2ff] to-[#ff007f] shadow-[0_0_40px_rgba(0,193,255,0.4)]">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-[#00B4FF] to-[#FF1F8E] shadow-[0_0_40px_rgba(0,193,255,0.4)]">
               <img
                 src="/tawoss-logo.png"
                 alt="Tawoss"
@@ -114,7 +114,7 @@ export default function AuthPage() {
             </div>
           </motion.div>
           <h1 className="text-5xl font-black text-white tracking-tight">TAWOSS</h1>
-          <p className="text-[#00f2ff] font-bold mt-1 text-base">On-demand grooming</p>
+          <p className="text-[#00B4FF] font-bold mt-1 text-base">On-demand grooming</p>
         </motion.div>
 
         {/* ── Step: Phone ── */}
@@ -129,8 +129,8 @@ export default function AuthPage() {
               <p className="text-white text-2xl font-black mb-1">Your phone number</p>
               <p className="text-gray-500 text-sm">We'll find or create your account</p>
             </div>
-            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-4 focus-within:border-[#00f2ff] transition-colors">
-              <Phone size={20} className="text-[#00f2ff] flex-shrink-0" />
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-4 focus-within:border-[#00B4FF] transition-colors">
+              <Phone size={20} className="text-[#00B4FF] flex-shrink-0" />
               <input
                 type="tel" placeholder="0612 345 678" value={phone}
                 onChange={e => setPhone(e.target.value)}
@@ -142,7 +142,7 @@ export default function AuthPage() {
             <button
               onClick={handlePhoneSubmit}
               disabled={phone.length < 8 || loading}
-              className="w-full bg-[#00f2ff] disabled:opacity-40 text-black font-black text-xl rounded-2xl py-5 transition-all shadow-[0_0_30px_rgba(0,193,255,0.4)] flex items-center justify-center gap-2"
+              className="w-full bg-[#00B4FF] disabled:opacity-40 text-black font-black text-xl rounded-2xl py-5 transition-all shadow-[0_0_30px_rgba(0,193,255,0.4)] flex items-center justify-center gap-2"
             >
               {loading ? "..." : <>Continue <ChevronRight size={22} /></>}
             </button>
@@ -164,8 +164,8 @@ export default function AuthPage() {
               <p className="text-white text-2xl font-black mb-1">What's your name?</p>
               <p className="text-gray-500 text-sm">Just your first name is fine</p>
             </div>
-            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-4 focus-within:border-[#00f2ff] transition-colors">
-              <User size={20} className="text-[#00f2ff] flex-shrink-0" />
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-4 focus-within:border-[#00B4FF] transition-colors">
+              <User size={20} className="text-[#00B4FF] flex-shrink-0" />
               <input
                 type="text" placeholder="Ahmed" value={name}
                 onChange={e => setName(e.target.value)}
@@ -177,7 +177,7 @@ export default function AuthPage() {
             <button
               onClick={() => setStep("role")}
               disabled={name.length < 2}
-              className="w-full bg-[#00f2ff] disabled:opacity-40 text-black font-black text-xl rounded-2xl py-5 transition-all shadow-[0_0_30px_rgba(0,193,255,0.4)] flex items-center justify-center gap-2"
+              className="w-full bg-[#00B4FF] disabled:opacity-40 text-black font-black text-xl rounded-2xl py-5 transition-all shadow-[0_0_30px_rgba(0,193,255,0.4)] flex items-center justify-center gap-2"
             >
               Continue <ChevronRight size={22} />
             </button>
@@ -203,19 +203,19 @@ export default function AuthPage() {
               <button
                 onClick={() => handleRoleSelect("client")}
                 disabled={loading}
-                className="w-full bg-white/5 hover:bg-[#00f2ff]/20 border-2 border-white/10 hover:border-[#00f2ff] text-left rounded-2xl p-5 transition-all group"
+                className="w-full bg-white/5 hover:bg-[#00B4FF]/20 border-2 border-white/10 hover:border-[#00B4FF] text-left rounded-2xl p-5 transition-all group"
               >
                 <div className="text-3xl mb-2">💈</div>
-                <p className="text-white text-xl font-black group-hover:text-[#00f2ff]">I need a service</p>
+                <p className="text-white text-xl font-black group-hover:text-[#00B4FF]">I need a service</p>
                 <p className="text-gray-500 text-sm">Book grooming at your price</p>
               </button>
               <button
                 onClick={() => handleRoleSelect("professional")}
                 disabled={loading}
-                className="w-full bg-white/5 hover:bg-[#ff007f]/20 border-2 border-white/10 hover:border-[#ff007f] text-left rounded-2xl p-5 transition-all group"
+                className="w-full bg-white/5 hover:bg-[#FF1F8E]/20 border-2 border-white/10 hover:border-[#FF1F8E] text-left rounded-2xl p-5 transition-all group"
               >
                 <div className="text-3xl mb-2">✂️</div>
-                <p className="text-white text-xl font-black group-hover:text-[#ff007f]">I'm a barber / stylist</p>
+                <p className="text-white text-xl font-black group-hover:text-[#FF1F8E]">I'm a barber / stylist</p>
                 <p className="text-gray-500 text-sm">Accept jobs and set your own terms</p>
               </button>
               <button
@@ -249,8 +249,8 @@ export default function AuthPage() {
             </div>
             <div className="space-y-3">
               {[
-                { key: "men"   as const, emoji: "💈", label: "Men's Grooming",  sub: "Barbers, fades, beard care",        hover: "hover:bg-[#00f2ff]/20 hover:border-[#00f2ff]", text: "group-hover:text-[#00f2ff]" },
-                { key: "women" as const, emoji: "💅", label: "Women's Beauty",  sub: "Nails, skincare, massage, styling", hover: "hover:bg-[#ff007f]/20 hover:border-[#ff007f]", text: "group-hover:text-[#ff007f]" },
+                { key: "men"   as const, emoji: "💈", label: "Men's Grooming",  sub: "Barbers, fades, beard care",        hover: "hover:bg-[#00B4FF]/20 hover:border-[#00B4FF]", text: "group-hover:text-[#00B4FF]" },
+                { key: "women" as const, emoji: "💅", label: "Women's Beauty",  sub: "Nails, skincare, massage, styling", hover: "hover:bg-[#FF1F8E]/20 hover:border-[#FF1F8E]", text: "group-hover:text-[#FF1F8E]" },
                 { key: "all"   as const, emoji: "✨", label: "All Services",    sub: "Show me everything",                hover: "hover:bg-purple-500/20 hover:border-purple-500", text: "group-hover:text-purple-400" },
               ].map(opt => (
                 <button

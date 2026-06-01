@@ -82,7 +82,7 @@ function ClaimModal({
       });
       L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(map);
       const salonIcon = L.divIcon({
-        html: `<div style="width:22px;height:22px;background:#00f2ff;border-radius:50%;border:3px solid #fff;box-shadow:0 0 12px rgba(0,242,255,0.8)"></div>`,
+        html: `<div style="width:22px;height:22px;background:#00B4FF;border-radius:50%;border:3px solid #fff;box-shadow:0 0 12px rgba(0,180,255,0.8)"></div>`,
         className: "", iconSize: [22, 22], iconAnchor: [11, 11],
       });
       L.marker([salon.lat, salon.lng], { icon: salonIcon }).addTo(map);
@@ -90,12 +90,12 @@ function ClaimModal({
         navigator.geolocation.getCurrentPosition(pos => {
           const clientPos: [number, number] = [pos.coords.latitude, pos.coords.longitude];
           const clientIcon = L.divIcon({
-            html: `<div style="width:16px;height:16px;background:#ff007f;border-radius:50%;border:3px solid #fff;box-shadow:0 0 8px rgba(255,0,127,0.8)"></div>`,
+            html: `<div style="width:16px;height:16px;background:#FF1F8E;border-radius:50%;border:3px solid #fff;box-shadow:0 0 8px rgba(255,31,142,0.8)"></div>`,
             className: "", iconSize: [16, 16], iconAnchor: [8, 8],
           });
           L.marker(clientPos, { icon: clientIcon }).addTo(map);
           L.polyline([clientPos, [salon.lat, salon.lng]], {
-            color: "#00f2ff", weight: 2.5, dashArray: "6,9", opacity: 0.85,
+            color: "#00B4FF", weight: 2.5, dashArray: "6,9", opacity: 0.85,
           }).addTo(map);
           map.fitBounds(L.latLngBounds([clientPos, [salon.lat, salon.lng]]), { padding: [28, 28] });
         }, () => { map.setView([salon.lat, salon.lng], 15); });
@@ -162,7 +162,7 @@ function ClaimModal({
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="w-full max-w-lg rounded-t-3xl overflow-hidden"
-        style={{ background: "linear-gradient(180deg,#0f0f0f,#0A0A0A)", border: "1px solid rgba(255,255,255,0.08)" }}>
+        style={{ background: "linear-gradient(180deg,#0D0020,#090013)", border: "1px solid rgba(255,255,255,0.08)" }}>
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-white/20" />
         </div>
@@ -186,9 +186,9 @@ function ClaimModal({
                   <button key={svc.id} onClick={() => setSelectedService(svc)}
                     className="w-full text-left rounded-2xl p-4 border transition-all"
                     style={{
-                      background: isSel ? "rgba(0,242,255,0.08)" : "rgba(255,255,255,0.04)",
-                      borderColor: isSel ? "rgba(0,242,255,0.55)" : "rgba(255,255,255,0.08)",
-                      boxShadow: isSel ? "0 0 14px rgba(0,242,255,0.15)" : "none",
+                      background: isSel ? "rgba(0,180,255,0.08)" : "rgba(255,255,255,0.04)",
+                      borderColor: isSel ? "rgba(0,180,255,0.55)" : "rgba(255,255,255,0.08)",
+                      boxShadow: isSel ? "0 0 14px rgba(0,180,255,0.15)" : "none",
                     }}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
@@ -199,7 +199,7 @@ function ClaimModal({
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-[#00f2ff] font-black text-xl">{svc.price}</p>
+                        <p className="text-[#00B4FF] font-black text-xl">{svc.price}</p>
                         <p className="text-gray-600 text-xs">MAD</p>
                       </div>
                     </div>
@@ -210,7 +210,7 @@ function ClaimModal({
             <button onClick={() => setStep("form")} disabled={!selectedService}
               className="w-full rounded-2xl py-4 font-black text-base transition-all active:scale-[0.97] disabled:opacity-30"
               style={{
-                background: selectedService ? "linear-gradient(135deg,#00f2ff,#0070FF)" : "rgba(255,255,255,0.06)",
+                background: selectedService ? "linear-gradient(135deg,#00B4FF,#0070FF)" : "rgba(255,255,255,0.06)",
                 color: selectedService ? "#000" : "#555",
                 boxShadow: selectedService ? "0 0 22px rgba(0,193,255,0.4)" : "none",
               }}>
@@ -226,7 +226,7 @@ function ClaimModal({
         {/* ── STEP: PROCESSING ── */}
         {step === "processing" && (
           <div className="px-6 pb-14 pt-8 flex flex-col items-center gap-4">
-            <div className="w-16 h-16 rounded-full border-4 border-[#00f2ff] border-t-transparent animate-spin" />
+            <div className="w-16 h-16 rounded-full border-4 border-[#00B4FF] border-t-transparent animate-spin" />
             <p className="text-gray-400 text-sm">Processing payment...</p>
           </div>
         )}
@@ -244,17 +244,17 @@ function ClaimModal({
               </button>
             </div>
             {selectedService && (
-              <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-xl border border-[#00f2ff]/30 bg-[#00f2ff]/8">
-                <Scissors size={13} className="text-[#00f2ff] flex-shrink-0" />
-                <span className="text-[#00f2ff] text-sm font-bold flex-1">{selectedService.name}</span>
+              <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-xl border border-[#00B4FF]/30 bg-[#00B4FF]/8">
+                <Scissors size={13} className="text-[#00B4FF] flex-shrink-0" />
+                <span className="text-[#00B4FF] text-sm font-bold flex-1">{selectedService.name}</span>
                 <span className="text-gray-500 text-xs">{selectedService.price} MAD · {selectedService.duration_mins}min</span>
               </div>
             )}
-            <div className="rounded-2xl border border-[#00f2ff]/25 bg-[#00f2ff]/5 p-3.5 mb-5">
+            <div className="rounded-2xl border border-[#00B4FF]/25 bg-[#00B4FF]/5 p-3.5 mb-5">
               <div className="flex items-start gap-3">
-                <Lock size={16} className="text-[#00f2ff] flex-shrink-0 mt-0.5" />
+                <Lock size={16} className="text-[#00B4FF] flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-[#00f2ff] font-bold text-sm">No-Show Lock</p>
+                  <p className="text-[#00B4FF] font-bold text-sm">No-Show Lock</p>
                   <p className="text-gray-500 text-xs leading-relaxed mt-0.5">
                     A <span className="text-white font-bold">{depositAmount} MAD deposit</span> holds your chair and is credited toward your service. No-shows forfeit the deposit.
                   </p>
@@ -268,20 +268,20 @@ function ClaimModal({
                   <CreditCard size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-600" />
                   <input value={cardNumber} onChange={e => handleCardNumberChange(e.target.value)}
                     placeholder="1234 5678 9012 3456" inputMode="numeric" maxLength={19}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none focus:border-[#00f2ff] placeholder:text-gray-700 font-mono tracking-wider" />
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none focus:border-[#00B4FF] placeholder:text-gray-700 font-mono tracking-wider" />
                 </div>
               </div>
               <div>
                 <label className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1.5 block">Cardholder Name</label>
                 <input value={cardHolder} onChange={e => setCardHolder(e.target.value)}
                   placeholder="Your name on card"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#00f2ff] placeholder:text-gray-700" />
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#00B4FF] placeholder:text-gray-700" />
               </div>
             </div>
             {error && <div className="mt-3 flex items-center gap-2 text-red-400 text-sm"><AlertCircle size={14} /><span>{error}</span></div>}
             <button onClick={handleSubmit}
               className="w-full mt-5 rounded-2xl py-4 font-black text-base flex items-center justify-center gap-2 active:scale-[0.97] transition-all"
-              style={{ background: "linear-gradient(135deg,#00f2ff,#0070FF)", color: "#000", boxShadow: "0 0 22px rgba(0,193,255,0.4)" }}>
+              style={{ background: "linear-gradient(135deg,#9B30FF,#00B4FF)", color: "#000", boxShadow: "0 0 22px rgba(0,193,255,0.4)" }}>
               <Lock size={16} />Pay {depositAmount} MAD · Secure My Chair
             </button>
           </div>
@@ -301,7 +301,7 @@ function ClaimModal({
               {selectedService && (
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Service</span>
-                  <span className="text-[#00f2ff] font-bold">{selectedService.name}</span>
+                  <span className="text-[#00B4FF] font-bold">{selectedService.name}</span>
                 </div>
               )}
               <div className="flex justify-between text-sm">
@@ -327,10 +327,10 @@ function ClaimModal({
               <button onClick={sendEnRoute} disabled={enRoute || sendingRoute}
                 className="flex-1 rounded-2xl py-3.5 font-black text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97]"
                 style={{
-                  background: enRoute ? "rgba(74,222,128,0.12)" : "linear-gradient(135deg,#ff007f,#cc0066)",
+                  background: enRoute ? "rgba(74,222,128,0.12)" : "linear-gradient(135deg,#FF1F8E,#cc0066)",
                   border: enRoute ? "1px solid rgba(74,222,128,0.4)" : "none",
                   color: enRoute ? "#4ade80" : "#fff",
-                  boxShadow: enRoute ? "none" : "0 0 16px rgba(255,0,127,0.4)",
+                  boxShadow: enRoute ? "none" : "0 0 16px rgba(255,31,142,0.4)",
                   opacity: sendingRoute ? 0.7 : 1,
                 }}>
                 {enRoute ? <><CheckCircle size={14} /> Barber notified!</> : <>🏃 I'm on my way!</>}
@@ -338,7 +338,7 @@ function ClaimModal({
               <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
                 className="flex-1 rounded-2xl py-3.5 font-black text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97]"
                 style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff" }}>
-                <Navigation size={14} className="text-[#00f2ff]" />Directions
+                <Navigation size={14} className="text-[#00B4FF]" />Directions
               </a>
             </div>
             <button onClick={onClose}
@@ -383,8 +383,8 @@ function ChairMap({
         {/* Room floor */}
         <rect x="0" y="0" width="100" height={svgH} fill="rgba(0,0,0,0.3)" rx="2" />
         {/* Mirror wall at top */}
-        <rect x="2" y="2" width="96" height="3" fill="#00f2ff" fillOpacity="0.15" rx="1" />
-        <text x="50" y="5.5" textAnchor="middle" fontSize="3" fill="#00f2ff" fillOpacity="0.6" fontFamily="monospace">MIRROR WALL</text>
+        <rect x="2" y="2" width="96" height="3" fill="#00B4FF" fillOpacity="0.15" rx="1" />
+        <text x="50" y="5.5" textAnchor="middle" fontSize="3" fill="#00B4FF" fillOpacity="0.6" fontFamily="monospace">MIRROR WALL</text>
 
         {chairs.map((chair, i) => {
           const col = i % cols;
@@ -396,11 +396,11 @@ function ChairMap({
           const isOpen = chair.status === "available";
           const isSelected = selected === chair.id;
 
-          const color = isClaimed ? "#00f2ff"
+          const color = isClaimed ? "#00B4FF"
             : isOpen ? "#4ade80"
-            : "#ff007f";
+            : "#FF1F8E";
 
-          const glowR = isClaimed ? "rgba(0,242,255,0.25)" : isOpen ? "rgba(74,222,128,0.20)" : "rgba(255,0,127,0.10)";
+          const glowR = isClaimed ? "rgba(0,180,255,0.25)" : isOpen ? "rgba(74,222,128,0.20)" : "rgba(255,31,142,0.10)";
 
           return (
             <g key={chair.id}
@@ -516,7 +516,7 @@ function ChairMap({
             <button
               onClick={onClaimClick}
               className="w-full mt-2 rounded-xl py-3 font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.97]"
-              style={{ background: "linear-gradient(135deg,#00f2ff,#0070FF)", color: "#000" }}
+              style={{ background: "linear-gradient(135deg,#9B30FF,#00B4FF)", color: "#000" }}
             >
               Claim {ch.name} · Walk In Now
             </button>
@@ -592,8 +592,8 @@ export default function SalonProfile() {
 
   if (!salon) {
     return (
-      <div className="min-h-[100dvh] bg-[#36013F] flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-[#00f2ff] border-t-transparent animate-spin" />
+      <div className="min-h-[100dvh] bg-[#090013] flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full border-2 border-[#00B4FF] border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -603,8 +603,8 @@ export default function SalonProfile() {
     ? (salon.reviews.reduce((s, r) => s + r.rating, 0) / salon.reviews.length).toFixed(1)
     : "–";
   const headerGradients = [
-    "from-[#00f2ff]/40 via-[#0A0A0A]/60 to-[#0A0A0A]",
-    "from-[#ff007f]/40 via-[#0A0A0A]/60 to-[#0A0A0A]",
+    "from-[#00B4FF]/40 via-[#0A0A0A]/60 to-[#0A0A0A]",
+    "from-[#FF1F8E]/40 via-[#0A0A0A]/60 to-[#0A0A0A]",
     "from-purple-600/40 via-[#0A0A0A]/60 to-[#0A0A0A]",
   ];
   const grad = headerGradients[salon.id % headerGradients.length];
@@ -612,13 +612,13 @@ export default function SalonProfile() {
   const isClient = user?.role === "client";
 
   return (
-    <div className="min-h-[100dvh] bg-[#36013F] pb-36">
+    <div className="min-h-[100dvh] bg-[#090013] pb-36">
       {/* Cinematic Header */}
       <div className="relative h-72 overflow-hidden">
         {salon.header_image ? (
           <img src={salon.header_image} alt={salon.name} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[#00f2ff]/20 via-[#0A0A0A] to-[#ff007f]/20 flex items-center justify-center">
+          <div className="w-full h-full bg-gradient-to-br from-[#00B4FF]/20 via-[#0A0A0A] to-[#FF1F8E]/20 flex items-center justify-center">
             <Scissors size={80} className="text-white/5" />
           </div>
         )}
@@ -632,7 +632,7 @@ export default function SalonProfile() {
         </button>
 
         {cartCount > 0 && (
-          <div className="absolute top-12 right-4 z-10 flex items-center gap-2 bg-[#ff007f] rounded-full px-3 py-2">
+          <div className="absolute top-12 right-4 z-10 flex items-center gap-2 bg-[#FF1F8E] rounded-full px-3 py-2">
             <ShoppingCart size={16} className="text-black" />
             <span className="text-black font-black text-sm">{cartCount} · {cartTotal} MAD</span>
           </div>
@@ -667,8 +667,8 @@ export default function SalonProfile() {
               <>
                 <span className="text-gray-600">·</span>
                 <div className="flex items-center gap-1">
-                  <Users size={12} className="text-[#00f2ff]" />
-                  <span className="text-[#00f2ff] text-sm font-bold">{queueCount} waiting</span>
+                  <Users size={12} className="text-[#00B4FF]" />
+                  <span className="text-[#00B4FF] text-sm font-bold">{queueCount} waiting</span>
                 </div>
               </>
             )}
@@ -692,7 +692,7 @@ export default function SalonProfile() {
                 </div>
                 <div className="text-right">
                   <p className="text-white text-xs font-bold">Queue</p>
-                  <p className="text-[#00f2ff] font-black text-xl">#{claimResult.queue_position}</p>
+                  <p className="text-[#00B4FF] font-black text-xl">#{claimResult.queue_position}</p>
                 </div>
               </div>
               <p className="text-gray-600 text-xs mt-2 text-center">
@@ -705,7 +705,7 @@ export default function SalonProfile() {
               onClick={() => setShowClaimModal(true)}
               className="w-full rounded-2xl py-4 font-black text-xl flex items-center justify-center gap-3 transition-all active:scale-[0.97]"
               style={{
-                background: "linear-gradient(135deg,#00f2ff,#0070FF)",
+                background: "linear-gradient(135deg,#9B30FF,#00B4FF)",
                 boxShadow: "0 0 30px rgba(0,193,255,0.45)",
                 color: "#000",
               }}
@@ -739,10 +739,10 @@ export default function SalonProfile() {
                   <span className="w-2 h-2 rounded-sm inline-block" style={{ background: "#4ade80" }} />Open
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-sm inline-block" style={{ background: "#ff007f" }} />Busy
+                  <span className="w-2 h-2 rounded-sm inline-block" style={{ background: "#FF1F8E" }} />Busy
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-sm inline-block" style={{ background: "#00f2ff" }} />Claimed
+                  <span className="w-2 h-2 rounded-sm inline-block" style={{ background: "#00B4FF" }} />Claimed
                 </span>
               </div>
             </div>
@@ -764,7 +764,7 @@ export default function SalonProfile() {
             key={t}
             onClick={() => setTab(t)}
             className={`flex-1 py-3 text-sm font-bold capitalize transition-colors border-b-2 ${
-              tab === t ? "border-[#00f2ff] text-[#00f2ff]" : "border-transparent text-gray-500"
+              tab === t ? "border-[#00B4FF] text-[#00B4FF]" : "border-transparent text-gray-500"
             }`}
           >
             {t === "services" && <Scissors size={14} className="inline mr-1" />}
@@ -792,11 +792,11 @@ export default function SalonProfile() {
                 </div>
               </div>
               <div className="flex flex-col items-end gap-2 ml-4">
-                <span className="text-[#00f2ff] font-black text-lg">{s.price} MAD</span>
+                <span className="text-[#00B4FF] font-black text-lg">{s.price} MAD</span>
                 {salon.is_live && isClient && !claimResult && freeChairs > 0 && (
                   <button
                     onClick={() => setShowClaimModal(true)}
-                    className="bg-[#00f2ff]/20 border border-[#00f2ff]/40 text-[#00f2ff] font-bold text-xs px-3 py-1.5 rounded-xl"
+                    className="bg-[#00B4FF]/20 border border-[#00B4FF]/40 text-[#00B4FF] font-bold text-xs px-3 py-1.5 rounded-xl"
                   >
                     Walk In
                   </button>
@@ -819,7 +819,7 @@ export default function SalonProfile() {
                 {p.photo_url ? (
                   <img src={p.photo_url} alt={p.name} className="w-full h-32 object-cover" />
                 ) : (
-                  <div className="w-full h-32 bg-gradient-to-br from-[#ff007f]/10 to-[#00f2ff]/10 flex items-center justify-center">
+                  <div className="w-full h-32 bg-gradient-to-br from-[#FF1F8E]/10 to-[#00B4FF]/10 flex items-center justify-center">
                     <Package size={32} className="text-white/20" />
                   </div>
                 )}
@@ -827,15 +827,15 @@ export default function SalonProfile() {
                   <p className="text-white font-bold text-sm">{p.name}</p>
                   {p.description && <p className="text-gray-500 text-xs mt-0.5 line-clamp-2">{p.description}</p>}
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-[#ff007f] font-black text-sm">{p.price} MAD</span>
+                    <span className="text-[#FF1F8E] font-black text-sm">{p.price} MAD</span>
                     <button
                       onClick={() => addToCart(p.id)}
-                      className="w-8 h-8 rounded-xl bg-[#ff007f]/15 border border-[#ff007f]/30 flex items-center justify-center"
+                      className="w-8 h-8 rounded-xl bg-[#FF1F8E]/15 border border-[#FF1F8E]/30 flex items-center justify-center"
                     >
-                      <span className="text-[#ff007f] font-black text-lg leading-none">+</span>
+                      <span className="text-[#FF1F8E] font-black text-lg leading-none">+</span>
                     </button>
                   </div>
-                  {cart[p.id] > 0 && <div className="mt-1.5 text-xs text-[#ff007f] font-bold">{cart[p.id]} in cart</div>}
+                  {cart[p.id] > 0 && <div className="mt-1.5 text-xs text-[#FF1F8E] font-bold">{cart[p.id]} in cart</div>}
                 </div>
               </div>
             ))}
@@ -861,12 +861,12 @@ export default function SalonProfile() {
                 onChange={e => setReviewComment(e.target.value)}
                 placeholder="Share your experience..."
                 rows={3}
-                className="w-full bg-white/5 border border-white/8 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-[#00f2ff] resize-none placeholder:text-gray-600"
+                className="w-full bg-white/5 border border-white/8 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-[#00B4FF] resize-none placeholder:text-gray-600"
               />
               <button
                 onClick={submitReview}
                 disabled={posting || !reviewComment.trim()}
-                className="mt-2 w-full bg-[#00f2ff] disabled:opacity-40 text-black font-black rounded-xl py-3 text-sm"
+                className="mt-2 w-full bg-[#00B4FF] disabled:opacity-40 text-black font-black rounded-xl py-3 text-sm"
               >
                 {posting ? "Posting..." : "Post Review"}
               </button>

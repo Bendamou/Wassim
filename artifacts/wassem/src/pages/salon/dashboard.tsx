@@ -61,18 +61,18 @@ function RevenueEstimator({ salon, freeChairs }: { salon: Salon; freeChairs: num
 
   if (!salon.is_live) {
     return (
-      <div className="mx-4 mb-5 rounded-3xl overflow-hidden border border-[#ff007f]/30"
+      <div className="mx-4 mb-5 rounded-3xl overflow-hidden border border-[#FF1F8E]/30"
         style={{ background: "linear-gradient(135deg,#1a0010,#0f0008)" }}>
         <div className="p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-xl bg-[#ff007f]/20 flex items-center justify-center">
-              <DollarSign size={16} className="text-[#ff007f]" />
+            <div className="w-8 h-8 rounded-xl bg-[#FF1F8E]/20 flex items-center justify-center">
+              <DollarSign size={16} className="text-[#FF1F8E]" />
             </div>
-            <p className="text-[#ff007f] font-black text-sm uppercase tracking-wider">Lost Revenue Estimator</p>
+            <p className="text-[#FF1F8E] font-black text-sm uppercase tracking-wider">Lost Revenue Estimator</p>
           </div>
           <p className="text-white/80 text-sm leading-relaxed">
             Your {salon.chairs.length} chair{salon.chairs.length !== 1 ? "s" : ""} could earn{" "}
-            <span className="text-[#ff007f] font-black text-lg">{potentialPerHour} MAD/hr</span>{" "}
+            <span className="text-[#FF1F8E] font-black text-lg">{potentialPerHour} MAD/hr</span>{" "}
             when live. Every minute offline is missed revenue.
           </p>
           <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
@@ -80,8 +80,8 @@ function RevenueEstimator({ salon, freeChairs }: { salon: Salon; freeChairs: num
             <span>Based on {avgPrice} MAD avg · 2 sessions/hr/chair</span>
           </div>
         </div>
-        <div className="h-1 bg-[#ff007f]/20">
-          <div className="h-full w-full bg-gradient-to-r from-[#ff007f] to-transparent animate-pulse" />
+        <div className="h-1 bg-[#FF1F8E]/20">
+          <div className="h-full w-full bg-gradient-to-r from-[#FF1F8E] to-transparent animate-pulse" />
         </div>
       </div>
     );
@@ -214,11 +214,11 @@ function QueuePanel({ salonId, token }: { salonId: number; token: string }) {
         return (
           <div
             key={claim.id}
-            className="rounded-2xl border border-[#00f2ff]/20 bg-[#00f2ff]/5 p-4"
+            className="rounded-2xl border border-[#00B4FF]/20 bg-[#00B4FF]/5 p-4"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-full bg-[#00f2ff]/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-[#00f2ff] font-black text-sm">#{i + 1}</span>
+              <div className="w-8 h-8 rounded-full bg-[#00B4FF]/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-[#00B4FF] font-black text-sm">#{i + 1}</span>
               </div>
               <img
                 src={claim.client_avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(claim.client_name)}&background=0d1a2e&color=00C1FF&bold=true&size=64`}
@@ -230,13 +230,13 @@ function QueuePanel({ salonId, token }: { salonId: number; token: string }) {
                   <p className="text-white font-bold text-sm truncate">{claim.client_name}</p>
                   {claim.status === "en_route" && (
                     <span className="flex-shrink-0 text-[10px] font-black px-2 py-0.5 rounded-full"
-                      style={{ background: "rgba(255,0,127,0.18)", color: "#ff007f", border: "1px solid rgba(255,0,127,0.35)" }}>
+                      style={{ background: "rgba(255,31,142,0.18)", color: "#FF1F8E", border: "1px solid rgba(255,31,142,0.35)" }}>
                       🏃 On the way
                     </span>
                   )}
                 </div>
                 {claim.service_name && (
-                  <p className="text-[#00f2ff] text-xs font-bold mt-0.5 flex items-center gap-1">
+                  <p className="text-[#00B4FF] text-xs font-bold mt-0.5 flex items-center gap-1">
                     <Scissors size={9} />
                     {claim.service_name}
                   </p>
@@ -245,7 +245,7 @@ function QueuePanel({ salonId, token }: { salonId: number; token: string }) {
                   <Clock size={10} />
                   <span>{formatTimeAgo(claim.created_at)}</span>
                   <span>·</span>
-                  <span className="text-[#00f2ff]">exp {expiresIn}m</span>
+                  <span className="text-[#00B4FF]">exp {expiresIn}m</span>
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
@@ -373,16 +373,16 @@ export default function SalonDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] bg-[#36013F] flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-[#00f2ff] border-t-transparent animate-spin" />
+      <div className="min-h-[100dvh] bg-[#090013] flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full border-2 border-[#00B4FF] border-t-transparent animate-spin" />
       </div>
     );
   }
 
   if (!salon) {
     return (
-      <div className="min-h-[100dvh] bg-[#36013F] flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#00f2ff] to-[#ff007f] flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(0,193,255,0.4)]">
+      <div className="min-h-[100dvh] bg-[#090013] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#00B4FF] to-[#FF1F8E] flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(0,193,255,0.4)]">
           <Scissors size={36} className="text-white" />
         </div>
         <h2 className="text-2xl font-black text-white mb-2">No salon yet</h2>
@@ -398,10 +398,10 @@ export default function SalonDashboard() {
   const queueCount = salon.activeClaims?.length ?? 0;
 
   return (
-    <div className="min-h-[100dvh] bg-[#36013F] pb-28">
+    <div className="min-h-[100dvh] bg-[#090013] pb-28">
       {/* Header */}
-      <div className="bg-gradient-to-b from-[#00f2ff]/8 to-transparent pt-14 pb-4 px-5">
-        <p className="text-[#00f2ff] text-xs font-bold uppercase tracking-widest mb-1">Salon Dashboard</p>
+      <div className="bg-gradient-to-b from-[#00B4FF]/8 to-transparent pt-14 pb-4 px-5">
+        <p className="text-[#00B4FF] text-xs font-bold uppercase tracking-widest mb-1">Salon Dashboard</p>
         <h1 className="text-2xl font-black text-white">{salon.name}</h1>
         <p className="text-gray-600 text-xs mt-0.5">{salon.address}</p>
       </div>
@@ -459,8 +459,8 @@ export default function SalonDashboard() {
                 <span>Live on map · 5km radius</span>
               </div>
               <div className="flex items-center gap-1.5 text-xs text-gray-500 ml-auto">
-                <Users size={12} className="text-[#00f2ff]" />
-                <span className="text-[#00f2ff] font-bold">{queueCount} in queue</span>
+                <Users size={12} className="text-[#00B4FF]" />
+                <span className="text-[#00B4FF] font-bold">{queueCount} in queue</span>
               </div>
             </div>
           )}
@@ -474,9 +474,9 @@ export default function SalonDashboard() {
       <div className="grid grid-cols-4 gap-2 px-4 mb-5">
         {[
           { label: "Free", value: freeChairs, color: "text-green-400" },
-          { label: "Queue", value: queueCount, color: "text-[#00f2ff]" },
+          { label: "Queue", value: queueCount, color: "text-[#00B4FF]" },
           { label: "Rating", value: avgRating, color: "text-yellow-400" },
-          { label: "Services", value: salon.services?.length ?? 0, color: "text-[#ff007f]" },
+          { label: "Services", value: salon.services?.length ?? 0, color: "text-[#FF1F8E]" },
         ].map(stat => (
           <div key={stat.label} className="bg-white/5 border border-white/8 rounded-2xl p-3 flex flex-col items-center">
             <span className={`text-xl font-black ${stat.color}`}>{stat.value}</span>
@@ -493,13 +493,13 @@ export default function SalonDashboard() {
             onClick={() => setActiveTab(tab)}
             className={`flex-1 py-2 rounded-xl text-xs font-bold capitalize transition-all border ${
               activeTab === tab
-                ? "bg-[#00f2ff]/15 border-[#00f2ff]/50 text-[#00f2ff]"
+                ? "bg-[#00B4FF]/15 border-[#00B4FF]/50 text-[#00B4FF]"
                 : "bg-white/3 border-white/8 text-gray-500"
             }`}
           >
             {tab}
             {tab === "queue" && queueCount > 0 && (
-              <span className="ml-1 bg-[#00f2ff] text-black rounded-full text-[10px] font-black px-1.5">{queueCount}</span>
+              <span className="ml-1 bg-[#00B4FF] text-black rounded-full text-[10px] font-black px-1.5">{queueCount}</span>
             )}
           </button>
         ))}
@@ -512,7 +512,7 @@ export default function SalonDashboard() {
           {(salon.services ?? []).slice(0, 4).map((s: any) => (
             <div key={s.id} className="bg-white/5 border border-white/8 rounded-xl px-4 py-2.5 flex justify-between items-center">
               <span className="text-white text-sm font-bold">{s.name}</span>
-              <span className="text-[#00f2ff] font-black text-sm">{s.price} MAD</span>
+              <span className="text-[#00B4FF] font-black text-sm">{s.price} MAD</span>
             </div>
           ))}
           {(salon.services?.length ?? 0) === 0 && (
@@ -531,9 +531,9 @@ export default function SalonDashboard() {
             </p>
             <button
               onClick={() => setShowAddChair(v => !v)}
-              className="w-9 h-9 rounded-xl bg-[#00f2ff]/15 border border-[#00f2ff]/30 flex items-center justify-center"
+              className="w-9 h-9 rounded-xl bg-[#00B4FF]/15 border border-[#00B4FF]/30 flex items-center justify-center"
             >
-              <Plus size={18} className="text-[#00f2ff]" />
+              <Plus size={18} className="text-[#00B4FF]" />
             </button>
           </div>
 
@@ -544,12 +544,12 @@ export default function SalonDashboard() {
                 onChange={e => setNewChairName(e.target.value)}
                 placeholder="e.g. Chair A, VIP Chair"
                 onKeyDown={e => e.key === "Enter" && addChair()}
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm outline-none focus:border-[#00f2ff] placeholder:text-gray-600"
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm outline-none focus:border-[#00B4FF] placeholder:text-gray-600"
               />
               <button
                 onClick={addChair}
                 disabled={addingChair || !newChairName.trim()}
-                className="bg-[#00f2ff] disabled:opacity-40 text-black font-black text-sm px-4 rounded-xl"
+                className="bg-[#00B4FF] disabled:opacity-40 text-black font-black text-sm px-4 rounded-xl"
               >
                 Add
               </button>
@@ -569,12 +569,12 @@ export default function SalonDashboard() {
                   className="rounded-2xl border transition-all overflow-hidden"
                   style={{
                     background: hasClaim
-                      ? "rgba(0,242,255,0.07)"
+                      ? "rgba(0,180,255,0.07)"
                       : isAvailable
                       ? "rgba(74,222,128,0.06)"
                       : "rgba(255,255,255,0.03)",
                     borderColor: hasClaim
-                      ? "rgba(0,242,255,0.40)"
+                      ? "rgba(0,180,255,0.40)"
                       : isAvailable
                       ? "rgba(74,222,128,0.30)"
                       : "rgba(255,255,255,0.08)",
@@ -589,19 +589,19 @@ export default function SalonDashboard() {
                       <div className="relative flex-shrink-0">
                         {isAvailable && (
                           <div className="absolute inset-0 rounded-full animate-ping"
-                            style={{ background: hasClaim ? "#00f2ff" : "#4ade80", opacity: 0.35 }} />
+                            style={{ background: hasClaim ? "#00B4FF" : "#4ade80", opacity: 0.35 }} />
                         )}
                         <div className="w-3 h-3 rounded-full" style={{
-                          background: hasClaim ? "#00f2ff" : isAvailable ? "#4ade80" : "#374151",
+                          background: hasClaim ? "#00B4FF" : isAvailable ? "#4ade80" : "#374151",
                           boxShadow: isAvailable
-                            ? `0 0 8px ${hasClaim ? "#00f2ff" : "#4ade80"}`
+                            ? `0 0 8px ${hasClaim ? "#00B4FF" : "#4ade80"}`
                             : "none",
                         }} />
                       </div>
                       <div>
                         <p className="text-white font-bold">{chair.name}</p>
                         <p className="text-xs font-bold" style={{
-                          color: hasClaim ? "#00f2ff" : isAvailable ? "#4ade80" : "#6b7280",
+                          color: hasClaim ? "#00B4FF" : isAvailable ? "#4ade80" : "#6b7280",
                         }}>
                           {hasClaim ? "● Client en route" : isAvailable ? "✓ Live — visible on map" : "● Offline"}
                         </p>
@@ -613,13 +613,13 @@ export default function SalonDashboard() {
                       className="transition-opacity disabled:opacity-50"
                     >
                       {isAvailable
-                        ? <ToggleRight size={36} style={{ color: hasClaim ? "#00f2ff" : "#4ade80" }} />
+                        ? <ToggleRight size={36} style={{ color: hasClaim ? "#00B4FF" : "#4ade80" }} />
                         : <ToggleLeft size={36} className="text-gray-600" />}
                     </button>
                   </div>
                   {isAvailable && (
                     <div className="h-0.5 mx-4 mb-3 rounded-full"
-                      style={{ background: `linear-gradient(90deg,${hasClaim ? "#00f2ff" : "#4ade80"},transparent)` }} />
+                      style={{ background: `linear-gradient(90deg,${hasClaim ? "#00B4FF" : "#4ade80"},transparent)` }} />
                   )}
                 </div>
               );

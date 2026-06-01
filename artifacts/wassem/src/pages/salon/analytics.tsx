@@ -8,8 +8,8 @@ import { useAuth } from "@/lib/auth";
 
 const API = "/api";
 
-const CYAN  = "#00f2ff";
-const PINK  = "#ff007f";
+const CYAN  = "#00B4FF";
+const PINK  = "#FF1F8E";
 const PURPLE_MID = "#a020ff";
 
 function seedRand(seed: number) {
@@ -59,8 +59,8 @@ function GradientBar({
           className="w-full rounded-t-lg transition-all"
           style={{
             height: `${pct}%`,
-            background: `rgba(0,242,255,0.12)`,
-            boxShadow: `0 0 4px rgba(0,242,255,0.15)`,
+            background: `rgba(0,180,255,0.12)`,
+            boxShadow: `0 0 4px rgba(0,180,255,0.15)`,
           }}
         />
       </div>
@@ -86,8 +86,8 @@ function GradientBar({
             ? `linear-gradient(to top, ${PINK}, ${CYAN})`
             : `linear-gradient(to top, ${CYAN}, ${PINK})`,
           boxShadow: isHighlight
-            ? `0 0 12px rgba(255,0,127,0.55), 0 0 4px rgba(0,242,255,0.3)`
-            : `0 0 12px rgba(0,242,255,0.5), 0 0 4px rgba(255,0,127,0.25)`,
+            ? `0 0 12px rgba(255,31,142,0.55), 0 0 4px rgba(0,180,255,0.3)`
+            : `0 0 12px rgba(0,180,255,0.5), 0 0 4px rgba(255,31,142,0.25)`,
         }}
       />
     </div>
@@ -108,9 +108,9 @@ function HourBar({ value, max }: { value: number; max: number }) {
     : `rgba(255,255,255,0.10)`;
 
   const glow = isPeak
-    ? `0 0 10px rgba(255,0,127,0.6)`
+    ? `0 0 10px rgba(255,31,142,0.6)`
     : isBusy
-    ? `0 0 8px rgba(0,242,255,0.45)`
+    ? `0 0 8px rgba(0,180,255,0.45)`
     : undefined;
 
   return (
@@ -150,7 +150,7 @@ export default function SalonAnalytics() {
 
   if (loading || !salon) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center" style={{ background: "#36013F" }}>
+      <div className="min-h-[100dvh] flex items-center justify-center" style={{ background: "#090013" }}>
         <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: `${CYAN} transparent` }} />
       </div>
     );
@@ -205,10 +205,10 @@ export default function SalonAnalytics() {
   const cardBorder = "rgba(120,60,220,0.35)";
 
   return (
-    <div className="min-h-[100dvh] pb-28" style={{ background: "#36013F" }}>
+    <div className="min-h-[100dvh] pb-28" style={{ background: "#090013" }}>
       {/* ── Header ── */}
       <div className="pt-12 pb-5 px-5"
-        style={{ background: "linear-gradient(to bottom, rgba(0,242,255,0.07), transparent)" }}>
+        style={{ background: "linear-gradient(to bottom, rgba(0,180,255,0.07), transparent)" }}>
         <div className="flex items-center gap-3 mb-3">
           <button
             onClick={() => setLocation("/salon/dashboard")}
@@ -256,7 +256,7 @@ export default function SalonAnalytics() {
       {/* ── Revenue Leakage Alert ── */}
       {leakage > 0 && (
         <div className="mx-4 mb-5 rounded-2xl p-4"
-          style={{ background: "rgba(255,0,127,0.08)", border: "1px solid rgba(255,0,127,0.30)" }}>
+          style={{ background: "rgba(255,31,142,0.08)", border: "1px solid rgba(255,31,142,0.30)" }}>
           <div className="flex items-start gap-3">
             <AlertTriangle size={20} style={{ color: PINK, flexShrink: 0, marginTop: 2 }} />
             <div>
@@ -399,7 +399,7 @@ export default function SalonAnalytics() {
               onClick={createOffer}
               disabled={submitting || !newOffer.title.trim()}
               className="w-full font-black rounded-xl py-3 text-sm disabled:opacity-40"
-              style={{ background: "#facc15", color: "#36013F" }}
+              style={{ background: "#facc15", color: "#090013" }}
             >
               {submitting ? "Creating..." : "⚡ Publish Flash Offer"}
             </button>

@@ -45,7 +45,7 @@ export default function MatchScreen() {
   const pendingBids = bids.filter((b) => b.status === "pending");
 
   return (
-    <div className="min-h-[100dvh] bg-[#36013F] flex flex-col">
+    <div className="min-h-[100dvh] bg-[#090013] flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-4 px-5 pt-safe-top pt-5 pb-4 border-b border-white/5">
         <button
@@ -57,9 +57,9 @@ export default function MatchScreen() {
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h1 className="text-white font-black text-xl">Live Offers</h1>
-            <div className="flex items-center gap-1 bg-[#00f2ff]/10 border border-[#00f2ff]/20 rounded-full px-2 py-0.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#00f2ff] animate-pulse" />
-              <span className="text-[#00f2ff] text-xs font-bold">LIVE</span>
+            <div className="flex items-center gap-1 bg-[#00B4FF]/10 border border-[#00B4FF]/20 rounded-full px-2 py-0.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#00B4FF] animate-pulse" />
+              <span className="text-[#00B4FF] text-xs font-bold">LIVE</span>
             </div>
           </div>
           {job && (
@@ -75,10 +75,10 @@ export default function MatchScreen() {
         {pendingBids.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="relative mb-6">
-              <div className="w-20 h-20 rounded-full bg-[#00f2ff]/10 border border-[#00f2ff]/20 flex items-center justify-center">
-                <Zap size={32} className="text-[#00f2ff]" />
+              <div className="w-20 h-20 rounded-full bg-[#00B4FF]/10 border border-[#00B4FF]/20 flex items-center justify-center">
+                <Zap size={32} className="text-[#00B4FF]" />
               </div>
-              <div className="absolute -top-1 -right-1 w-6 h-6 bg-[#00f2ff] rounded-full animate-ping" />
+              <div className="absolute -top-1 -right-1 w-6 h-6 bg-[#00B4FF] rounded-full animate-ping" />
             </div>
             <p className="text-white font-black text-2xl mb-2">Waiting for barbers</p>
             <p className="text-gray-500 max-w-xs">Nearby professionals are seeing your request right now</p>
@@ -91,7 +91,7 @@ export default function MatchScreen() {
                 <div className="p-5">
                   <div className="flex items-start gap-4">
                     {/* Avatar */}
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#00f2ff] to-[#ff007f] flex items-center justify-center text-white font-black text-2xl flex-shrink-0 shadow-[0_0_15px_rgba(0,193,255,0.3)]">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#00B4FF] to-[#FF1F8E] flex items-center justify-center text-white font-black text-2xl flex-shrink-0 shadow-[0_0_15px_rgba(0,193,255,0.3)]">
                       {bid.professional?.name?.charAt(0).toUpperCase()}
                     </div>
 
@@ -100,7 +100,7 @@ export default function MatchScreen() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-white font-black text-lg">{bid.professional?.name}</p>
                         {bid.professional?.isVerified && (
-                          <span className="text-xs bg-[#00f2ff]/20 border border-[#00f2ff]/40 text-[#00f2ff] rounded-full px-2 py-0.5 font-bold">✓ Verified</span>
+                          <span className="text-xs bg-[#00B4FF]/20 border border-[#00B4FF]/40 text-[#00B4FF] rounded-full px-2 py-0.5 font-bold">✓ Verified</span>
                         )}
                       </div>
                       <div className="flex items-center gap-3 mt-1 text-sm text-gray-400">
@@ -112,8 +112,8 @@ export default function MatchScreen() {
                         )}
                         {bid.estimatedArrival && (
                           <span className="flex items-center gap-1">
-                            <Clock size={13} className="text-[#ff007f]" />
-                            <span className="text-[#ff007f] font-bold">{bid.estimatedArrival}</span>
+                            <Clock size={13} className="text-[#FF1F8E]" />
+                            <span className="text-[#FF1F8E] font-bold">{bid.estimatedArrival}</span>
                           </span>
                         )}
                       </div>
@@ -134,7 +134,7 @@ export default function MatchScreen() {
                         <span className="text-2xl font-bold text-gray-400">MAD</span>
                       </div>
                       {savings !== 0 && (
-                        <p className={`text-sm font-bold mt-0.5 ${savings > 0 ? "text-green-400" : "text-[#ff007f]"}`}>
+                        <p className={`text-sm font-bold mt-0.5 ${savings > 0 ? "text-green-400" : "text-[#FF1F8E]"}`}>
                           {savings > 0 ? `You save ${savings} MAD!` : `+${Math.abs(savings)} MAD above your offer`}
                         </p>
                       )}
@@ -144,7 +144,7 @@ export default function MatchScreen() {
                     <button
                       onClick={() => handleAccept(bid.id)}
                       disabled={updateBidStatus.isPending}
-                      className="bg-[#00f2ff] hover:bg-[#00b0e8] disabled:opacity-40 text-black font-black text-lg rounded-2xl px-6 py-4 transition-all shadow-[0_0_20px_rgba(0,193,255,0.4)] flex items-center gap-2 active:scale-95"
+                      className="bg-[#00B4FF] hover:bg-[#00b0e8] disabled:opacity-40 text-black font-black text-lg rounded-2xl px-6 py-4 transition-all shadow-[0_0_20px_rgba(0,193,255,0.4)] flex items-center gap-2 active:scale-95"
                     >
                       <Check size={20} /> Accept
                     </button>

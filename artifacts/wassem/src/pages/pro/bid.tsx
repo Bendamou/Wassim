@@ -45,14 +45,14 @@ export default function ProBid() {
 
   if (isLoading || !job) {
     return (
-      <div className="min-h-[100dvh] bg-[#36013F] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#ff007f] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-[100dvh] bg-[#090013] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#FF1F8E] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[#36013F] flex flex-col">
+    <div className="min-h-[100dvh] bg-[#090013] flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-4 px-5 pt-safe-top pt-5 pb-4">
         <button
@@ -71,7 +71,7 @@ export default function ProBid() {
         {/* Job card */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-5">
           <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-[#ff007f]/10 border border-[#ff007f]/20 flex items-center justify-center text-2xl flex-shrink-0">
+            <div className="w-14 h-14 rounded-2xl bg-[#FF1F8E]/10 border border-[#FF1F8E]/20 flex items-center justify-center text-2xl flex-shrink-0">
               {SERVICE_EMOJI[job.service] || "✂️"}
             </div>
             <div className="flex-1 min-w-0">
@@ -96,11 +96,11 @@ export default function ProBid() {
             onClick={() => setMode("accept")}
             className={`rounded-2xl p-5 border-2 transition-all text-left ${
               mode === "accept"
-                ? "bg-[#00f2ff]/10 border-[#00f2ff] shadow-[0_0_20px_rgba(0,193,255,0.2)]"
+                ? "bg-[#00B4FF]/10 border-[#00B4FF] shadow-[0_0_20px_rgba(0,193,255,0.2)]"
                 : "bg-white/5 border-white/10"
             }`}
           >
-            <Check size={24} className={mode === "accept" ? "text-[#00f2ff]" : "text-gray-500"} />
+            <Check size={24} className={mode === "accept" ? "text-[#00B4FF]" : "text-gray-500"} />
             <p className={`font-black text-lg mt-3 ${mode === "accept" ? "text-white" : "text-gray-400"}`}>Accept Price</p>
             <p className="text-gray-500 text-sm mt-1">{job.budget} MAD</p>
           </button>
@@ -111,11 +111,11 @@ export default function ProBid() {
             }}
             className={`rounded-2xl p-5 border-2 transition-all text-left ${
               mode === "counter"
-                ? "bg-[#ff007f]/10 border-[#ff007f] shadow-[0_0_20px_rgba(255,0,255,0.2)]"
+                ? "bg-[#FF1F8E]/10 border-[#FF1F8E] shadow-[0_0_20px_rgba(255,0,255,0.2)]"
                 : "bg-white/5 border-white/10"
             }`}
           >
-            <MessageSquare size={24} className={mode === "counter" ? "text-[#ff007f]" : "text-gray-500"} />
+            <MessageSquare size={24} className={mode === "counter" ? "text-[#FF1F8E]" : "text-gray-500"} />
             <p className={`font-black text-lg mt-3 ${mode === "counter" ? "text-white" : "text-gray-400"}`}>Counter-Offer</p>
             <p className="text-gray-500 text-sm mt-1">Set your price</p>
           </button>
@@ -123,7 +123,7 @@ export default function ProBid() {
 
         {/* Counter price editor */}
         {mode === "counter" && (
-          <div className="bg-white/5 border border-[#ff007f]/20 rounded-3xl p-6">
+          <div className="bg-white/5 border border-[#FF1F8E]/20 rounded-3xl p-6">
             <p className="text-gray-400 text-xs uppercase tracking-wider font-bold mb-5 text-center">Your Counter Price</p>
             <div className="flex items-center justify-center gap-6">
               <button
@@ -138,13 +138,13 @@ export default function ProBid() {
               </div>
               <button
                 onClick={() => setCounterPrice((p) => p + 10)}
-                className="w-14 h-14 rounded-full bg-[#ff007f] flex items-center justify-center text-white hover:bg-[#e600e6] active:scale-95 shadow-[0_0_20px_rgba(255,0,255,0.4)]"
+                className="w-14 h-14 rounded-full bg-[#FF1F8E] flex items-center justify-center text-white hover:bg-[#e600e6] active:scale-95 shadow-[0_0_20px_rgba(255,0,255,0.4)]"
               >
                 <Plus size={24} />
               </button>
             </div>
             {counterPrice !== job.budget && (
-              <p className={`text-center text-sm font-bold mt-3 ${counterPrice < job.budget ? "text-green-400" : "text-[#ff007f]"}`}>
+              <p className={`text-center text-sm font-bold mt-3 ${counterPrice < job.budget ? "text-green-400" : "text-[#FF1F8E]"}`}>
                 {counterPrice < job.budget ? `You're offering ${job.budget - counterPrice} MAD less` : `${counterPrice - job.budget} MAD above client's offer`}
               </p>
             )}
@@ -154,8 +154,8 @@ export default function ProBid() {
         {/* ETA */}
         <div>
           <p className="text-gray-400 text-xs uppercase tracking-wider font-bold mb-2">Your ETA (optional)</p>
-          <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-4 focus-within:border-[#ff007f] transition-colors">
-            <Clock size={18} className="text-[#ff007f] flex-shrink-0" />
+          <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-4 focus-within:border-[#FF1F8E] transition-colors">
+            <Clock size={18} className="text-[#FF1F8E] flex-shrink-0" />
             <input
               value={eta}
               onChange={(e) => setEta(e.target.value)}
@@ -174,8 +174,8 @@ export default function ProBid() {
           disabled={createBid.isPending || (mode === "counter" && counterPrice <= 0)}
           className={`w-full font-black text-xl rounded-2xl py-5 transition-all flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-40 ${
             mode === "accept"
-              ? "bg-[#00f2ff] hover:bg-[#00b0e8] text-black shadow-[0_0_30px_rgba(0,193,255,0.5)]"
-              : "bg-[#ff007f] hover:bg-[#e600e6] text-white shadow-[0_0_30px_rgba(255,0,255,0.5)]"
+              ? "bg-[#00B4FF] hover:bg-[#00b0e8] text-black shadow-[0_0_30px_rgba(0,193,255,0.5)]"
+              : "bg-[#FF1F8E] hover:bg-[#e600e6] text-white shadow-[0_0_30px_rgba(255,0,255,0.5)]"
           }`}
         >
           {createBid.isPending ? "Sending..." : (

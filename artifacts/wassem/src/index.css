@@ -66,59 +66,59 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* ── Wassem: Cyber Purple × Neon Cyan × Neon Pink ─────────────────────────── */
+/* ── Tawoss: PicsArt Dark × Electric Blue × Vivid Purple × Hot Pink ────────── */
 :root {
-  --button-outline: rgba(180,100,255, .15);
-  --badge-outline: rgba(180,100,255, .08);
+  --button-outline: rgba(155,48,255, .15);
+  --badge-outline: rgba(155,48,255, .08);
   --opaque-button-border-intensity: 9;
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  /* Background: #36013F — deep violet edge of spotlight */
-  --background: 291 97% 13%;
-  /* Foreground: #f3f1f6 — crisp off-white */
-  --foreground: 260 22% 96%;
+  /* Background: #090013 — PicsArt deep night */
+  --background: 278 100% 4%;
+  /* Foreground: #f0eeff */
+  --foreground: 245 80% 96%;
   /* Border */
-  --border: 270 40% 32%;
-  /* Card: #4a2866 — mid-spotlight purple, pops above edge */
-  --card: 270 50% 28%;
-  --card-foreground: 260 22% 96%;
-  --card-border: 270 45% 38%;
-  /* Sidebar: darkest violet */
-  --sidebar: 291 97% 10%;
-  --sidebar-foreground: 260 22% 96%;
-  --sidebar-border: 270 40% 24%;
-  --sidebar-primary: 177 100% 50%;
-  --sidebar-primary-foreground: 291 97% 13%;
-  --sidebar-accent: 270 45% 32%;
-  --sidebar-accent-foreground: 260 22% 96%;
-  --sidebar-ring: 177 100% 50%;
+  --border: 265 50% 22%;
+  /* Card: #130028 — dark surface */
+  --card: 272 100% 8%;
+  --card-foreground: 245 80% 96%;
+  --card-border: 268 60% 22%;
+  /* Sidebar */
+  --sidebar: 278 100% 3%;
+  --sidebar-foreground: 245 80% 96%;
+  --sidebar-border: 265 50% 16%;
+  --sidebar-primary: 198 100% 50%;
+  --sidebar-primary-foreground: 278 100% 4%;
+  --sidebar-accent: 268 60% 16%;
+  --sidebar-accent-foreground: 245 80% 96%;
+  --sidebar-ring: 198 100% 50%;
   /* Popover */
-  --popover: 270 50% 28%;
-  --popover-foreground: 260 22% 96%;
-  --popover-border: 270 45% 38%;
-  /* Primary: #00f2ff — Neon Cyan */
-  --primary: 177 100% 50%;
-  --primary-foreground: 291 97% 13%;
-  /* Secondary: #ff007f — Neon Pink */
-  --secondary: 330 100% 50%;
-  --secondary-foreground: 291 97% 13%;
+  --popover: 272 100% 8%;
+  --popover-foreground: 245 80% 96%;
+  --popover-border: 268 60% 22%;
+  /* Primary: #00B4FF — PicsArt Electric Blue */
+  --primary: 198 100% 50%;
+  --primary-foreground: 278 100% 4%;
+  /* Secondary: #FF1F8E — PicsArt Hot Pink */
+  --secondary: 328 100% 56%;
+  --secondary-foreground: 278 100% 4%;
   /* Muted */
-  --muted: 270 40% 26%;
-  --muted-foreground: 263 20% 65%;
-  /* Accent */
-  --accent: 270 45% 32%;
-  --accent-foreground: 260 22% 96%;
+  --muted: 268 50% 14%;
+  --muted-foreground: 260 20% 65%;
+  /* Accent: #9B30FF — PicsArt Vivid Purple */
+  --accent: 271 100% 40%;
+  --accent-foreground: 245 80% 96%;
   /* Destructive */
   --destructive: 0 72% 51%;
-  --destructive-foreground: 260 22% 96%;
+  --destructive-foreground: 245 80% 96%;
   /* Input */
-  --input: 270 45% 30%;
-  --ring: 177 100% 50%;
-  /* Charts: cyan → pink spectrum */
-  --chart-1: 177 100% 50%;
-  --chart-2: 330 100% 50%;
-  --chart-3: 290 100% 55%;
+  --input: 268 55% 18%;
+  --ring: 198 100% 50%;
+  /* Charts: blue → pink → purple spectrum */
+  --chart-1: 198 100% 50%;
+  --chart-2: 328 100% 56%;
+  --chart-3: 271 100% 60%;
   --chart-4: 38 92% 50%;
   --chart-5: 0 72% 51%;
 
@@ -127,14 +127,14 @@
   --app-font-mono: Menlo, monospace;
   --radius: .75rem;
 
-  --shadow-2xs: 0px 1px 2px 0px rgba(0,242,255, 0.06);
-  --shadow-xs:  0px 2px 4px 0px rgba(0,242,255, 0.09);
-  --shadow-sm:  0px 2px 4px 0px rgba(0,242,255, 0.09), 0px 1px 2px -1px rgba(0,242,255, 0.06);
-  --shadow:     0px 4px 8px 0px rgba(0,242,255, 0.12), 0px 2px 4px -1px rgba(0,242,255, 0.07);
-  --shadow-md:  0px 6px 12px 0px rgba(0,242,255, 0.14), 0px 2px 6px -1px rgba(0,242,255, 0.09);
-  --shadow-lg:  0px 8px 16px 0px rgba(0,242,255, 0.14), 0px 4px 8px -2px rgba(0,242,255, 0.09);
-  --shadow-xl:  0px 12px 24px 0px rgba(0,242,255, 0.16), 0px 8px 12px -4px rgba(0,242,255, 0.11);
-  --shadow-2xl: 0px 20px 40px 0px rgba(0,242,255, 0.16);
+  --shadow-2xs: 0px 1px 2px 0px rgba(0,180,255, 0.06);
+  --shadow-xs:  0px 2px 4px 0px rgba(0,180,255, 0.09);
+  --shadow-sm:  0px 2px 4px 0px rgba(0,180,255, 0.09), 0px 1px 2px -1px rgba(0,180,255, 0.06);
+  --shadow:     0px 4px 8px 0px rgba(0,180,255, 0.12), 0px 2px 4px -1px rgba(0,180,255, 0.07);
+  --shadow-md:  0px 6px 12px 0px rgba(0,180,255, 0.14), 0px 2px 6px -1px rgba(0,180,255, 0.09);
+  --shadow-lg:  0px 8px 16px 0px rgba(0,180,255, 0.14), 0px 4px 8px -2px rgba(0,180,255, 0.09);
+  --shadow-xl:  0px 12px 24px 0px rgba(0,180,255, 0.16), 0px 8px 12px -4px rgba(0,180,255, 0.11);
+  --shadow-2xl: 0px 20px 40px 0px rgba(0,180,255, 0.16);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
@@ -154,88 +154,86 @@
 
   body {
     @apply font-sans antialiased;
-    background: radial-gradient(ellipse 110% 90% at 50% 35%, #58427C 0%, #36013F 65%, #2a0132 100%);
+    background: linear-gradient(160deg, #1C0845 0%, #090013 50%, #040010 100%);
     background-attachment: fixed;
     min-height: 100dvh;
-    color: #f3f1f6;
+    color: #f0eeff;
   }
 }
 
-/* ── Global Cyber Purple overrides ─────────────────────────────────────────── */
-/* Replace legacy midnight-black backgrounds with deep Cyber Purple */
+/* ── Global PicsArt colour overrides ──────────────────────────────────────── */
 @layer utilities {
-  /* Hard-coded legacy blacks → Galaxy Purple */
-  .bg-\[#0A0A0A\]   { background-color: #1a0b2e !important; }
-  .from-\[#0A0A0A\] { --tw-gradient-from: #1a0b2e !important; }
-  .via-\[#0A0A0A\]  { --tw-gradient-via: #1a0b2e !important; }
-  .to-\[#0A0A0A\]   { --tw-gradient-to: #1a0b2e !important; }
-  /* Previous cyber-purple values still in markup → remap to galaxy */
-  .bg-\[#0f051d\]   { background-color: #1a0b2e !important; }
-  .from-\[#0f051d\] { --tw-gradient-from: #1a0b2e !important; }
-  .to-\[#0f051d\]   { --tw-gradient-to: #1a0b2e !important; }
-  /* black/70 overlays → deep galaxy overlay */
-  .bg-black\/70 { background-color: rgba(26,11,46,0.80) !important; }
-  .bg-black\/50 { background-color: rgba(26,11,46,0.60) !important; }
+  /* Hard-coded legacy darks → PicsArt deep night */
+  .bg-\[#0A0A0A\]   { background-color: #0D0020 !important; }
+  .from-\[#0A0A0A\] { --tw-gradient-from: #0D0020 !important; }
+  .via-\[#0A0A0A\]  { --tw-gradient-via: #0D0020 !important; }
+  .to-\[#0A0A0A\]   { --tw-gradient-to: #0D0020 !important; }
+  .bg-\[#0f051d\]   { background-color: #090013 !important; }
+  .from-\[#0f051d\] { --tw-gradient-from: #090013 !important; }
+  .to-\[#0f051d\]   { --tw-gradient-to: #090013 !important; }
+  /* black overlays → deep PicsArt overlay */
+  .bg-black\/70 { background-color: rgba(9,0,19,0.80) !important; }
+  .bg-black\/50 { background-color: rgba(9,0,19,0.60) !important; }
+  .bg-black\/40 { background-color: rgba(9,0,19,0.70) !important; }
+  .bg-black\/60 { background-color: rgba(9,0,19,0.75) !important; }
 
-  /* Legacy #0D0D0D tweaks (used in map markers etc.) */
-  /* kept as-is for Leaflet marker inner circles */
+  /* Electric Blue: old #00C1FF → #00B4FF */
+  .text-\[#00C1FF\]   { color: #00B4FF !important; }
+  .bg-\[#00C1FF\]     { background-color: #00B4FF !important; }
+  .border-\[#00C1FF\] { border-color: #00B4FF !important; }
+  /* Hot Pink: old #FF00FF → #FF1F8E */
+  .text-\[#FF00FF\]   { color: #FF1F8E !important; }
+  .bg-\[#FF00FF\]     { background-color: #FF1F8E !important; }
+  .border-\[#FF00FF\] { border-color: #FF1F8E !important; }
 
-  /* Neon Cyan: old #00C1FF → new #00f2ff */
-  .text-\[#00C1FF\]         { color: #00f2ff !important; }
-  .bg-\[#00C1FF\]           { background-color: #00f2ff !important; }
-  .border-\[#00C1FF\]       { border-color: #00f2ff !important; }
-  .shadow-\[0_0_25px_rgba\(0\,193\,255\,0\.4\)\]  { box-shadow: 0 0 25px rgba(0,242,255,0.5) !important; }
-  .shadow-\[0_0_20px_rgba\(0\,193\,255\,0\.4\)\]  { box-shadow: 0 0 20px rgba(0,242,255,0.5) !important; }
-  .shadow-\[0_0_15px_rgba\(0\,193\,255\,0\.5\)\]  { box-shadow: 0 0 15px rgba(0,242,255,0.6) !important; }
-  .shadow-\[0_0_12px_rgba\(0\,193\,255\,0\.3\)\]  { box-shadow: 0 0 12px rgba(0,242,255,0.4) !important; }
-  .shadow-\[0_0_30px_rgba\(0\,193\,255\,0\.4\)\]  { box-shadow: 0 0 30px rgba(0,242,255,0.5) !important; }
-  .shadow-\[0_0_40px_rgba\(0\,193\,255\,0\.4\)\]  { box-shadow: 0 0 40px rgba(0,242,255,0.5) !important; }
+  /* Shadow remaps to Electric Blue glow */
+  .shadow-\[0_0_25px_rgba\(0\,193\,255\,0\.4\)\]  { box-shadow: 0 0 25px rgba(0,180,255,0.5) !important; }
+  .shadow-\[0_0_20px_rgba\(0\,193\,255\,0\.4\)\]  { box-shadow: 0 0 20px rgba(0,180,255,0.5) !important; }
+  .shadow-\[0_0_15px_rgba\(0\,193\,255\,0\.5\)\]  { box-shadow: 0 0 15px rgba(0,180,255,0.6) !important; }
+  .shadow-\[0_0_12px_rgba\(0\,193\,255\,0\.3\)\]  { box-shadow: 0 0 12px rgba(0,180,255,0.4) !important; }
+  .shadow-\[0_0_30px_rgba\(0\,193\,255\,0\.4\)\]  { box-shadow: 0 0 30px rgba(0,180,255,0.5) !important; }
+  .shadow-\[0_0_40px_rgba\(0\,193\,255\,0\.4\)\]  { box-shadow: 0 0 40px rgba(0,180,255,0.5) !important; }
+  .shadow-\[0_0_25px_rgba\(255\,0\,255\,0\.4\)\]  { box-shadow: 0 0 25px rgba(255,31,142,0.5) !important; }
+  .shadow-\[0_0_25px_rgba\(255\,0\,255\,0\.5\)\]  { box-shadow: 0 0 25px rgba(255,31,142,0.6) !important; }
 
-  /* Neon Pink: old #FF00FF → new #ff007f */
-  .text-\[#FF00FF\]         { color: #ff007f !important; }
-  .bg-\[#FF00FF\]           { background-color: #ff007f !important; }
-  .border-\[#FF00FF\]       { border-color: #ff007f !important; }
-  .shadow-\[0_0_25px_rgba\(255\,0\,255\,0\.4\)\]  { box-shadow: 0 0 25px rgba(255,0,127,0.5) !important; }
-  .shadow-\[0_0_25px_rgba\(255\,0\,255\,0\.5\)\]  { box-shadow: 0 0 25px rgba(255,0,127,0.6) !important; }
+  /* Gradient remaps */
+  .from-\[#00C1FF\] { --tw-gradient-from: #00B4FF !important; }
+  .to-\[#FF00FF\]   { --tw-gradient-to:   #FF1F8E !important; }
+  .from-\[#FF00FF\] { --tw-gradient-from: #FF1F8E !important; }
+  .to-\[#00C1FF\]   { --tw-gradient-to:   #00B4FF !important; }
 
-  /* Gradient "from/to" cyan/pink used in brand elements */
-  .from-\[#00C1FF\] { --tw-gradient-from: #00f2ff !important; }
-  .to-\[#FF00FF\]   { --tw-gradient-to:   #ff007f !important; }
-  .from-\[#FF00FF\] { --tw-gradient-from: #ff007f !important; }
-  .to-\[#00C1FF\]   { --tw-gradient-to:   #00f2ff !important; }
+  /* Opacity variants — Electric Blue */
+  .bg-\[#00C1FF\]\/20  { background-color: rgba(0,180,255,0.20) !important; }
+  .bg-\[#00C1FF\]\/15  { background-color: rgba(0,180,255,0.15) !important; }
+  .bg-\[#00C1FF\]\/10  { background-color: rgba(0,180,255,0.10) !important; }
+  .bg-\[#00C1FF\]\/5   { background-color: rgba(0,180,255,0.05) !important; }
+  /* Opacity variants — Hot Pink */
+  .bg-\[#FF00FF\]\/20  { background-color: rgba(255,31,142,0.20) !important; }
+  .bg-\[#FF00FF\]\/15  { background-color: rgba(255,31,142,0.15) !important; }
+  .bg-\[#FF00FF\]\/10  { background-color: rgba(255,31,142,0.10) !important; }
+  /* Border opacity variants */
+  .border-\[#00C1FF\]\/20  { border-color: rgba(0,180,255,0.20) !important; }
+  .border-\[#00C1FF\]\/30  { border-color: rgba(0,180,255,0.30) !important; }
+  .border-\[#00C1FF\]\/40  { border-color: rgba(0,180,255,0.40) !important; }
+  .border-\[#00C1FF\]\/50  { border-color: rgba(0,180,255,0.50) !important; }
+  .border-\[#FF00FF\]\/20  { border-color: rgba(255,31,142,0.20) !important; }
+  .border-\[#FF00FF\]\/30  { border-color: rgba(255,31,142,0.30) !important; }
+  .border-\[#FF00FF\]\/40  { border-color: rgba(255,31,142,0.40) !important; }
+  .text-\[#00C1FF\]\/80 { color: rgba(0,180,255,0.80) !important; }
 
-  /* opacity variants */
-  .bg-\[#00C1FF\]\/20  { background-color: rgba(0,242,255,0.20) !important; }
-  .bg-\[#00C1FF\]\/15  { background-color: rgba(0,242,255,0.15) !important; }
-  .bg-\[#00C1FF\]\/10  { background-color: rgba(0,242,255,0.10) !important; }
-  .bg-\[#00C1FF\]\/5   { background-color: rgba(0,242,255,0.05) !important; }
-  .bg-\[#FF00FF\]\/20  { background-color: rgba(255,0,127,0.20) !important; }
-  .bg-\[#FF00FF\]\/15  { background-color: rgba(255,0,127,0.15) !important; }
-  .bg-\[#FF00FF\]\/10  { background-color: rgba(255,0,127,0.10) !important; }
-  .border-\[#00C1FF\]\/20  { border-color: rgba(0,242,255,0.20) !important; }
-  .border-\[#00C1FF\]\/30  { border-color: rgba(0,242,255,0.30) !important; }
-  .border-\[#00C1FF\]\/40  { border-color: rgba(0,242,255,0.40) !important; }
-  .border-\[#00C1FF\]\/50  { border-color: rgba(0,242,255,0.50) !important; }
-  .border-\[#FF00FF\]\/20  { border-color: rgba(255,0,127,0.20) !important; }
-  .border-\[#FF00FF\]\/30  { border-color: rgba(255,0,127,0.30) !important; }
-  .border-\[#FF00FF\]\/40  { border-color: rgba(255,0,127,0.40) !important; }
-  .text-\[#00C1FF\]\/80 { color: rgba(0,242,255,0.80) !important; }
+  /* Gradient opacity variants */
+  .from-\[#00C1FF\]\/20 { --tw-gradient-from: rgba(0,180,255,0.20) !important; }
+  .from-\[#00C1FF\]\/40 { --tw-gradient-from: rgba(0,180,255,0.40) !important; }
+  .from-\[#00C1FF\]\/8  { --tw-gradient-from: rgba(0,180,255,0.08) !important; }
+  .from-\[#00C1FF\]\/10 { --tw-gradient-from: rgba(0,180,255,0.10) !important; }
+  .from-\[#FF00FF\]\/20 { --tw-gradient-from: rgba(255,31,142,0.20) !important; }
+  .from-\[#FF00FF\]\/40 { --tw-gradient-from: rgba(255,31,142,0.40) !important; }
+  .to-\[#FF00FF\]\/20   { --tw-gradient-to:   rgba(255,31,142,0.20) !important; }
+  .to-\[#00C1FF\]\/20   { --tw-gradient-to:   rgba(0,180,255,0.20) !important; }
 
-  /* Map tile dark bg and border */
-  .from-\[#00C1FF\]\/20 { --tw-gradient-from: rgba(0,242,255,0.20) !important; }
-  .from-\[#00C1FF\]\/40 { --tw-gradient-from: rgba(0,242,255,0.40) !important; }
-  .from-\[#00C1FF\]\/8  { --tw-gradient-from: rgba(0,242,255,0.08) !important; }
-  .from-\[#00C1FF\]\/10 { --tw-gradient-from: rgba(0,242,255,0.10) !important; }
-  .from-\[#FF00FF\]\/20 { --tw-gradient-from: rgba(255,0,127,0.20) !important; }
-  .from-\[#FF00FF\]\/40 { --tw-gradient-from: rgba(255,0,127,0.40) !important; }
-  .to-\[#FF00FF\]\/20   { --tw-gradient-to:   rgba(255,0,127,0.20) !important; }
-  .to-\[#00C1FF\]\/20   { --tw-gradient-to:   rgba(0,242,255,0.20) !important; }
-
-  /* Card glass panels throughout the app */
+  /* Card glass panels */
   .bg-white\/5  { background-color: rgba(255,255,255,0.05); }
   .bg-white\/3  { background-color: rgba(255,255,255,0.03); }
-  .bg-black\/40 { background-color: rgba(15,5,29,0.7) !important; }
-  .bg-black\/60 { background-color: rgba(15,5,29,0.75) !important; }
 
   input[type="search"]::-webkit-search-cancel-button {
     @apply hidden;

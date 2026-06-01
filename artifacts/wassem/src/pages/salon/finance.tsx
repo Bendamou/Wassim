@@ -7,8 +7,8 @@ import {
 import { useAuth } from "@/lib/auth";
 
 const API = "/api";
-const CYAN = "#00f2ff";
-const PINK = "#ff007f";
+const CYAN = "#00B4FF";
+const PINK = "#FF1F8E";
 
 function seedRand(seed: number) {
   let s = seed;
@@ -199,7 +199,7 @@ export default function SalonFinance() {
 
   if (loading) return (
     <div className="min-h-[100dvh] flex items-center justify-center" style={{ background: "#1a0030" }}>
-      <div className="w-10 h-10 rounded-full border-2 border-[#00f2ff] border-t-transparent animate-spin" />
+      <div className="w-10 h-10 rounded-full border-2 border-[#00B4FF] border-t-transparent animate-spin" />
     </div>
   );
   if (!salon) return (
@@ -235,7 +235,7 @@ export default function SalonFinance() {
       style={{ background: "radial-gradient(ellipse 110% 90% at 50% 20%, #2d1260 0%, #1a0030 60%)" }}>
 
       <div className="px-5 pt-14 pb-4"
-        style={{ background: "linear-gradient(180deg,rgba(0,242,255,0.06),transparent)" }}>
+        style={{ background: "linear-gradient(180deg,rgba(0,180,255,0.06),transparent)" }}>
         <div className="flex items-center gap-3 mb-4">
           <button onClick={() => setLocation("/salon/dashboard")}
             className="w-10 h-10 rounded-xl flex items-center justify-center"

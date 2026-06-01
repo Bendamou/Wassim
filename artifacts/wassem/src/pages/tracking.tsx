@@ -181,7 +181,7 @@ function FakeMap({
         <path
           d={polyline}
           fill="none"
-          stroke="#00f2ff"
+          stroke="#00B4FF"
           strokeWidth={0.8}
           strokeDasharray="2 1.5"
           opacity={0.65}
@@ -193,7 +193,7 @@ function FakeMap({
       <circle
         cx={CLIENT_POS.x} cy={CLIENT_POS.y}
         r={pulse ? 5 : 3.5}
-        fill="none" stroke="#00f2ff"
+        fill="none" stroke="#00B4FF"
         strokeWidth={0.5}
         opacity={pulse ? 0.25 : 0.5}
         style={{ transition: "r 0.8s ease-out, opacity 0.8s ease-out" }}
@@ -202,14 +202,14 @@ function FakeMap({
       <circle
         cx={CLIENT_POS.x} cy={CLIENT_POS.y}
         r={2.4}
-        fill="#00f2ff"
+        fill="#00B4FF"
         filter="url(#glow-cyan)"
       />
       {/* Label */}
       <text
         x={CLIENT_POS.x} y={CLIENT_POS.y - 3.8}
         textAnchor="middle" fontSize={2.4}
-        fill="#00f2ff" fontWeight="bold" fontFamily="sans-serif"
+        fill="#00B4FF" fontWeight="bold" fontFamily="sans-serif"
       >
         {isClient ? "You" : clientName}
       </text>
@@ -219,7 +219,7 @@ function FakeMap({
       <circle
         cx={barber.x} cy={barber.y}
         r={pulse ? 4.5 : 3}
-        fill="none" stroke="#ff007f"
+        fill="none" stroke="#FF1F8E"
         strokeWidth={0.5}
         opacity={pulse ? 0.3 : 0.55}
         style={{ transition: "r 0.8s ease-out, opacity 0.8s ease-out" }}
@@ -228,7 +228,7 @@ function FakeMap({
       <circle
         cx={barber.x} cy={barber.y}
         r={2.4}
-        fill={arrived ? "#00f2ff" : "#ff007f"}
+        fill={arrived ? "#00B4FF" : "#FF1F8E"}
         filter="url(#glow-pink)"
         style={{ transition: "fill 0.5s" }}
       />
@@ -244,7 +244,7 @@ function FakeMap({
       <text
         x={barber.x} y={barber.y - 3.8}
         textAnchor="middle" fontSize={2.4}
-        fill="#ff007f" fontWeight="bold" fontFamily="sans-serif"
+        fill="#FF1F8E" fontWeight="bold" fontFamily="sans-serif"
       >
         {isClient ? proName : "You"}
       </text>
@@ -252,10 +252,10 @@ function FakeMap({
       {/* ── ETA badge ── */}
       <rect x={2} y={2} width={24} height={10} rx={2}
         fill="rgba(26,0,48,0.85)"
-        stroke={arrived ? "#00f2ff" : "#ff007f"}
+        stroke={arrived ? "#00B4FF" : "#FF1F8E"}
         strokeWidth={0.5}
       />
-      <text x={5} y={7.5} fontSize={2.6} fill={arrived ? "#00f2ff" : "#ff007f"} fontWeight="bold" fontFamily="sans-serif">
+      <text x={5} y={7.5} fontSize={2.6} fill={arrived ? "#00B4FF" : "#FF1F8E"} fontWeight="bold" fontFamily="sans-serif">
         {arrived ? "✓ Arrived!" : `ETA: ${etaStr}`}
       </text>
       <text x={5} y={10.2} fontSize={2} fill="#9a7acc" fontFamily="sans-serif">
@@ -275,7 +275,7 @@ function FakeMap({
             key={i}
             x={mx} y={my + 0.8}
             textAnchor="middle" fontSize={2.2}
-            fill="#00f2ff" opacity={0.5} fontFamily="sans-serif"
+            fill="#00B4FF" opacity={0.5} fontFamily="sans-serif"
             transform={`rotate(${ang}, ${mx}, ${my})`}
           >
             ›
@@ -289,7 +289,7 @@ function FakeMap({
           <rect
             x={CLIENT_POS.x - 10} y={CLIENT_POS.y + 4}
             width={20} height={6} rx={1.5}
-            fill="rgba(26,0,48,0.80)" stroke="#00f2ff22" strokeWidth={0.4}
+            fill="rgba(26,0,48,0.80)" stroke="#00B4FF22" strokeWidth={0.4}
           />
           <text
             x={CLIENT_POS.x} y={CLIENT_POS.y + 8.4}
@@ -345,10 +345,10 @@ export default function TrackingPage() {
         </div>
         <div
           className="flex items-center gap-1.5 rounded-full px-3 py-1.5 flex-shrink-0"
-          style={{ background: "rgba(0,242,255,0.08)", border: "1px solid rgba(0,242,255,0.25)" }}
+          style={{ background: "rgba(0,180,255,0.08)", border: "1px solid rgba(0,180,255,0.25)" }}
         >
-          <div className="w-1.5 h-1.5 rounded-full bg-[#00f2ff] animate-pulse" />
-          <span className="text-xs font-bold" style={{ color: "#00f2ff" }}>LIVE</span>
+          <div className="w-1.5 h-1.5 rounded-full bg-[#00B4FF] animate-pulse" />
+          <span className="text-xs font-bold" style={{ color: "#00B4FF" }}>LIVE</span>
         </div>
       </div>
 
@@ -362,13 +362,13 @@ export default function TrackingPage() {
             className="flex items-center gap-4 px-5 py-2.5 rounded-2xl text-sm font-bold backdrop-blur-sm"
             style={{ background: "rgba(26,0,48,0.80)", border: "1px solid rgba(255,255,255,0.10)" }}
           >
-            <span className="flex items-center gap-1.5" style={{ color: "#00f2ff" }}>
-              <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: "#00f2ff", boxShadow: "0 0 6px #00f2ff" }} />
+            <span className="flex items-center gap-1.5" style={{ color: "#00B4FF" }}>
+              <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: "#00B4FF", boxShadow: "0 0 6px #00B4FF" }} />
               {isClient ? "You" : clientName}
             </span>
             <span style={{ color: "rgba(255,255,255,0.2)" }}>|</span>
-            <span className="flex items-center gap-1.5" style={{ color: "#ff007f" }}>
-              <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: "#ff007f", boxShadow: "0 0 6px #ff007f" }} />
+            <span className="flex items-center gap-1.5" style={{ color: "#FF1F8E" }}>
+              <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: "#FF1F8E", boxShadow: "0 0 6px #FF1F8E" }} />
               {isClient ? proName : "You"}
             </span>
           </div>
@@ -390,8 +390,8 @@ export default function TrackingPage() {
               <div
                 className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                 style={{
-                  background: isClient ? "#00f2ff" : "#ff007f",
-                  boxShadow: isClient ? "0 0 6px #00f2ff" : "0 0 6px #ff007f",
+                  background: isClient ? "#00B4FF" : "#FF1F8E",
+                  boxShadow: isClient ? "0 0 6px #00B4FF" : "0 0 6px #FF1F8E",
                 }}
               />
               <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "rgba(243,241,246,0.45)" }}>You</span>
@@ -409,8 +409,8 @@ export default function TrackingPage() {
               <div
                 className="w-2.5 h-2.5 rounded-full flex-shrink-0 animate-pulse"
                 style={{
-                  background: isClient ? "#ff007f" : "#00f2ff",
-                  boxShadow: isClient ? "0 0 6px #ff007f" : "0 0 6px #00f2ff",
+                  background: isClient ? "#FF1F8E" : "#00B4FF",
+                  boxShadow: isClient ? "0 0 6px #FF1F8E" : "0 0 6px #00B4FF",
                 }}
               />
               <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "rgba(243,241,246,0.45)" }}>

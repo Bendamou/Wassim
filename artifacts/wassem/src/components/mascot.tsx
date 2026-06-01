@@ -158,15 +158,15 @@ function TawossMascot() {
               className="relative max-w-[180px] rounded-2xl rounded-br-sm px-3.5 py-2.5 shadow-xl cursor-pointer"
               style={{
                 background: "linear-gradient(135deg,#0d1b2a,#1a2a3a)",
-                border: "1.5px solid rgba(0,242,255,0.35)",
-                boxShadow: "0 4px 20px rgba(0,242,255,0.2)",
+                border: "1.5px solid rgba(0,180,255,0.35)",
+                boxShadow: "0 4px 20px rgba(0,180,255,0.2)",
               }}
               onClick={dismissMessage}
             >
               <p className="text-[12px] font-bold leading-snug text-white">{message}</p>
               {/* Tail */}
               <div className="absolute bottom-[-7px] right-3 w-3 h-3 rotate-45 rounded-sm"
-                style={{ background: "#1a2a3a", borderRight: "1.5px solid rgba(0,242,255,0.35)", borderBottom: "1.5px solid rgba(0,242,255,0.35)" }} />
+                style={{ background: "#1a2a3a", borderRight: "1.5px solid rgba(0,180,255,0.35)", borderBottom: "1.5px solid rgba(0,180,255,0.35)" }} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -185,8 +185,8 @@ function TawossMascot() {
             className="absolute inset-0 rounded-full"
             animate={{
               boxShadow: state === "happy" || state === "celebrating"
-                ? ["0 0 0px 0px rgba(255,0,127,0)", "0 0 18px 8px rgba(255,0,127,0.5)", "0 0 0px 0px rgba(255,0,127,0)"]
-                : ["0 0 0px 0px rgba(0,242,255,0)", "0 0 14px 5px rgba(0,242,255,0.4)", "0 0 0px 0px rgba(0,242,255,0)"],
+                ? ["0 0 0px 0px rgba(255,31,142,0)", "0 0 18px 8px rgba(255,31,142,0.5)", "0 0 0px 0px rgba(255,31,142,0)"]
+                : ["0 0 0px 0px rgba(0,180,255,0)", "0 0 14px 5px rgba(0,180,255,0.4)", "0 0 0px 0px rgba(0,180,255,0)"],
             }}
             transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -196,7 +196,7 @@ function TawossMascot() {
             src="/tawoss-logo.png"
             alt="Tawoss mascot"
             className="w-full h-full object-contain drop-shadow-lg"
-            style={{ filter: "drop-shadow(0 2px 8px rgba(0,242,255,0.4))" }}
+            style={{ filter: "drop-shadow(0 2px 8px rgba(0,180,255,0.4))" }}
             draggable={false}
           />
 
@@ -235,7 +235,7 @@ function TawossMascot() {
                   <motion.div
                     key={i}
                     className="rounded-full shadow"
-                    style={{ width: 4 + i * 2, height: 4 + i * 2, background: "#00f2ff" }}
+                    style={{ width: 4 + i * 2, height: 4 + i * 2, background: "#00B4FF" }}
                     animate={{ y: [0, -3, 0] }}
                     transition={{ duration: 0.7, delay: i * 0.15, repeat: Infinity }}
                   />

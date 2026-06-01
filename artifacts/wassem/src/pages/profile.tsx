@@ -15,7 +15,7 @@ export default function Profile() {
   const isClient = user?.role === "client";
 
   return (
-    <div className="min-h-[100dvh] bg-[#36013F] flex flex-col">
+    <div className="min-h-[100dvh] bg-[#090013] flex flex-col">
       {/* Header */}
       <div className="px-5 pt-safe-top pt-5 pb-6 border-b border-white/5">
         <h1 className="text-white font-black text-2xl">Profile</h1>
@@ -24,13 +24,13 @@ export default function Profile() {
       <div className="flex-1 overflow-y-auto px-5 py-6 pb-28 space-y-6">
         {/* Avatar + info */}
         <div className="flex flex-col items-center text-center py-4">
-          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#00f2ff] to-[#ff007f] flex items-center justify-center text-white font-black text-4xl shadow-[0_0_30px_rgba(0,193,255,0.3)] mb-4">
+          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#00B4FF] to-[#FF1F8E] flex items-center justify-center text-white font-black text-4xl shadow-[0_0_30px_rgba(0,193,255,0.3)] mb-4">
             {user?.name?.charAt(0).toUpperCase()}
           </div>
           <h2 className="text-white font-black text-2xl">{user?.name}</h2>
           {user?.phone && <p className="text-gray-500 text-sm mt-1">{user.phone}</p>}
           <div className="flex items-center gap-2 mt-2">
-            <span className={`text-xs font-bold px-3 py-1 rounded-full border ${isClient ? "text-[#00f2ff] border-[#00f2ff]/30 bg-[#00f2ff]/10" : "text-[#ff007f] border-[#ff007f]/30 bg-[#ff007f]/10"}`}>
+            <span className={`text-xs font-bold px-3 py-1 rounded-full border ${isClient ? "text-[#00B4FF] border-[#00B4FF]/30 bg-[#00B4FF]/10" : "text-[#FF1F8E] border-[#FF1F8E]/30 bg-[#FF1F8E]/10"}`}>
               {isClient ? "💈 Client" : "✂️ Professional"}
             </span>
             {user?.isVerified && (
@@ -48,13 +48,13 @@ export default function Profile() {
               <p className="text-3xl font-black text-white">{totalBids}</p>
               <p className="text-gray-500 text-xs mt-1 font-bold">BIDS</p>
             </div>
-            <div className="bg-[#00f2ff]/10 border border-[#00f2ff]/20 rounded-2xl p-4 text-center">
+            <div className="bg-[#00B4FF]/10 border border-[#00B4FF]/20 rounded-2xl p-4 text-center">
               <p className="text-3xl font-black text-white">{acceptedBids}</p>
-              <p className="text-[#00f2ff] text-xs mt-1 font-bold">WON</p>
+              <p className="text-[#00B4FF] text-xs mt-1 font-bold">WON</p>
             </div>
-            <div className="bg-[#ff007f]/10 border border-[#ff007f]/20 rounded-2xl p-4 text-center">
+            <div className="bg-[#FF1F8E]/10 border border-[#FF1F8E]/20 rounded-2xl p-4 text-center">
               <p className="text-3xl font-black text-white">{winRate}%</p>
-              <p className="text-[#ff007f] text-xs mt-1 font-bold">WIN RATE</p>
+              <p className="text-[#FF1F8E] text-xs mt-1 font-bold">WIN RATE</p>
             </div>
           </div>
         )}
@@ -80,7 +80,7 @@ export default function Profile() {
               {bids.slice(0, 5).map((bid) => (
                 <div key={bid.id} className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${bid.status === "accepted" ? "bg-green-400" : bid.status === "rejected" ? "bg-red-500" : "bg-[#00f2ff]"}`} />
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${bid.status === "accepted" ? "bg-green-400" : bid.status === "rejected" ? "bg-red-500" : "bg-[#00B4FF]"}`} />
                     <div>
                       <p className="text-white font-bold text-sm">Job #{bid.jobId}</p>
                       <p className="text-gray-500 text-xs capitalize">{bid.status}</p>
