@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/tawoss-mobile/"
+title = "Tawoss – Mobile App"
+version = "1.0.0"
+id = "artifacts/tawoss-mobile"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/tawoss-mobile/" ]
+localPort = 22614
+
+[services.development]
+run = "pnpm --filter @workspace/tawoss-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/tawoss-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/tawoss-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "22614"
+BASE_PATH = "/tawoss-mobile/"

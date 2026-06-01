@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "AFNxp9JHO88QGglkJxoPY"
+uri = "file://artifacts/tawoss-mobile/assets/images/icon.png"
+type = "image"
+title = "tawoss mobile icon"
