@@ -4,6 +4,7 @@ import { Tabs } from "expo-router";
 import { Platform, StyleSheet, View } from "react-native";
 
 import { useAuth } from "@/context/AuthContext";
+import { ar } from "@/lib/strings";
 
 export default function TabLayout() {
   const { user } = useAuth();
@@ -32,30 +33,20 @@ export default function TabLayout() {
         },
         tabBarBackground: () =>
           isIOS ? (
-            <BlurView
-              intensity={60}
-              tint="dark"
-              style={StyleSheet.absoluteFill}
-            />
+            <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
           ) : (
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                { backgroundColor: "#0a0018" },
-              ]}
-            />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: "#0a0018" }]} />
           ),
         tabBarLabelStyle: {
-          fontSize: 10,
-          fontFamily: "Inter_600SemiBold",
-          letterSpacing: 0.3,
+          fontSize: 11,
+          fontFamily: "Cairo_600SemiBold",
         },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: isSalon ? "Dashboard" : "Home",
+          title: isSalon ? ar.tabDashboard : ar.tabHome,
           tabBarIcon: ({ color, size }) => (
             <Feather name="home" size={size} color={color} />
           ),
@@ -64,7 +55,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: isPro ? "Requests" : isSalon ? "Analytics" : "Explore",
+          title: isPro ? ar.tabRequests : isSalon ? ar.analytics : ar.tabExplore,
           tabBarIcon: ({ color, size }) => (
             <Feather
               name={isPro ? "zap" : isSalon ? "bar-chart-2" : "compass"}
@@ -77,7 +68,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="activity"
         options={{
-          title: isPro ? "My Bids" : isSalon ? "Queue" : "My Jobs",
+          title: isPro ? ar.tabMyBids : isSalon ? ar.tabQueue : ar.tabMyJobs,
           tabBarIcon: ({ color, size }) => (
             <Feather name="briefcase" size={size} color={color} />
           ),
@@ -86,7 +77,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="post-job"
         options={{
-          title: "Post Job",
+          title: ar.tabPostJob,
           tabBarButton: isClient ? undefined : () => null,
           tabBarIcon: ({ color, size }) => (
             <Feather name="plus-circle" size={size} color={color} />
@@ -96,7 +87,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: ar.tabProfile,
           tabBarIcon: ({ color, size }) => (
             <Feather name="user" size={size} color={color} />
           ),

@@ -3,28 +3,28 @@ import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator, Animated, FlatList, Platform, Pressable,
+  ActivityIndicator, FlatList, Platform, Pressable,
   RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import { ar, SVC_LABEL_AR, STATUS_LABEL_AR } from "@/lib/strings";
 
-// ── Shared types ────────────────────────────────────────────────────────────
 interface Job {
   id: number; service: string; budget: number; location: string;
-  status: string; bidsCount?: number; scheduledTime?: string; createdAt?: string;
+  status: string; bidsCount?: number;
 }
+
 const SVC_EMOJI: Record<string, string> = { haircut: "💇", beard: "🧔", nails: "💅", full_grooming: "✨" };
-const SVC_LABEL: Record<string, string> = { haircut: "Haircut", beard: "Beard Trim", nails: "Nails", full_grooming: "Full Package" };
+const STATUS_COLOR: Record<string, string> = { open: "#4ade80", in_progress: "#00B4FF", completed: "#9ca3af", cancelled: "#ef4444" };
 
 // ── CLIENT HOME ─────────────────────────────────────────────────────────────
 function ClientHome() {
   const { user, token } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const qc = useQueryClient();
 
   const { data: dashboard, isLoading, refetch } = useQuery({
     queryKey: ["dashboard", "client"],
@@ -34,72 +34,65 @@ function ClientHome() {
   });
 
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-
-  const STATUS_COLOR: Record<string, string> = { open: "#4ade80", in_progress: "#00B4FF", completed: "#9ca3af", cancelled: "#ef4444" };
+  const greeting = hour < 12 ? ar.goodMorning : hour < 18 ? ar.goodAfternoon : ar.goodEvening;
 
   return (
-    <View style={[styles.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
+    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
       <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#00B4FF" />}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>{greeting},</Text>
-            <Text style={styles.userName}>{user?.name?.split(" ")[0]} 👋</Text>
+        <View style={s.header}>
+          <View style={s.avatarBox}>
+            <Text style={s.avatarText}>{user?.name?.[0]?.toUpperCase()}</Text>
           </View>
-          <View style={styles.avatarBox}>
-            <Text style={styles.avatarText}>{user?.name?.[0]?.toUpperCase()}</Text>
+          <View style={{ alignItems: "flex-end" }}>
+            <Text style={s.greeting}>{greeting}،</Text>
+            <Text style={s.userName}>{user?.name?.split(" ")[0]} 👋</Text>
           </View>
         </View>
 
-        {/* Stats */}
-        <View style={styles.statsRow}>
+        <View style={s.statsRow}>
           {[
-            { label: "Active Jobs", value: dashboard?.activeJobs ?? "–", color: "#00B4FF" },
-            { label: "Pending Bids", value: dashboard?.pendingBids ?? "–", color: "#FF1F8E" },
-            { label: "Total Jobs", value: dashboard?.totalJobs ?? "–", color: "#9B30FF" },
-          ].map((s) => (
-            <View key={s.label} style={[styles.statCard, { borderColor: `${s.color}30` }]}>
-              <Text style={[styles.statVal, { color: s.color }]}>{s.value}</Text>
-              <Text style={styles.statLabel}>{s.label}</Text>
+            { label: ar.activeJobs, value: dashboard?.activeJobs ?? "–", color: "#00B4FF" },
+            { label: ar.pendingBids, value: dashboard?.pendingBids ?? "–", color: "#FF1F8E" },
+            { label: ar.totalJobs, value: dashboard?.totalJobs ?? "–", color: "#9B30FF" },
+          ].map((s2) => (
+            <View key={s2.label} style={[s.statCard, { borderColor: `${s2.color}30` }]}>
+              <Text style={[s.statVal, { color: s2.color }]}>{s2.value}</Text>
+              <Text style={s.statLabel}>{s2.label}</Text>
             </View>
           ))}
         </View>
 
-        {/* CTA */}
         <Pressable
-          style={({ pressed }) => [styles.postBtn, { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+          style={({ pressed }) => [s.postBtn, { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/(tabs)/post-job"); }}
         >
+          <Text style={s.postBtnText}>{ar.postNewJob}</Text>
           <Feather name="plus-circle" size={22} color="#000" />
-          <Text style={styles.postBtnText}>Post a New Job</Text>
-          <Feather name="chevron-right" size={20} color="#000" />
         </Pressable>
 
-        {/* Recent jobs */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Jobs</Text>
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>{ar.recentJobs}</Text>
           {isLoading ? (
             <ActivityIndicator color="#00B4FF" style={{ marginTop: 20 }} />
           ) : (dashboard?.recentJobs?.length ?? 0) === 0 ? (
-            <View style={styles.empty}>
+            <View style={s.empty}>
               <Feather name="briefcase" size={32} color="#374151" />
-              <Text style={styles.emptyText}>No jobs yet — post your first one!</Text>
+              <Text style={s.emptyText}>{ar.noJobsYet}</Text>
             </View>
           ) : (
             dashboard?.recentJobs?.map((job: Job) => (
-              <TouchableOpacity key={job.id} style={styles.jobCard} onPress={() => router.push("/(tabs)/activity")}>
-                <View style={styles.jobIcon}>
+              <TouchableOpacity key={job.id} style={s.jobCard} onPress={() => router.push("/(tabs)/activity")}>
+                <View style={{ flex: 1, alignItems: "flex-end" }}>
+                  <Text style={s.jobTitle}>{SVC_LABEL_AR[job.service] ?? job.service}</Text>
+                  <Text style={s.jobSub}>{job.location}</Text>
+                </View>
+                <View style={s.jobIcon}>
                   <Text style={{ fontSize: 20 }}>{SVC_EMOJI[job.service] ?? "✂️"}</Text>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.jobTitle}>{SVC_LABEL[job.service] ?? job.service}</Text>
-                  <Text style={styles.jobSub}>{job.location}</Text>
-                </View>
-                <View>
-                  <Text style={styles.jobBudget}>{job.budget}</Text>
-                  <Text style={styles.jobBudgetSub}>MAD</Text>
-                  <View style={[styles.statusDot, { backgroundColor: STATUS_COLOR[job.status] ?? "#9ca3af" }]} />
+                <View style={{ alignItems: "flex-start" }}>
+                  <Text style={s.jobBudget}>{job.budget}</Text>
+                  <Text style={s.jobBudgetSub}>{ar.mad}</Text>
+                  <View style={[s.statusDot, { backgroundColor: STATUS_COLOR[job.status] ?? "#9ca3af" }]} />
                 </View>
               </TouchableOpacity>
             ))
@@ -124,17 +117,17 @@ function FreelancerHome() {
   });
 
   return (
-    <View style={[styles.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
-      <View style={styles.header}>
-        <View>
-          <View style={styles.liveRow}>
-            <Text style={styles.sectionTitle}>Nearby Requests</Text>
-            <View style={styles.liveBadge}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveText}>LIVE</Text>
+    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
+      <View style={s.header}>
+        <View style={{ alignItems: "flex-end" }}>
+          <View style={s.liveRow}>
+            <View style={s.liveBadge}>
+              <View style={s.liveDot} />
+              <Text style={s.liveText}>{ar.live}</Text>
             </View>
+            <Text style={s.sectionTitle}>{ar.nearbyRequests}</Text>
           </View>
-          <Text style={styles.subLabel}>{jobs.length} open request{jobs.length !== 1 ? "s" : ""}</Text>
+          <Text style={s.subLabel}>{ar.openRequestsLabel(jobs.length)}</Text>
         </View>
         {isLoading && <ActivityIndicator color="#FF1F8E" size="small" />}
       </View>
@@ -146,35 +139,33 @@ function FreelancerHome() {
         refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#FF1F8E" />}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 34 : 100, gap: 12 }}
         ListEmptyComponent={!isLoading ? (
-          <View style={[styles.empty, { marginTop: 60 }]}>
+          <View style={[s.empty, { marginTop: 60 }]}>
             <Feather name="zap" size={40} color="#374151" />
-            <Text style={styles.emptyText}>No requests yet</Text>
-            <Text style={styles.emptyHint}>Clients are posting — check back soon</Text>
+            <Text style={s.emptyText}>{ar.noRequestsYet}</Text>
+            <Text style={s.emptyHint}>{ar.clientsPosting}</Text>
           </View>
         ) : null}
         renderItem={({ item: job }) => (
           <Pressable
-            style={({ pressed }) => [styles.jobCard, styles.jobCardFull, { borderColor: pressed ? "#FF1F8E50" : "rgba(255,255,255,0.08)", opacity: pressed ? 0.85 : 1 }]}
+            style={({ pressed }) => [s.jobCard, s.jobCardFull, { borderColor: pressed ? "#FF1F8E50" : "rgba(255,255,255,0.08)", opacity: pressed ? 0.85 : 1 }]}
             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/(tabs)/activity"); }}
           >
-            <View style={[styles.jobIcon, { backgroundColor: "rgba(255,31,142,0.12)", borderColor: "rgba(255,31,142,0.25)" }]}>
+            <View style={{ flex: 1, alignItems: "flex-end" }}>
+              <Text style={s.jobTitle}>{SVC_LABEL_AR[job.service] ?? job.service}</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 }}>
+                <Text style={s.jobSub}>{job.location}</Text>
+                <Feather name="map-pin" size={12} color="#9ca3af" />
+              </View>
+              {(job.bidsCount ?? 0) === 0
+                ? <Text style={s.firstBid}>{ar.beTheFirst}</Text>
+                : <Text style={s.bidCount}>{ar.bidsCount(job.bidsCount!)}</Text>}
+            </View>
+            <View style={[s.jobIcon, { backgroundColor: "rgba(255,31,142,0.12)", borderColor: "rgba(255,31,142,0.25)" }]}>
               <Text style={{ fontSize: 22 }}>{SVC_EMOJI[job.service] ?? "✂️"}</Text>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.jobTitle}>{SVC_LABEL[job.service] ?? job.service}</Text>
-              <View style={styles.jobMetaRow}>
-                <Feather name="map-pin" size={12} color="#9ca3af" />
-                <Text style={styles.jobSub}>{job.location}</Text>
-              </View>
-              {(job.bidsCount ?? 0) === 0 ? (
-                <Text style={styles.firstBid}>⚡ Be the first!</Text>
-              ) : (
-                <Text style={styles.bidCount}>{job.bidsCount} bid{job.bidsCount !== 1 ? "s" : ""}</Text>
-              )}
-            </View>
-            <View style={{ alignItems: "flex-end" }}>
-              <Text style={styles.jobBudget}>{job.budget}</Text>
-              <Text style={styles.jobBudgetSub}>MAD</Text>
+            <View style={{ alignItems: "flex-start" }}>
+              <Text style={s.jobBudget}>{job.budget}</Text>
+              <Text style={s.jobBudgetSub}>{ar.mad}</Text>
             </View>
           </Pressable>
         )}
@@ -205,15 +196,12 @@ function SalonHome() {
 
   useEffect(() => {
     if (!salonId || !token) return;
-    const load = () => {
-      api("GET", `/salons/${salonId}/queue`, undefined, token).then(setQueue).catch(() => {});
-    };
+    const load = () => api("GET", `/salons/${salonId}/queue`, undefined, token).then(setQueue).catch(() => {});
     load();
     const iv = setInterval(load, 8000);
     return () => clearInterval(iv);
   }, [salonId, token]);
 
-  // Lost revenue ticker
   useEffect(() => {
     if (!isLive) { setLostRevenue(0); return; }
     const iv = setInterval(() => setLostRevenue((v) => v + 0.04), 1000);
@@ -231,56 +219,54 @@ function SalonHome() {
   };
 
   return (
-    <View style={[styles.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
+    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.userName}>Salon Dashboard</Text>
-            <Text style={styles.subLabel}>{user?.name}</Text>
+        <View style={s.header}>
+          <View style={{ alignItems: "flex-end" }}>
+            <Text style={s.userName}>{ar.salonDashboard}</Text>
+            <Text style={s.subLabel}>{user?.name}</Text>
           </View>
         </View>
 
-        {/* Go Live Toggle */}
-        <View style={styles.liveTile}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.liveTileLabel}>{isLive ? "🟢 You're LIVE" : "Go Live"}</Text>
-            <Text style={styles.liveTileSub}>{isLive ? "Clients can find & book you" : "Start accepting walk-ins"}</Text>
-            {isLive && lostRevenue > 0 && (
-              <View style={styles.revenueRow}>
-                <Feather name="trending-up" size={14} color="#4ade80" />
-                <Text style={styles.revenueText}>+{lostRevenue.toFixed(0)} MAD earned today</Text>
-              </View>
-            )}
-          </View>
+        <View style={s.liveTile}>
           <Pressable
-            style={({ pressed }) => [styles.toggleBtn, isLive ? styles.toggleOn : styles.toggleOff, { opacity: toggling || pressed ? 0.75 : 1 }]}
+            style={({ pressed }) => [s.toggleBtn, isLive ? s.toggleOn : s.toggleOff, { opacity: toggling || pressed ? 0.75 : 1 }]}
             onPress={toggleLive}
           >
             {toggling ? <ActivityIndicator color="#fff" size="small" /> : (
               <Feather name={isLive ? "wifi" : "wifi-off"} size={22} color="#fff" />
             )}
           </Pressable>
+          <View style={{ flex: 1, alignItems: "flex-end" }}>
+            <Text style={s.liveTileLabel}>{isLive ? ar.youAreLive : ar.goLive}</Text>
+            <Text style={s.liveTileSub}>{isLive ? ar.clientsCanFind : ar.startAccepting}</Text>
+            {isLive && lostRevenue > 0 && (
+              <View style={s.revenueRow}>
+                <Text style={s.revenueText}>+{lostRevenue.toFixed(0)} {ar.earnedToday}</Text>
+                <Feather name="trending-up" size={14} color="#4ade80" />
+              </View>
+            )}
+          </View>
         </View>
 
-        {/* Queue */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Live Queue ({queue.length})</Text>
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>{ar.liveQueueTitle(queue.length)}</Text>
           {queue.length === 0 ? (
-            <View style={[styles.empty, { marginTop: 12 }]}>
+            <View style={[s.empty, { marginTop: 12 }]}>
               <Feather name="users" size={28} color="#374151" />
-              <Text style={styles.emptyText}>{isLive ? "No claims yet — share your link!" : "Go live to start accepting walk-ins"}</Text>
+              <Text style={s.emptyText}>{isLive ? ar.noClaimsYet : ar.goLiveToStart}</Text>
             </View>
           ) : (
             queue.map((claim: any) => (
-              <View key={claim.id} style={styles.queueCard}>
-                <View style={styles.jobIcon}>
+              <View key={claim.id} style={s.queueCard}>
+                <View style={[s.statusDot, { backgroundColor: claim.status === "claimed" ? "#4ade80" : "#9ca3af", width: 10, height: 10 }]} />
+                <View style={{ flex: 1, alignItems: "flex-end" }}>
+                  <Text style={s.jobTitle}>{claim.clientName ?? ar.clientNum(claim.clientId)}</Text>
+                  <Text style={s.jobSub}>{ar.chair} {claim.chairId ?? "–"} · {STATUS_LABEL_AR[claim.status] ?? claim.status}</Text>
+                </View>
+                <View style={s.jobIcon}>
                   <Feather name="user" size={18} color="#00B4FF" />
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.jobTitle}>{claim.clientName ?? `Client #${claim.clientId}`}</Text>
-                  <Text style={styles.jobSub}>Chair {claim.chairId ?? "–"} · {claim.status}</Text>
-                </View>
-                <View style={[styles.statusDot, { backgroundColor: claim.status === "claimed" ? "#4ade80" : "#9ca3af", width: 10, height: 10 }]} />
               </View>
             ))
           )}
@@ -290,7 +276,6 @@ function SalonHome() {
   );
 }
 
-// ── Root component ─────────────────────────────────────────────────────────
 export default function HomeTab() {
   const { user } = useAuth();
   if (user?.role === "professional") return <FreelancerHome />;
@@ -298,48 +283,44 @@ export default function HomeTab() {
   return <ClientHome />;
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#090013" },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 20, paddingVertical: 16 },
-  greeting: { fontSize: 14, fontFamily: "Inter_400Regular", color: "#9ca3af" },
-  userName: { fontSize: 24, fontFamily: "Inter_700Bold", color: "#f0eeff" },
-  subLabel: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#9ca3af", marginTop: 2 },
+  greeting: { fontSize: 14, fontFamily: "Cairo_400Regular", color: "#9ca3af" },
+  userName: { fontSize: 24, fontFamily: "Cairo_700Bold", color: "#f0eeff" },
+  subLabel: { fontSize: 13, fontFamily: "Cairo_400Regular", color: "#9ca3af", marginTop: 2 },
   avatarBox: { width: 42, height: 42, borderRadius: 21, backgroundColor: "rgba(0,180,255,0.18)", borderWidth: 1.5, borderColor: "rgba(0,180,255,0.35)", alignItems: "center", justifyContent: "center" },
-  avatarText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#00B4FF" },
+  avatarText: { fontSize: 16, fontFamily: "Cairo_700Bold", color: "#00B4FF" },
   statsRow: { flexDirection: "row", gap: 10, paddingHorizontal: 20, marginBottom: 20 },
   statCard: { flex: 1, backgroundColor: "#130028", borderWidth: 1, borderRadius: 16, padding: 14, alignItems: "center" },
-  statVal: { fontSize: 24, fontFamily: "Inter_700Bold" },
-  statLabel: { fontSize: 11, fontFamily: "Inter_500Medium", color: "#9ca3af", marginTop: 4, textAlign: "center" },
-  postBtn: {
-    marginHorizontal: 20, marginBottom: 28, backgroundColor: "#00B4FF",
-    borderRadius: 18, paddingVertical: 18, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
-  },
-  postBtnText: { fontSize: 18, fontFamily: "Inter_700Bold", color: "#000" },
+  statVal: { fontSize: 24, fontFamily: "Cairo_700Bold" },
+  statLabel: { fontSize: 11, fontFamily: "Cairo_500Medium", color: "#9ca3af", marginTop: 4, textAlign: "center" },
+  postBtn: { marginHorizontal: 20, marginBottom: 28, backgroundColor: "#00B4FF", borderRadius: 18, paddingVertical: 18, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
+  postBtnText: { fontSize: 18, fontFamily: "Cairo_700Bold", color: "#000" },
   section: { paddingHorizontal: 20 },
-  sectionTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: "#f0eeff", marginBottom: 14 },
+  sectionTitle: { fontSize: 18, fontFamily: "Cairo_700Bold", color: "#f0eeff", marginBottom: 14, textAlign: "right" },
   jobCard: { flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: "#130028", borderRadius: 18, padding: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", marginBottom: 10 },
   jobCardFull: { backgroundColor: "#130028" },
   jobIcon: { width: 48, height: 48, borderRadius: 14, backgroundColor: "rgba(0,180,255,0.10)", borderWidth: 1, borderColor: "rgba(0,180,255,0.20)", alignItems: "center", justifyContent: "center" },
-  jobTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#f0eeff" },
-  jobSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#9ca3af", marginTop: 2 },
-  jobMetaRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
-  jobBudget: { fontSize: 20, fontFamily: "Inter_700Bold", color: "#f0eeff", textAlign: "right" },
-  jobBudgetSub: { fontSize: 11, fontFamily: "Inter_500Medium", color: "#9ca3af", textAlign: "right" },
-  statusDot: { width: 8, height: 8, borderRadius: 4, alignSelf: "flex-end", marginTop: 6 },
-  firstBid: { fontSize: 12, fontFamily: "Inter_700Bold", color: "#4ade80", marginTop: 4 },
-  bidCount: { fontSize: 12, fontFamily: "Inter_700Bold", color: "#FF1F8E", marginTop: 4 },
+  jobTitle: { fontSize: 16, fontFamily: "Cairo_700Bold", color: "#f0eeff" },
+  jobSub: { fontSize: 12, fontFamily: "Cairo_400Regular", color: "#9ca3af", marginTop: 2 },
+  jobBudget: { fontSize: 20, fontFamily: "Cairo_700Bold", color: "#f0eeff", textAlign: "left" },
+  jobBudgetSub: { fontSize: 11, fontFamily: "Cairo_500Medium", color: "#9ca3af", textAlign: "left" },
+  statusDot: { width: 8, height: 8, borderRadius: 4, alignSelf: "center", marginTop: 6 },
+  firstBid: { fontSize: 12, fontFamily: "Cairo_700Bold", color: "#4ade80", marginTop: 4 },
+  bidCount: { fontSize: 12, fontFamily: "Cairo_700Bold", color: "#FF1F8E", marginTop: 4 },
   empty: { alignItems: "center", gap: 10, paddingVertical: 32 },
-  emptyText: { fontSize: 15, fontFamily: "Inter_500Medium", color: "#6b7280", textAlign: "center" },
-  emptyHint: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#4b5563", textAlign: "center" },
+  emptyText: { fontSize: 15, fontFamily: "Cairo_500Medium", color: "#6b7280", textAlign: "center" },
+  emptyHint: { fontSize: 13, fontFamily: "Cairo_400Regular", color: "#4b5563", textAlign: "center" },
   liveRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   liveBadge: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "rgba(255,31,142,0.15)", borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#FF1F8E" },
-  liveText: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#FF1F8E", letterSpacing: 1 },
-  liveTile: { marginHorizontal: 20, marginBottom: 24, backgroundColor: "#130028", borderRadius: 20, padding: 20, flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
-  liveTileLabel: { fontSize: 20, fontFamily: "Inter_700Bold", color: "#f0eeff" },
-  liveTileSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#9ca3af", marginTop: 4 },
+  liveText: { fontSize: 10, fontFamily: "Cairo_700Bold", color: "#FF1F8E", letterSpacing: 1 },
+  liveTile: { marginHorizontal: 20, marginBottom: 24, backgroundColor: "#130028", borderRadius: 20, padding: 20, flexDirection: "row", alignItems: "center", gap: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
+  liveTileLabel: { fontSize: 20, fontFamily: "Cairo_700Bold", color: "#f0eeff" },
+  liveTileSub: { fontSize: 13, fontFamily: "Cairo_400Regular", color: "#9ca3af", marginTop: 4 },
   revenueRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 },
-  revenueText: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#4ade80" },
+  revenueText: { fontSize: 13, fontFamily: "Cairo_700Bold", color: "#4ade80" },
   toggleBtn: { width: 56, height: 56, borderRadius: 18, alignItems: "center", justifyContent: "center" },
   toggleOn: { backgroundColor: "#4ade80" },
   toggleOff: { backgroundColor: "#374151" },

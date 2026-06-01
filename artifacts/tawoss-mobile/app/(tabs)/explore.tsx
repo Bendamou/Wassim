@@ -1,6 +1,5 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
 import {
   ActivityIndicator, FlatList, Platform, Pressable,
   RefreshControl, StyleSheet, Text, View,
@@ -9,12 +8,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import { ar, SVC_LABEL_AR } from "@/lib/strings";
 
-interface Pro { id: number; name: string; rating?: number; location?: string; bio?: string; isVerified: boolean; acceptedBids?: number; }
+interface Pro { id: number; name: string; rating?: number; location?: string; isVerified: boolean; acceptedBids?: number; }
 interface Job { id: number; service: string; budget: number; location: string; status: string; bidsCount?: number; }
 
 const SVC_EMOJI: Record<string, string> = { haircut: "💇", beard: "🧔", nails: "💅", full_grooming: "✨" };
-const SVC_LABEL: Record<string, string> = { haircut: "Haircut", beard: "Beard Trim", nails: "Nails", full_grooming: "Full Package" };
 
 // ── CLIENT ───────────────────────────────────────────────────────────────────
 function ClientExplore() {
@@ -29,8 +28,8 @@ function ClientExplore() {
   return (
     <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
       <View style={s.header}>
-        <Text style={s.title}>Top Professionals</Text>
         {isLoading && <ActivityIndicator color="#00B4FF" size="small" />}
+        <Text style={s.title}>{ar.topProfessionals}</Text>
       </View>
       <FlatList
         data={pros}
@@ -41,32 +40,32 @@ function ClientExplore() {
         ListEmptyComponent={!isLoading ? (
           <View style={s.empty}>
             <Feather name="users" size={36} color="#374151" />
-            <Text style={s.emptyText}>No professionals yet</Text>
+            <Text style={s.emptyText}>{ar.noProfessionals}</Text>
           </View>
         ) : null}
         renderItem={({ item: pro }) => (
           <View style={s.card}>
-            <View style={s.avatar}>
-              <Text style={s.avatarText}>{pro.name[0]?.toUpperCase()}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
+            {(pro.acceptedBids ?? 0) > 0 && (
+              <View style={s.statPill}>
+                <Text style={s.statPillText}>{ar.jobsCount(pro.acceptedBids!)}</Text>
+              </View>
+            )}
+            <View style={{ flex: 1, alignItems: "flex-end" }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <Text style={s.proName}>{pro.name}</Text>
                 {pro.isVerified && <Feather name="check-circle" size={13} color="#00B4FF" />}
+                <Text style={s.proName}>{pro.name}</Text>
               </View>
               {!!pro.location && <Text style={s.proSub}>{pro.location}</Text>}
               {!!pro.rating && pro.rating > 0 && (
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 }}>
-                  <Feather name="star" size={12} color="#FFDD00" />
                   <Text style={s.rating}>{pro.rating.toFixed(1)}</Text>
+                  <Feather name="star" size={12} color="#FFDD00" />
                 </View>
               )}
             </View>
-            {(pro.acceptedBids ?? 0) > 0 && (
-              <View style={s.statPill}>
-                <Text style={s.statPillText}>{pro.acceptedBids} jobs</Text>
-              </View>
-            )}
+            <View style={s.avatar}>
+              <Text style={s.avatarText}>{pro.name[0]?.toUpperCase()}</Text>
+            </View>
           </View>
         )}
       />
@@ -89,14 +88,14 @@ function FreelancerExplore() {
   return (
     <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
       <View style={s.header}>
+        {isLoading && <ActivityIndicator color="#FF1F8E" size="small" />}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <Text style={s.title}>All Requests</Text>
           <View style={s.liveBadge}>
             <View style={s.liveDot} />
             <Text style={s.liveText}>{jobs.length}</Text>
           </View>
+          <Text style={s.title}>{ar.allRequests}</Text>
         </View>
-        {isLoading && <ActivityIndicator color="#FF1F8E" size="small" />}
       </View>
       <FlatList
         data={jobs}
@@ -107,7 +106,7 @@ function FreelancerExplore() {
         ListEmptyComponent={!isLoading ? (
           <View style={s.empty}>
             <Feather name="zap" size={36} color="#374151" />
-            <Text style={s.emptyText}>No requests right now</Text>
+            <Text style={s.emptyText}>{ar.noRequests}</Text>
           </View>
         ) : null}
         renderItem={({ item: job }) => (
@@ -115,20 +114,19 @@ function FreelancerExplore() {
             style={({ pressed }) => [s.card, { borderColor: pressed ? "#FF1F8E60" : "rgba(255,255,255,0.08)", opacity: pressed ? 0.85 : 1 }]}
             onPress={() => router.push("/(tabs)/activity")}
           >
-            <View style={s.svcIcon}>
-              <Text style={{ fontSize: 20 }}>{SVC_EMOJI[job.service] ?? "✂️"}</Text>
+            <View style={{ alignItems: "flex-start" }}>
+              <Text style={s.budget}>{job.budget}</Text>
+              <Text style={s.budgetSub}>{ar.mad}</Text>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.proName}>{SVC_LABEL[job.service] ?? job.service}</Text>
+            <View style={{ flex: 1, alignItems: "flex-end" }}>
+              <Text style={s.proName}>{SVC_LABEL_AR[job.service] ?? job.service}</Text>
               <Text style={s.proSub}>{job.location}</Text>
               {(job.bidsCount ?? 0) === 0
-                ? <Text style={{ fontSize: 12, color: "#4ade80", fontFamily: "Inter_700Bold", marginTop: 3 }}>⚡ No bids yet</Text>
-                : <Text style={{ fontSize: 12, color: "#FF1F8E", fontFamily: "Inter_700Bold", marginTop: 3 }}>{job.bidsCount} bids</Text>
-              }
+                ? <Text style={{ fontSize: 12, color: "#4ade80", fontFamily: "Cairo_700Bold", marginTop: 3 }}>⚡ {ar.beTheFirst}</Text>
+                : <Text style={{ fontSize: 12, color: "#FF1F8E", fontFamily: "Cairo_700Bold", marginTop: 3 }}>{ar.bidsCount(job.bidsCount!)}</Text>}
             </View>
-            <View style={{ alignItems: "flex-end" }}>
-              <Text style={s.budget}>{job.budget}</Text>
-              <Text style={s.budgetSub}>MAD</Text>
+            <View style={s.svcIcon}>
+              <Text style={{ fontSize: 20 }}>{SVC_EMOJI[job.service] ?? "✂️"}</Text>
             </View>
           </Pressable>
         )}
@@ -142,16 +140,16 @@ function SalonExplore() {
   const insets = useSafeAreaInsets();
 
   const stats = [
-    { label: "Today's Revenue", value: "0 MAD", color: "#00B4FF" },
-    { label: "This Week", value: "0 MAD", color: "#FF1F8E" },
-    { label: "Chairs Busy", value: "0 / 4", color: "#9B30FF" },
-    { label: "Avg Rating", value: "–", color: "#FFDD00" },
+    { label: ar.todayRevenue, value: `0 ${ar.mad}`, color: "#00B4FF" },
+    { label: ar.thisWeek, value: `0 ${ar.mad}`, color: "#FF1F8E" },
+    { label: ar.chairsBusy, value: "0 / 4", color: "#9B30FF" },
+    { label: ar.avgRating, value: "–", color: "#FFDD00" },
   ];
 
   return (
     <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
       <View style={s.header}>
-        <Text style={s.title}>Analytics</Text>
+        <Text style={s.title}>{ar.analytics}</Text>
       </View>
       <View style={s.analyticsGrid}>
         {stats.map((item) => (
@@ -163,8 +161,8 @@ function SalonExplore() {
       </View>
       <View style={s.empty}>
         <Feather name="bar-chart-2" size={40} color="#374151" />
-        <Text style={s.emptyText}>Detailed analytics coming soon</Text>
-        <Text style={s.emptyHint}>Your earnings and chair activity will appear here</Text>
+        <Text style={s.emptyText}>{ar.analyticsComingSoon}</Text>
+        <Text style={s.emptyHint}>{ar.yourEarningsHere}</Text>
       </View>
     </View>
   );
@@ -180,26 +178,26 @@ export default function ExploreTab() {
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#090013" },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 20, paddingVertical: 16 },
-  title: { fontSize: 22, fontFamily: "Inter_700Bold", color: "#f0eeff" },
+  title: { fontSize: 22, fontFamily: "Cairo_700Bold", color: "#f0eeff" },
   card: { flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: "#130028", borderRadius: 18, padding: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
   avatar: { width: 46, height: 46, borderRadius: 23, backgroundColor: "rgba(0,180,255,0.15)", borderWidth: 1, borderColor: "rgba(0,180,255,0.3)", alignItems: "center", justifyContent: "center" },
-  avatarText: { fontSize: 18, fontFamily: "Inter_700Bold", color: "#00B4FF" },
+  avatarText: { fontSize: 18, fontFamily: "Cairo_700Bold", color: "#00B4FF" },
   svcIcon: { width: 46, height: 46, borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,31,142,0.25)", backgroundColor: "rgba(255,31,142,0.12)", alignItems: "center", justifyContent: "center" },
-  proName: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#f0eeff" },
-  proSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#9ca3af", marginTop: 2 },
-  rating: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#FFDD00" },
+  proName: { fontSize: 15, fontFamily: "Cairo_700Bold", color: "#f0eeff" },
+  proSub: { fontSize: 12, fontFamily: "Cairo_400Regular", color: "#9ca3af", marginTop: 2 },
+  rating: { fontSize: 13, fontFamily: "Cairo_700Bold", color: "#FFDD00" },
   statPill: { backgroundColor: "rgba(0,180,255,0.12)", borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
-  statPillText: { fontSize: 12, fontFamily: "Inter_700Bold", color: "#00B4FF" },
-  budget: { fontSize: 20, fontFamily: "Inter_700Bold", color: "#f0eeff" },
-  budgetSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: "#9ca3af" },
+  statPillText: { fontSize: 12, fontFamily: "Cairo_700Bold", color: "#00B4FF" },
+  budget: { fontSize: 20, fontFamily: "Cairo_700Bold", color: "#f0eeff" },
+  budgetSub: { fontSize: 11, fontFamily: "Cairo_400Regular", color: "#9ca3af" },
   liveBadge: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "rgba(255,31,142,0.15)", borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#FF1F8E" },
-  liveText: { fontSize: 12, fontFamily: "Inter_700Bold", color: "#FF1F8E" },
+  liveText: { fontSize: 12, fontFamily: "Cairo_700Bold", color: "#FF1F8E" },
   analyticsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, paddingHorizontal: 20, marginBottom: 20 },
   analyticsCard: { width: "46%", backgroundColor: "#130028", borderRadius: 18, padding: 18, borderWidth: 1 },
-  analyticsVal: { fontSize: 22, fontFamily: "Inter_700Bold" },
-  analyticsLabel: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#9ca3af", marginTop: 4 },
+  analyticsVal: { fontSize: 22, fontFamily: "Cairo_700Bold" },
+  analyticsLabel: { fontSize: 12, fontFamily: "Cairo_400Regular", color: "#9ca3af", marginTop: 4, textAlign: "right" },
   empty: { alignItems: "center", gap: 12, paddingTop: 40 },
-  emptyText: { fontSize: 15, fontFamily: "Inter_500Medium", color: "#6b7280" },
-  emptyHint: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#4b5563", textAlign: "center", paddingHorizontal: 40 },
+  emptyText: { fontSize: 15, fontFamily: "Cairo_500Medium", color: "#6b7280" },
+  emptyHint: { fontSize: 13, fontFamily: "Cairo_400Regular", color: "#4b5563", textAlign: "center", paddingHorizontal: 40 },
 });
