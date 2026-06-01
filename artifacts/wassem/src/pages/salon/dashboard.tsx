@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-  Scissors, Plus, ToggleLeft, ToggleRight, TrendingUp, Users, Star,
+  Scissors, Plus, TrendingUp, Users, Star,
   Package, Radio, DollarSign, Clock, AlertTriangle, CheckCircle, X,
   Zap, ChevronDown, ChevronUp,
 } from "lucide-react";
@@ -274,6 +274,133 @@ function QueuePanel({ salonId, token }: { salonId: number; token: string }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// ── iOS-style Chair Toggle ─────────────────────────────────────────────────
+function ChairToggle({ isOn, onToggle, loading }: { isOn: boolean; onToggle: () => void; loading: boolean }) {
+  return (
+    <button
+      onClick={onToggle}
+      disabled={loading}
+      aria-label={isOn ? "Mark chair busy" : "Mark chair available"}
+      className="relative flex-shrink-0 rounded-full disabled:opacity-50 focus:outline-none"
+      style={{
+        width: 52,
+        height: 28,
+        background: isOn
+          ? "linear-gradient(135deg,#4ade80,#22c55e)"
+          : "rgba(255,255,255,0.10)",
+        border: isOn ? "none" : "1px solid rgba(255,255,255,0.15)",
+        boxShadow: isOn ? "0 0 14px rgba(74,222,128,0.45)" : "none",
+        transition: "background 0.3s, box-shadow 0.3s",
+      }}
+    >
+      <span
+        className="absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md block"
+        style={{
+          left: isOn ? "calc(100% - 26px)" : 2,
+          transition: "left 0.28s cubic-bezier(0.34,1.56,0.64,1)",
+        }}
+      />
+    </button>
+  );
+}
+
+// ── Swipe-to-Finish Slider ─────────────────────────────────────────────────
+function SwipeToFinish({ onFinish, loading }: { onFinish: () => void; loading: boolean }) {
+  const [offset, setOffset] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const [done, setDone] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const startXRef = useRef(0);
+
+  const THUMB = 48;
+  const PAD = 4;
+  const maxOff = () => (containerRef.current?.offsetWidth ?? 260) - THUMB - PAD * 2;
+
+  const onStart = (x: number) => {
+    if (loading || done) return;
+    setDragging(true);
+    startXRef.current = x - offset;
+  };
+
+  const onMove = (x: number) => {
+    if (!dragging) return;
+    setOffset(Math.max(0, Math.min(x - startXRef.current, maxOff())));
+  };
+
+  const onEnd = () => {
+    if (!dragging) return;
+    setDragging(false);
+    if (offset >= maxOff() * 0.72) {
+      setDone(true);
+      setOffset(maxOff());
+      onFinish();
+      setTimeout(() => { setDone(false); setOffset(0); }, 1400);
+    } else {
+      setOffset(0);
+    }
+  };
+
+  const pct = maxOff() > 0 ? offset / maxOff() : 0;
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative rounded-2xl overflow-hidden select-none"
+      style={{ height: 48, background: "rgba(255,31,142,0.08)", border: "1px solid rgba(255,31,142,0.18)" }}
+      onMouseMove={e => onMove(e.clientX)}
+      onMouseUp={onEnd}
+      onMouseLeave={onEnd}
+      onTouchMove={e => { e.preventDefault(); onMove(e.touches[0].clientX); }}
+      onTouchEnd={onEnd}
+    >
+      {/* Progress fill */}
+      <div
+        className="absolute inset-0 rounded-2xl pointer-events-none"
+        style={{
+          background: "linear-gradient(90deg,rgba(255,31,142,0.28),rgba(155,48,255,0.16))",
+          clipPath: `inset(0 ${100 - pct * 100}% 0 0)`,
+          transition: dragging ? "none" : "clip-path 0.3s ease",
+        }}
+      />
+      {/* Track label */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <span
+          className="text-[11px] font-black tracking-widest uppercase"
+          style={{ color: "rgba(255,31,142,0.55)", opacity: Math.max(0, 1 - pct * 2) }}
+        >
+          Swipe to finish ›
+        </span>
+        {done && (
+          <span className="text-[11px] font-black text-green-400 tracking-wider absolute">
+            ✓ Chair is free!
+          </span>
+        )}
+      </div>
+      {/* Draggable thumb */}
+      <div
+        className="absolute top-1 bottom-1 rounded-xl flex items-center justify-center touch-none"
+        style={{
+          left: PAD,
+          width: THUMB,
+          transform: `translateX(${offset}px)`,
+          background: done
+            ? "linear-gradient(135deg,#4ade80,#22c55e)"
+            : "linear-gradient(135deg,#FF1F8E,#9B30FF)",
+          transition: dragging ? "none" : "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)",
+          cursor: dragging ? "grabbing" : "grab",
+          boxShadow: "0 2px 14px rgba(255,31,142,0.45)",
+        }}
+        onMouseDown={e => { e.preventDefault(); onStart(e.clientX); }}
+        onTouchStart={e => { e.preventDefault(); onStart(e.touches[0].clientX); }}
+      >
+        <span className="text-white text-lg font-black pointer-events-none">
+          {done ? "✓" : "›"}
+        </span>
+      </div>
     </div>
   );
 }
@@ -563,6 +690,7 @@ export default function SalonDashboard() {
             {salon.chairs.map(chair => {
               const isAvailable = chair.status === "available";
               const hasClaim = salon.activeClaims?.some(c => c.chair_name === chair.name);
+              const isToggling = togglingId === chair.id;
               return (
                 <div
                   key={chair.id}
@@ -583,9 +711,10 @@ export default function SalonDashboard() {
                       : "none",
                   }}
                 >
-                  <div className="flex items-center justify-between px-4 py-3">
+                  {/* ── Header row ── */}
+                  <div className="flex items-center justify-between px-4 pt-3 pb-2">
                     <div className="flex items-center gap-3">
-                      {/* Map-pin glow indicator */}
+                      {/* Status dot */}
                       <div className="relative flex-shrink-0">
                         {isAvailable && (
                           <div className="absolute inset-0 rounded-full animate-ping"
@@ -600,23 +729,32 @@ export default function SalonDashboard() {
                       </div>
                       <div>
                         <p className="text-white font-bold">{chair.name}</p>
-                        <p className="text-xs font-bold" style={{
+                        <p className="text-[11px] font-bold" style={{
                           color: hasClaim ? "#00B4FF" : isAvailable ? "#4ade80" : "#6b7280",
                         }}>
-                          {hasClaim ? "● Client en route" : isAvailable ? "✓ Live — visible on map" : "● Offline"}
+                          {hasClaim ? "● Client en route" : isAvailable ? "✓ Live — visible on map" : "● Offline — not bookable"}
                         </p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => toggleChair(chair.id)}
-                      disabled={togglingId === chair.id}
-                      className="transition-opacity disabled:opacity-50"
-                    >
-                      {isAvailable
-                        ? <ToggleRight size={36} style={{ color: hasClaim ? "#00B4FF" : "#4ade80" }} />
-                        : <ToggleLeft size={36} className="text-gray-600" />}
-                    </button>
+                    {/* iOS toggle */}
+                    <ChairToggle
+                      isOn={isAvailable}
+                      onToggle={() => toggleChair(chair.id)}
+                      loading={isToggling}
+                    />
                   </div>
+
+                  {/* ── Swipe-to-Finish (occupied chairs only) ── */}
+                  {!isAvailable && (
+                    <div className="px-4 pb-3">
+                      <SwipeToFinish
+                        onFinish={() => toggleChair(chair.id)}
+                        loading={isToggling}
+                      />
+                    </div>
+                  )}
+
+                  {/* ── Active glow bar (available chairs) ── */}
                   {isAvailable && (
                     <div className="h-0.5 mx-4 mb-3 rounded-full"
                       style={{ background: `linear-gradient(90deg,${hasClaim ? "#00B4FF" : "#4ade80"},transparent)` }} />
