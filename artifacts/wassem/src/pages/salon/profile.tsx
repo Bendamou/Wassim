@@ -404,8 +404,9 @@ function ChairMap({
 
           return (
             <g key={chair.id}
-              style={{ cursor: canClaim && isOpen ? "pointer" : "default" }}
+              style={{ cursor: canClaim && isOpen && !isClaimed ? "pointer" : "default" }}
               onClick={() => {
+                if (canClaim && isOpen && !isClaimed) { onClaimClick(); return; }
                 if (isSelected) { setSelected(null); return; }
                 setSelected(chair.id);
               }}>
@@ -722,7 +723,7 @@ export default function SalonProfile() {
       )}
 
       {/* ── 2D INTERACTIVE CHAIR MAP ── */}
-      {salon.chairs.length > 0 && (
+      {salon.chairs.length > 0 && user?.role !== "salon_owner" && (
         <div className="px-4 py-4">
           <div className="rounded-2xl border overflow-hidden"
             style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)" }}>
