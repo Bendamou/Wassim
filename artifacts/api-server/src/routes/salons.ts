@@ -176,20 +176,28 @@ router.post("/salons/:id/go-live", async (req, res) => {
   }
 });
 
-// ── PATCH /api/salons/:id  (update avg_service_price or other fields) ────────
+// ── PATCH /api/salons/:id  (update salon fields) ─────────────────────────────
 router.patch("/salons/:id", async (req, res) => {
   const salonId = parseInt(req.params.id, 10);
   const token = req.headers.authorization?.replace("Bearer ", "");
   const user = await getUserFromToken(token);
   if (!user) { res.status(401).json({ message: "Unauthorized" }); return; }
 
-  const { avg_service_price } = req.body;
+  const { avg_service_price, name, description, address, photos } = req.body;
   try {
     const [updated] = (await db.execute(sql`
-      UPDATE salons SET avg_service_price = ${avg_service_price ?? 80} WHERE id = ${salonId} RETURNING *
+      UPDATE salons SET
+        avg_service_price = COALESCE(${avg_service_price ?? null}, avg_service_price),
+        name        = COALESCE(${name        ?? null}, name),
+        description = COALESCE(${description ?? null}, description),
+        address     = COALESCE(${address     ?? null}, address),
+        photos      = COALESCE(${photos      ?? null}, photos)
+      WHERE id = ${salonId}
+      RETURNING *
     `)).rows;
     res.json(updated);
   } catch (err) {
+    req.log.error({ err }, "PATCH /salons/:id failed");
     res.status(500).json({ message: "Internal error" });
   }
 });
@@ -201,7 +209,7 @@ router.post("/salons/:id/claim-chair", async (req, res) => {
   const user = await getUserFromToken(token);
   if (!user) { res.status(401).json({ message: "Unauthorized" }); return; }
 
-  const { card_last4, card_holder, deposit_amount, service_name } = req.body;
+  const { card_last4, card_holder, deposit_amount, service_name, client_lat, client_lng } = req.body;
   if (!card_last4 || card_last4.length !== 4 || !/^\d+$/.test(card_last4)) {
     res.status(400).json({ message: "card_last4 must be 4 digits" }); return;
   }
@@ -237,9 +245,10 @@ router.post("/salons/:id/claim-chair", async (req, res) => {
     `)).rows as any[];
 
     const [claim] = (await db.execute(sql`
-      INSERT INTO chair_claims (salon_id, chair_id, client_id, status, deposit_amount, card_last4, card_holder, service_name)
+      INSERT INTO chair_claims (salon_id, chair_id, client_id, status, deposit_amount, card_last4, card_holder, service_name, client_lat, client_lng)
       VALUES (${salonId}, ${chair?.id ?? null}, ${user.id}, 'confirmed',
-              ${deposit_amount ?? 20}, ${card_last4}, ${card_holder ?? null}, ${service_name ?? null})
+              ${deposit_amount ?? 20}, ${card_last4}, ${card_holder ?? null}, ${service_name ?? null},
+              ${client_lat ?? null}, ${client_lng ?? null})
       RETURNING *
     `)).rows;
 

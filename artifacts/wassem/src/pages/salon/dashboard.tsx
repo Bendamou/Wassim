@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Scissors, Plus, TrendingUp, Users, Star,
   Package, Radio, DollarSign, Clock, AlertTriangle, CheckCircle, X,
-  Zap, ChevronDown, ChevronUp,
+  Zap, ChevronDown, ChevronUp, Navigation, Edit3, Camera,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -15,11 +15,14 @@ type Claim = {
   chair_name: string; status: string; deposit_amount: number;
   card_last4: string; created_at: string; expires_at: string;
   service_name: string | null;
+  client_lat?: number | null; client_lng?: number | null;
 };
 type Salon = {
   id: number; name: string; description: string; address: string;
+  lat?: number | null; lng?: number | null;
   free_chairs: number; total_chairs: number; is_live: boolean;
   live_since: string | null; avg_service_price: number;
+  photos?: string | null;
   chairs: Chair[]; services: any[]; products: any[];
   reviews: any[]; activeClaims: Claim[];
 };
@@ -164,7 +167,19 @@ function RevenueEstimator({ salon, freeChairs }: { salon: Salon; freeChairs: num
 }
 
 // ── Queue Panel ────────────────────────────────────────────────────────────
-function QueuePanel({ salonId, token }: { salonId: number; token: string }) {
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const toRad = (d: number) => d * Math.PI / 180;
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function QueuePanel({ salonId, token, salonLat, salonLng }: {
+  salonId: number; token: string;
+  salonLat?: number | null; salonLng?: number | null;
+}) {
   const [queue, setQueue] = useState<Claim[]>([]);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const { toast } = useToast();
@@ -241,11 +256,19 @@ function QueuePanel({ salonId, token }: { salonId: number; token: string }) {
                     {claim.service_name}
                   </p>
                 )}
-                <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5 flex-wrap">
                   <Clock size={10} />
                   <span>{formatTimeAgo(claim.created_at)}</span>
                   <span>·</span>
                   <span className="text-[#00B4FF]">exp {expiresIn}m</span>
+                  {claim.client_lat && claim.client_lng && salonLat && salonLng && (
+                    <>
+                      <span>·</span>
+                      <span className="text-green-400 font-bold">
+                        📍 {haversineKm(salonLat, salonLng, claim.client_lat, claim.client_lng).toFixed(1)} km away
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
@@ -253,6 +276,16 @@ function QueuePanel({ salonId, token }: { salonId: number; token: string }) {
                 <p className="text-gray-600 text-xs">•••• {claim.card_last4}</p>
               </div>
             </div>
+            {claim.client_lat && claim.client_lng && (
+              <a href={`https://www.google.com/maps/dir/?api=1&destination=${claim.client_lat},${claim.client_lng}`}
+                target="_blank" rel="noopener noreferrer"
+                className="w-full mb-2 py-2 rounded-xl border border-[#00B4FF]/30 text-[#00B4FF] font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
+                style={{ background: "rgba(0,180,255,0.08)" }}>
+                <Navigation size={12} />
+                Navigate to Client
+                {salonLat && salonLng && ` · ${haversineKm(salonLat, salonLng, claim.client_lat, claim.client_lng).toFixed(1)} km`}
+              </a>
+            )}
             <div className="flex gap-2">
               <button
                 onClick={() => updateClaim(claim.id, "completed")}
@@ -416,7 +449,13 @@ export default function SalonDashboard() {
   const [newChairName, setNewChairName] = useState("");
   const [addingChair, setAddingChair] = useState(false);
   const [showAddChair, setShowAddChair] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "chairs" | "queue">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "chairs" | "queue" | "edit">("overview");
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editAddress, setEditAddress] = useState("");
+  const [editPhotos, setEditPhotos] = useState<string[]>([]);
+  const [photoInput, setPhotoInput] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadSalon = useCallback(async () => {
@@ -433,6 +472,16 @@ export default function SalonDashboard() {
     pollRef.current = setInterval(loadSalon, 15000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [loadSalon]);
+
+  useEffect(() => {
+    if (activeTab !== "edit" || !salon) return;
+    setEditName(salon.name ?? "");
+    setEditDesc(salon.description ?? "");
+    setEditAddress(salon.address ?? "");
+    let photos: string[] = [];
+    try { photos = JSON.parse(salon.photos ?? "[]"); } catch {}
+    setEditPhotos(photos);
+  }, [activeTab, salon]);
 
   const toggleLive = async () => {
     if (!salon) return;
@@ -495,6 +544,29 @@ export default function SalonDashboard() {
       }
     } finally {
       setAddingChair(false);
+    }
+  };
+
+  const saveEdit = async () => {
+    if (!salon) return;
+    setSavingEdit(true);
+    try {
+      const res = await fetch(`${API}/salons/${salon.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          name: editName.trim() || null,
+          description: editDesc.trim() || null,
+          address: editAddress.trim() || null,
+          photos: JSON.stringify(editPhotos),
+        }),
+      });
+      if (res.ok) {
+        await loadSalon();
+        toast({ title: "Salon profile updated!" });
+      }
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -614,7 +686,7 @@ export default function SalonDashboard() {
 
       {/* Tabs */}
       <div className="flex px-4 gap-2 mb-4">
-        {(["overview", "chairs", "queue"] as const).map(tab => (
+        {(["overview", "chairs", "queue", "edit"] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -773,7 +845,93 @@ export default function SalonDashboard() {
             <p className="text-white font-black text-base">Live Queue</p>
             <p className="text-gray-600 text-xs mt-0.5">Clients with confirmed deposits — auto-refreshes every 10s</p>
           </div>
-          <QueuePanel salonId={salon.id} token={token!} />
+          <QueuePanel salonId={salon.id} token={token!} salonLat={salon.lat} salonLng={salon.lng} />
+        </div>
+      )}
+
+      {/* ── EDIT TAB ── */}
+      {activeTab === "edit" && (
+        <div className="px-4 space-y-5 pb-4">
+          <div>
+            <p className="text-white font-black text-base mb-0.5">Edit Salon Profile</p>
+            <p className="text-gray-600 text-xs">Updates your public page visible to clients</p>
+          </div>
+
+          {/* Name */}
+          <div>
+            <label className="text-gray-400 text-xs uppercase tracking-wider font-bold block mb-1.5">Salon Name</label>
+            <input value={editName} onChange={e => setEditName(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#9B30FF] placeholder:text-gray-700"
+              placeholder={salon.name} />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="text-gray-400 text-xs uppercase tracking-wider font-bold block mb-1.5">About the Salon</label>
+            <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={3}
+              placeholder="Tell clients what makes your salon special, specialties, vibe…"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#9B30FF] placeholder:text-gray-700 resize-none" />
+          </div>
+
+          {/* Address */}
+          <div>
+            <label className="text-gray-400 text-xs uppercase tracking-wider font-bold block mb-1.5">Address</label>
+            <input value={editAddress} onChange={e => setEditAddress(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#9B30FF] placeholder:text-gray-700"
+              placeholder={salon.address ?? "Street, City, Neighbourhood"} />
+          </div>
+
+          {/* Photos */}
+          <div>
+            <label className="text-gray-400 text-xs uppercase tracking-wider font-bold block mb-1">Salon & Client Photos</label>
+            <p className="text-gray-600 text-xs mb-2">Paste image URLs — salon interior, haircuts, client results</p>
+            <div className="flex gap-2 mb-3">
+              <input type="url" value={photoInput} onChange={e => setPhotoInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter" && photoInput.trim()) {
+                    setEditPhotos(prev => [...prev, photoInput.trim()]);
+                    setPhotoInput("");
+                  }
+                }}
+                placeholder="https://..."
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm outline-none focus:border-[#9B30FF] placeholder:text-gray-700" />
+              <button
+                onClick={() => {
+                  if (photoInput.trim()) {
+                    setEditPhotos(prev => [...prev, photoInput.trim()]);
+                    setPhotoInput("");
+                  }
+                }}
+                disabled={!photoInput.trim()}
+                className="px-4 py-2.5 rounded-xl font-black text-sm disabled:opacity-40 flex items-center gap-1.5"
+                style={{ background: "linear-gradient(135deg,#9B30FF,#00B4FF)", color: "#fff" }}>
+                <Camera size={14} />
+              </button>
+            </div>
+            {editPhotos.length > 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                {editPhotos.map((url, i) => (
+                  <div key={i} className="relative rounded-xl overflow-hidden aspect-square group">
+                    <img src={url} alt="" className="w-full h-full object-cover"
+                      onError={e => { (e.target as HTMLImageElement).src = "https://placehold.co/200x200/130028/9B30FF?text=Photo"; }} />
+                    <button
+                      onClick={() => setEditPhotos(prev => prev.filter((_, idx) => idx !== i))}
+                      className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ background: "rgba(0,0,0,0.8)", border: "1px solid rgba(255,255,255,0.2)" }}>
+                      <X size={12} className="text-white" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Save */}
+          <button onClick={saveEdit} disabled={savingEdit}
+            className="w-full py-4 rounded-2xl font-black text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ background: "linear-gradient(135deg,#9B30FF,#00B4FF)", color: "#fff", boxShadow: "0 0 20px rgba(155,48,255,0.35)" }}>
+            {savingEdit ? "Saving…" : <><Edit3 size={16} />Save Salon Profile</>}
+          </button>
         </div>
       )}
     </div>

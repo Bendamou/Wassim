@@ -157,13 +157,14 @@ router.patch("/auth/profile", async (req, res) => {
   const token = req.headers.authorization?.replace("Bearer ", "");
   const user = await getUserFromToken(token);
   if (!user) { res.status(401).json({ message: "Unauthorized" }); return; }
-  const { bio, location } = req.body;
+  const { bio, location, portfolio } = req.body;
   try {
     const { sql: rawSql } = await import("drizzle-orm");
     await db.execute(rawSql`
       UPDATE users SET
-        bio      = COALESCE(${bio      ?? null}, bio),
-        location = COALESCE(${location ?? null}, location)
+        bio       = COALESCE(${bio       ?? null}, bio),
+        location  = COALESCE(${location  ?? null}, location),
+        portfolio = COALESCE(${portfolio ?? null}, portfolio)
       WHERE id = ${user.id}
     `);
     res.json({ message: "Profile updated" });

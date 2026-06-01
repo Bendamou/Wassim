@@ -119,13 +119,23 @@ function ClaimModal({
     if (!cardHolder.trim()) { setError("Enter cardholder name"); return; }
     setError("");
     setStep("processing");
-    await new Promise(r => setTimeout(r, 1500));
+    // Capture client location so barber can see distance + navigate
+    let clientLat: number | null = null;
+    let clientLng: number | null = null;
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 3000, maximumAge: 60000 }));
+      clientLat = pos.coords.latitude;
+      clientLng = pos.coords.longitude;
+    } catch { /* location optional */ }
+    await new Promise(r => setTimeout(r, 900));
     const res = await fetch(`${API}/salons/${salon.id}/claim-chair`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({
         card_last4: cardLast4, card_holder: cardHolder.trim(),
         deposit_amount: depositAmount, service_name: selectedService?.name ?? null,
+        client_lat: clientLat, client_lng: clientLng,
       }),
     });
     if (!res.ok) {
