@@ -80,6 +80,16 @@ export const JobService = {
   beard: "beard",
   nails: "nails",
   full_grooming: "full_grooming",
+  makeup_artist: "makeup_artist",
+  hair_colorist: "hair_colorist",
+  nail_technician: "nail_technician",
+  lash_artist: "lash_artist",
+  bridal_specialist: "bridal_specialist",
+  esthetician: "esthetician",
+  hairdresser: "hairdresser",
+  brow_specialist: "brow_specialist",
+  waxing_specialist: "waxing_specialist",
+  massage_therapist: "massage_therapist",
 } as const;
 
 export type JobStatus = (typeof JobStatus)[keyof typeof JobStatus];
@@ -112,6 +122,16 @@ export const CreateJobBodyService = {
   beard: "beard",
   nails: "nails",
   full_grooming: "full_grooming",
+  makeup_artist: "makeup_artist",
+  hair_colorist: "hair_colorist",
+  nail_technician: "nail_technician",
+  lash_artist: "lash_artist",
+  bridal_specialist: "bridal_specialist",
+  esthetician: "esthetician",
+  hairdresser: "hairdresser",
+  brow_specialist: "brow_specialist",
+  waxing_specialist: "waxing_specialist",
+  massage_therapist: "massage_therapist",
 } as const;
 
 export interface CreateJobBody {

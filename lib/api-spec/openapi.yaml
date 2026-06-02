@@ -522,7 +522,7 @@ components:
           $ref: "#/components/schemas/User"
         service:
           type: string
-          enum: [haircut, beard, nails, full_grooming]
+          enum: [haircut, beard, nails, full_grooming, makeup_artist, hair_colorist, nail_technician, lash_artist, bridal_specialist, esthetician, hairdresser, brow_specialist, waxing_specialist, massage_therapist]
         budget:
           type: number
         location:
@@ -549,7 +549,7 @@ components:
       properties:
         service:
           type: string
-          enum: [haircut, beard, nails, full_grooming]
+          enum: [haircut, beard, nails, full_grooming, makeup_artist, hair_colorist, nail_technician, lash_artist, bridal_specialist, esthetician, hairdresser, brow_specialist, waxing_specialist, massage_therapist]
         budget:
           type: number
         location:

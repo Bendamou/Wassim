@@ -13,7 +13,7 @@ import { Scissors, MapPin, Clock, DollarSign, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 
 const schema = z.object({
-  service: z.enum(["haircut", "beard", "nails", "full_grooming"]),
+  service: z.enum(["haircut", "beard", "nails", "full_grooming", "makeup_artist", "hair_colorist", "nail_technician", "lash_artist", "bridal_specialist", "esthetician", "hairdresser", "brow_specialist", "waxing_specialist", "massage_therapist"]),
   budget: z.coerce.number().min(10, "Minimum budget is 10 MAD"),
   location: z.string().min(3, "Please enter a location"),
   scheduledTime: z.string().optional(),
@@ -24,6 +24,16 @@ const serviceLabels: Record<string, string> = {
   beard: "Beard Trim",
   nails: "Nails",
   full_grooming: "Full Grooming Package",
+  makeup_artist: "💄 Mobile Makeup Artist (Bridal + Event) — 1000–3000 MAD",
+  hair_colorist: "🎨 Mobile Hair Colorist (Highlights, Balayage) — 400–1200 MAD",
+  nail_technician: "💅 Mobile Nail Technician (Manicure + Pedicure) — 150–400 MAD",
+  lash_artist: "👁️ Mobile Lash Artist (Extensions) — 400–1200 MAD",
+  bridal_specialist: "👰 Mobile Bridal Specialist (Full Package) — 2500–6000 MAD",
+  esthetician: "🧖 Mobile Esthetician (Facials) — 250–600 MAD",
+  hairdresser: "✂️ Mobile Hairdresser (Cut + Style) — 150–300 MAD",
+  brow_specialist: "🤨 Mobile Brow Specialist (Shaping + Lamination) — 150–400 MAD",
+  waxing_specialist: "🌸 Mobile Waxing Specialist (Brazilian) — 200–450 MAD",
+  massage_therapist: "💆 Mobile Massage Therapist (Relaxing) — 300–550 MAD",
 };
 
 export default function PostJob() {
@@ -98,10 +108,22 @@ export default function PostJob() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent className="bg-card border-card-border">
+                        <div className="px-2 py-1 text-xs font-bold text-muted-foreground uppercase tracking-wider">✂️ Men's Grooming</div>
                         <SelectItem value="haircut">Haircut</SelectItem>
                         <SelectItem value="beard">Beard Trim</SelectItem>
                         <SelectItem value="nails">Nails</SelectItem>
                         <SelectItem value="full_grooming">Full Grooming Package</SelectItem>
+                        <div className="px-2 pt-2 pb-1 text-xs font-bold tracking-wider" style={{ color: "#FF1F8E" }}>💄 Women's Beauty</div>
+                        <SelectItem value="makeup_artist">💄 Makeup Artist (Bridal + Event) — 1000–3000 MAD</SelectItem>
+                        <SelectItem value="hair_colorist">🎨 Hair Colorist (Highlights, Balayage) — 400–1200 MAD</SelectItem>
+                        <SelectItem value="nail_technician">💅 Nail Technician (Manicure + Pedicure) — 150–400 MAD</SelectItem>
+                        <SelectItem value="lash_artist">👁️ Lash Artist (Extensions) — 400–1200 MAD</SelectItem>
+                        <SelectItem value="bridal_specialist">👰 Bridal Specialist (Full Package) — 2500–6000 MAD</SelectItem>
+                        <SelectItem value="esthetician">🧖 Esthetician (Facials) — 250–600 MAD</SelectItem>
+                        <SelectItem value="hairdresser">✂️ Hairdresser (Cut + Style) — 150–300 MAD</SelectItem>
+                        <SelectItem value="brow_specialist">🤨 Brow Specialist (Shaping + Lamination) — 150–400 MAD</SelectItem>
+                        <SelectItem value="waxing_specialist">🌸 Waxing Specialist (Brazilian) — 200–450 MAD</SelectItem>
+                        <SelectItem value="massage_therapist">💆 Massage Therapist (Relaxing) — 300–550 MAD</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

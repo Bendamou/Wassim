@@ -21,11 +21,23 @@ export default function PostJob() {
   const { isRTL } = useLanguage();
   const ta = isRTL ? "right" : "left" as const;
 
-  const SERVICES = [
+  const MENS_SERVICES = [
     { id: "haircut", label: t.serviceHaircut, emoji: "💇" },
     { id: "beard", label: t.serviceBeard, emoji: "🧔" },
     { id: "nails", label: t.serviceNails, emoji: "💅" },
     { id: "full_grooming", label: t.serviceFull, emoji: "✨" },
+  ];
+  const WOMENS_SERVICES = [
+    { id: "makeup_artist", label: t.serviceMakeupArtist, emoji: "💄", badge: "1000–3000 MAD" },
+    { id: "hair_colorist", label: t.serviceHairColorist, emoji: "🎨", badge: "400–1200 MAD" },
+    { id: "nail_technician", label: t.serviceNailTechnician, emoji: "💅", badge: "150–400 MAD" },
+    { id: "lash_artist", label: t.serviceLashArtist, emoji: "👁️", badge: "400–1200 MAD" },
+    { id: "bridal_specialist", label: t.serviceBridalSpecialist, emoji: "👰", badge: "2500–6000 MAD" },
+    { id: "esthetician", label: t.serviceEsthetician, emoji: "🧖", badge: "250–600 MAD" },
+    { id: "hairdresser", label: t.serviceHairdresser, emoji: "✂️", badge: "150–300 MAD" },
+    { id: "brow_specialist", label: t.serviceBrowSpecialist, emoji: "🤨", badge: "150–400 MAD" },
+    { id: "waxing_specialist", label: t.serviceWaxingSpecialist, emoji: "🌸", badge: "200–450 MAD" },
+    { id: "massage_therapist", label: t.serviceMassageTherapist, emoji: "💆", badge: "300–550 MAD" },
   ];
 
   const [service, setService] = useState("");
@@ -57,8 +69,14 @@ export default function PostJob() {
         </View>
 
         <Text style={[s.label, { textAlign: ta }]}>{t.serviceLabel}</Text>
+
+        {/* Men's / General */}
+        <View style={s.sectionHeader}>
+          <Text style={s.sectionEmoji}>✂️</Text>
+          <Text style={s.sectionTitle}>{isRTL ? "حلاقة رجالية" : "Men's Grooming"}</Text>
+        </View>
         <View style={s.serviceGrid}>
-          {SERVICES.map((svc) => (
+          {MENS_SERVICES.map((svc) => (
             <Pressable
               key={svc.id}
               style={({ pressed }) => [s.svcCard, service === svc.id && s.svcSelected, { opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.96 : 1 }] }]}
@@ -68,6 +86,30 @@ export default function PostJob() {
               <Text style={[s.svcLabel, service === svc.id && { color: "#00B4FF" }]}>{svc.label}</Text>
             </Pressable>
           ))}
+        </View>
+
+        {/* Women's Beauty */}
+        <View style={[s.sectionHeader, { marginTop: 8 }]}>
+          <Text style={s.sectionEmoji}>💄</Text>
+          <Text style={[s.sectionTitle, { color: "#FF1F8E" }]}>{isRTL ? "خدمات تجميل نسائية" : "Women's Beauty"}</Text>
+        </View>
+        <View style={s.serviceGrid}>
+          {WOMENS_SERVICES.map((svc) => {
+            const sel = service === svc.id;
+            return (
+              <Pressable
+                key={svc.id}
+                style={({ pressed }) => [s.svcCard, sel && s.svcSelectedPink, { opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.96 : 1 }] }]}
+                onPress={() => { Haptics.selectionAsync(); setService(svc.id); }}
+              >
+                <Text style={s.svcEmoji}>{svc.emoji}</Text>
+                <Text style={[s.svcLabel, sel && { color: "#FF1F8E" }]} numberOfLines={2}>{svc.label}</Text>
+                <View style={s.priceBadge}>
+                  <Text style={s.priceBadgeText}>{svc.badge}</Text>
+                </View>
+              </Pressable>
+            );
+          })}
         </View>
 
         <Text style={[s.label, { textAlign: ta }]}>{t.budgetLabel}</Text>
@@ -123,11 +165,17 @@ const s = StyleSheet.create({
   title: { fontSize: 26, fontFamily: "Cairo_700Bold", color: "#f0eeff" },
   sub: { fontSize: 14, fontFamily: "Cairo_400Regular", color: "#9ca3af", marginTop: 4 },
   label: { fontSize: 13, fontFamily: "Cairo_600SemiBold", color: "#6b7280", marginBottom: 10 },
-  serviceGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 28 },
-  svcCard: { width: "47%", backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 1.5, borderColor: "rgba(255,255,255,0.10)", borderRadius: 16, padding: 16, alignItems: "center", gap: 6 },
+  sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
+  sectionEmoji: { fontSize: 16 },
+  sectionTitle: { fontSize: 13, fontFamily: "Cairo_700Bold", color: "#6b7280", letterSpacing: 0.5, textTransform: "uppercase" },
+  serviceGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 24 },
+  svcCard: { width: "47%", backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 1.5, borderColor: "rgba(255,255,255,0.10)", borderRadius: 16, padding: 14, alignItems: "center", gap: 5 },
   svcSelected: { borderColor: "#00B4FF", backgroundColor: "rgba(0,180,255,0.10)" },
-  svcEmoji: { fontSize: 28 },
-  svcLabel: { fontSize: 14, fontFamily: "Cairo_600SemiBold", color: "#9ca3af" },
+  svcSelectedPink: { borderColor: "#FF1F8E", backgroundColor: "rgba(255,31,142,0.10)" },
+  svcEmoji: { fontSize: 26 },
+  svcLabel: { fontSize: 12, fontFamily: "Cairo_600SemiBold", color: "#9ca3af", textAlign: "center", lineHeight: 16 },
+  priceBadge: { backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2, marginTop: 2 },
+  priceBadgeText: { fontSize: 10, fontFamily: "Cairo_600SemiBold", color: "#6b7280" },
   inputRow: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 1.5, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 24 },
   currencySymbol: { fontSize: 16, fontFamily: "Cairo_700Bold", color: "#6b7280" },
   input: { flex: 1, fontSize: 16, fontFamily: "Cairo_500Medium", color: "#f0eeff" },
