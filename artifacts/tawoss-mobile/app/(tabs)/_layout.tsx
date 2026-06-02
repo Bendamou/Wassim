@@ -71,8 +71,8 @@ export default function TabLayout() {
           borderTopWidth: 1,
           borderTopColor: "rgba(255,255,255,0.08)",
           elevation: 0,
-          height: Platform.OS === "web" ? 64 : 82,
-          paddingBottom: Platform.OS === "web" ? 8 : 24,
+          height: Platform.OS === "web" ? 62 : 82,
+          paddingBottom: Platform.OS === "web" ? 10 : 22,
           paddingTop: 8,
         },
         tabBarBackground: () =>
@@ -82,7 +82,7 @@ export default function TabLayout() {
             <View style={[StyleSheet.absoluteFill, { backgroundColor: "#0a0018" }]} />
           ),
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontFamily: "Cairo_600SemiBold",
         },
       }}

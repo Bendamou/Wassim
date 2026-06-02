@@ -57,7 +57,7 @@ function ClientActivity() {
         keyExtractor={(j) => String(j.id)}
         scrollEnabled={jobs.length > 0}
         refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#00B4FF" />}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 34 : 120, gap: 12 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 70 : 120, gap: 12 }}
         ListEmptyComponent={!isLoading ? (
           <View style={s.empty}>
             <Feather name="briefcase" size={40} color="#374151" />
@@ -162,7 +162,7 @@ function FreelancerActivity() {
         keyExtractor={(b) => String(b.id)}
         scrollEnabled
         refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#FF1F8E" />}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 34 : 120, gap: 12 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 70 : 120, gap: 12 }}
         ListHeaderComponent={openJobs.length > 0 ? (
           <View style={{ marginBottom: 20 }}>
             <Text style={[s.sectionLabel, { textAlign: ta }]}>{t.availableJobs(openJobs.length)}</Text>
@@ -265,7 +265,7 @@ function SalonActivity() {
         data={queue}
         keyExtractor={(c: any) => String(c.id)}
         scrollEnabled={queue.length > 0}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 34 : 120, gap: 12 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 70 : 120, gap: 12 }}
         ListEmptyComponent={(
           <View style={s.empty}>
             <Feather name="users" size={40} color="#374151" />

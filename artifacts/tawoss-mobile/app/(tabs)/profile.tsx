@@ -40,7 +40,7 @@ export default function ProfileTab() {
 
   return (
     <View style={[s.screen, ]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: Platform.OS === "web" ? 34 : 100 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: Platform.OS === "web" ? 70 : 100 }}>
         <View style={s.heroSection}>
           <View style={[s.avatar, { borderColor: `${color}60`, shadowColor: color }]}>
             <Text style={[s.avatarText, { color }]}>{user?.name?.[0]?.toUpperCase() ?? "?"}</Text>

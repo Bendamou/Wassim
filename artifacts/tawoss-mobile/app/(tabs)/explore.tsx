@@ -39,7 +39,7 @@ function ClientExplore() {
         keyExtractor={(p) => String(p.id)}
         scrollEnabled={pros.length > 0}
         refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#00B4FF" />}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 34 : 120, gap: 12 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 70 : 120, gap: 12 }}
         ListEmptyComponent={!isLoading ? (
           <View style={s.empty}>
             <Feather name="users" size={36} color="#374151" />
@@ -109,7 +109,7 @@ function FreelancerExplore() {
         keyExtractor={(j) => String(j.id)}
         scrollEnabled={jobs.length > 0}
         refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#FF1F8E" />}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 34 : 120, gap: 12 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 70 : 120, gap: 12 }}
         ListEmptyComponent={!isLoading ? (
           <View style={s.empty}>
             <Feather name="zap" size={36} color="#374151" />
