@@ -1,0 +1,82 @@
+@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card-border: hsl(var(--card-border));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-popover-border: hsl(var(--popover-border));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --font-sans: 'Cairo', sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: Menlo, monospace;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  /* Only using dark mode values since it's forced dark */
+  --background: 260 79% 15%; /* gradient will handle the actual background */
+  --foreground: 247 100% 97%; /* #f0eeff */
+  --border: 271 100% 50%; /* vivid purple */
+  --card: 268 100% 8%; /* #130028 */
+  --card-foreground: 247 100% 97%;
+  --card-border: 271 100% 50%;
+  --popover: 268 100% 8%;
+  --popover-foreground: 247 100% 97%;
+  --popover-border: 271 100% 50%;
+  --primary: 198 100% 50%; /* Electric Blue #00B4FF */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 330 100% 56%; /* Hot Pink #FF1F8E */
+  --secondary-foreground: 0 0% 100%;
+  --muted: 260 79% 25%;
+  --muted-foreground: 247 100% 80%;
+  --accent: 271 100% 50%; /* Vivid Purple #9B30FF */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 100% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --input: 260 79% 30%;
+  --ring: 198 100% 50%;
+  --radius: 0.5rem;
+}
+
+@layer base {
+  body {
+    @apply font-sans antialiased text-foreground;
+    background: linear-gradient(180deg, #1C0845 0%, #090013 50%, #040010 100%);
+    background-attachment: fixed;
+    min-height: 100dvh;
+  }
+  * {
+    @apply border-border;
+  }
+}
