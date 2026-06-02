@@ -1,11 +1,12 @@
 import { Feather } from "@expo/vector-icons";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
+import { useCallback } from "react";
 import {
   ActivityIndicator, FlatList, Platform, Pressable,
-  RefreshControl, StyleSheet, Text, View,
+  RefreshControl, StyleSheet, Text, ToastAndroid, View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage, useStrings } from "@/context/LanguageContext";
 import { api } from "@/lib/api";
@@ -13,64 +14,213 @@ import { SVC_LABEL_AR } from "@/lib/strings";
 
 interface Pro { id: number; name: string; rating?: number; location?: string; isVerified: boolean; acceptedBids?: number; }
 interface Job { id: number; service: string; budget: number; location: string; status: string; bidsCount?: number; }
+interface Salon { id: number; name: string; address?: string; rating?: number; is_live?: boolean; free_chairs?: number; avg_service_price?: number; owner_name?: string; }
+
 const SVC_EMOJI: Record<string, string> = { haircut: "💇", beard: "🧔", nails: "💅", full_grooming: "✨" };
+
+function HeartButton({ salonId, token }: { salonId: number; token: string | null }) {
+  const qc = useQueryClient();
+  const t = useStrings();
+
+  const { data: check } = useQuery<{ isFavorite: boolean }>({
+    queryKey: ["fav-check", salonId],
+    queryFn: () => api("GET", `/users/favorites/check/${salonId}`, undefined, token),
+    enabled: !!token,
+    staleTime: 30_000,
+  });
+
+  const isFav = check?.isFavorite ?? false;
+
+  const toggle = useMutation({
+    mutationFn: () =>
+      isFav
+        ? api("DELETE", `/users/favorites/${salonId}`, undefined, token)
+        : api("POST", `/users/favorites/${salonId}`, undefined, token),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["fav-check", salonId] });
+      qc.invalidateQueries({ queryKey: ["favorites"] });
+      if (Platform.OS === "android") {
+        ToastAndroid.show(isFav ? t.removedFromFavorites : t.addedToFavorites, ToastAndroid.SHORT);
+      }
+    },
+  });
+
+  return (
+    <Pressable
+      style={[hb.btn, isFav && hb.btnActive]}
+      onPress={() => toggle.mutate()}
+      disabled={toggle.isPending}
+    >
+      <Feather name="heart" size={16} color={isFav ? "#FF1F8E" : "#6b7280"} />
+    </Pressable>
+  );
+}
+
+const hb = StyleSheet.create({
+  btn: {
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: "rgba(255,31,142,0.08)", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
+    alignItems: "center", justifyContent: "center",
+  },
+  btnActive: { backgroundColor: "rgba(255,31,142,0.18)", borderColor: "rgba(255,31,142,0.45)" },
+});
 
 function ClientExplore() {
   const { token } = useAuth();
-  const insets = useSafeAreaInsets();
   const t = useStrings();
   const { isRTL } = useLanguage();
   const ta = isRTL ? "right" : "left" as const;
 
-  const { data: pros = [], isLoading, refetch } = useQuery<Pro[]>({
+  const { data: salons = [], isLoading: salonsLoading, refetch: refetchSalons } = useQuery<Salon[]>({
+    queryKey: ["salons"],
+    queryFn: () => api("GET", "/salons", undefined, token),
+    enabled: !!token,
+  });
+
+  const { data: pros = [], isLoading: prosLoading, refetch: refetchPros } = useQuery<Pro[]>({
     queryKey: ["professionals"],
     queryFn: () => api("GET", "/professionals", undefined, token),
     enabled: !!token,
   });
 
+  const isLoading = salonsLoading || prosLoading;
+  const refetch = useCallback(() => { refetchSalons(); refetchPros(); }, [refetchSalons, refetchPros]);
+
+  type Section =
+    | { type: "header-salons" }
+    | { type: "salon"; data: Salon }
+    | { type: "empty-salons" }
+    | { type: "header-pros" }
+    | { type: "pro"; data: Pro }
+    | { type: "empty-pros" };
+
+  const listData: Section[] = [
+    { type: "header-salons" },
+    ...(salons.length > 0
+      ? salons.map(s => ({ type: "salon" as const, data: s }))
+      : [{ type: "empty-salons" as const }]),
+    { type: "header-pros" },
+    ...(pros.length > 0
+      ? pros.map(p => ({ type: "pro" as const, data: p }))
+      : [{ type: "empty-pros" as const }]),
+  ];
+
   return (
-    <View style={[s.screen, ]}>
-      <View style={s.header}>
-        {isLoading && <ActivityIndicator color="#00B4FF" size="small" />}
-        <Text style={[s.title, { textAlign: ta }]}>{t.topProfessionals}</Text>
-      </View>
+    <View style={s.screen}>
+      {isLoading && (
+        <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
+          <ActivityIndicator color="#00B4FF" size="small" />
+        </View>
+      )}
       <FlatList
-        data={pros}
-        keyExtractor={(p) => String(p.id)}
-        scrollEnabled={pros.length > 0}
+        data={listData}
+        keyExtractor={(item, i) => {
+          if (item.type === "salon") return `salon-${item.data.id}`;
+          if (item.type === "pro") return `pro-${item.data.id}`;
+          return `${item.type}-${i}`;
+        }}
         refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#00B4FF" />}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 70 : 120, gap: 12 }}
-        ListEmptyComponent={!isLoading ? (
-          <View style={s.empty}>
-            <Feather name="users" size={36} color="#374151" />
-            <Text style={s.emptyText}>{t.noProfessionals}</Text>
-          </View>
-        ) : null}
-        renderItem={({ item: pro }) => (
-          <View style={s.card}>
-            {(pro.acceptedBids ?? 0) > 0 && (
-              <View style={s.statPill}>
-                <Text style={s.statPillText}>{t.jobsCount(pro.acceptedBids!)}</Text>
+        renderItem={({ item }) => {
+          if (item.type === "header-salons") {
+            return (
+              <View style={s.header}>
+                <Text style={[s.title, { textAlign: ta }]}>{t.salonsNearby}</Text>
               </View>
-            )}
-            <View style={{ flex: 1, alignItems: ta === "right" ? "flex-end" : "flex-start" }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                {pro.isVerified && <Feather name="check-circle" size={13} color="#00B4FF" />}
-                <Text style={[s.proName, { textAlign: ta }]}>{pro.name}</Text>
+            );
+          }
+          if (item.type === "empty-salons") {
+            return (
+              <View style={s.empty}>
+                <Feather name="scissors" size={28} color="#374151" />
+                <Text style={s.emptyText}>{t.noSalons}</Text>
               </View>
-              {!!pro.location && <Text style={[s.proSub, { textAlign: ta }]}>{pro.location}</Text>}
-              {!!pro.rating && pro.rating > 0 && (
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 }}>
-                  <Text style={s.rating}>{pro.rating.toFixed(1)}</Text>
-                  <Feather name="star" size={12} color="#FFDD00" />
+            );
+          }
+          if (item.type === "salon") {
+            const salon = item.data;
+            const freeChairs = Number(salon.free_chairs ?? 0);
+            return (
+              <View style={s.card}>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                    {salon.is_live && (
+                      <View style={s.liveBadge}>
+                        <View style={s.liveDot} />
+                        <Text style={s.liveText}>{t.isLive}</Text>
+                      </View>
+                    )}
+                    <Text style={[s.proName, { textAlign: ta, flex: 1 }]} numberOfLines={1}>{salon.name}</Text>
+                  </View>
+                  {!!salon.address && (
+                    <Text style={[s.proSub, { textAlign: ta }]} numberOfLines={1}>
+                      <Feather name="map-pin" size={10} color="#9ca3af" /> {salon.address}
+                    </Text>
+                  )}
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 5, flexWrap: "wrap" }}>
+                    {typeof salon.rating === "number" && salon.rating > 0 && (
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+                        <Feather name="star" size={11} color="#FFDD00" />
+                        <Text style={[s.rating, { fontSize: 12 }]}>{salon.rating.toFixed(1)}</Text>
+                      </View>
+                    )}
+                    <View style={[s.chairPill, { borderColor: freeChairs > 0 ? "rgba(0,180,255,0.3)" : "rgba(255,255,255,0.1)" }]}>
+                      <Feather name="scissors" size={10} color={freeChairs > 0 ? "#00B4FF" : "#6b7280"} />
+                      <Text style={[s.chairText, { color: freeChairs > 0 ? "#00B4FF" : "#6b7280" }]}>
+                        {freeChairs > 0 ? t.freeChairs(freeChairs) : t.noFreeChairs}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
-              )}
-            </View>
-            <View style={s.avatar}>
-              <Text style={s.avatarText}>{pro.name[0]?.toUpperCase()}</Text>
-            </View>
-          </View>
-        )}
+                <HeartButton salonId={salon.id} token={token} />
+              </View>
+            );
+          }
+          if (item.type === "header-pros") {
+            return (
+              <View style={[s.header, { marginTop: 8 }]}>
+                <Text style={[s.title, { textAlign: ta }]}>{t.topProfessionals}</Text>
+              </View>
+            );
+          }
+          if (item.type === "empty-pros") {
+            return (
+              <View style={s.empty}>
+                <Feather name="users" size={28} color="#374151" />
+                <Text style={s.emptyText}>{t.noProfessionals}</Text>
+              </View>
+            );
+          }
+          if (item.type === "pro") {
+            const pro = item.data;
+            return (
+              <View style={s.card}>
+                {(pro.acceptedBids ?? 0) > 0 && (
+                  <View style={s.statPill}>
+                    <Text style={s.statPillText}>{t.jobsCount(pro.acceptedBids!)}</Text>
+                  </View>
+                )}
+                <View style={{ flex: 1, alignItems: ta === "right" ? "flex-end" : "flex-start" }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    {pro.isVerified && <Feather name="check-circle" size={13} color="#00B4FF" />}
+                    <Text style={[s.proName, { textAlign: ta }]}>{pro.name}</Text>
+                  </View>
+                  {!!pro.location && <Text style={[s.proSub, { textAlign: ta }]}>{pro.location}</Text>}
+                  {!!pro.rating && pro.rating > 0 && (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 }}>
+                      <Text style={s.rating}>{pro.rating.toFixed(1)}</Text>
+                      <Feather name="star" size={12} color="#FFDD00" />
+                    </View>
+                  )}
+                </View>
+                <View style={s.avatar}>
+                  <Text style={s.avatarText}>{pro.name[0]?.toUpperCase()}</Text>
+                </View>
+              </View>
+            );
+          }
+          return null;
+        }}
       />
     </View>
   );
