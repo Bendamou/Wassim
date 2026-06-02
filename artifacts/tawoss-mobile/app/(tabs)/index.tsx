@@ -42,7 +42,7 @@ function ClientHome() {
   const statusMap = STATUS_LABEL(t);
 
   return (
-    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
+    <View style={[s.screen, ]}>
       <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#00B4FF" />}>
         <View style={s.header}>
           <View style={s.avatarBox}>
@@ -125,7 +125,7 @@ function FreelancerHome() {
   });
 
   return (
-    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
+    <View style={[s.screen, ]}>
       <View style={s.header}>
         <View style={{ alignItems: "flex-end" }}>
           <View style={s.liveRow}>
@@ -226,7 +226,7 @@ function SalonHome() {
   };
 
   return (
-    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
+    <View style={[s.screen, ]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={s.header}>
           <View style={{ alignItems: "flex-end" }}>

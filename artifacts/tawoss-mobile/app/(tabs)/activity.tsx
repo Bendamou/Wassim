@@ -47,7 +47,7 @@ function ClientActivity() {
   });
 
   return (
-    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
+    <View style={[s.screen, ]}>
       <View style={s.header}>
         {isLoading && <ActivityIndicator color="#00B4FF" size="small" />}
         <Text style={[s.title, { textAlign: ta }]}>{t.myJobs}</Text>
@@ -151,7 +151,7 @@ function FreelancerActivity() {
   const openJobs = jobs.filter((j) => j.status === "open" && !bids.some((b) => b.jobId === j.id));
 
   return (
-    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
+    <View style={[s.screen, ]}>
       <View style={s.header}>
         {isLoading && <ActivityIndicator color="#FF1F8E" size="small" />}
         <Text style={[s.title, { textAlign: ta }]}>{t.myBids}</Text>
@@ -257,7 +257,7 @@ function SalonActivity() {
   };
 
   return (
-    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
+    <View style={[s.screen, ]}>
       <View style={s.header}>
         <Text style={[s.title, { textAlign: ta }]}>{t.chairQueueTitle(queue.length)}</Text>
       </View>

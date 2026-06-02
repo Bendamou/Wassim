@@ -18,9 +18,6 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/context/AuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
-
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();

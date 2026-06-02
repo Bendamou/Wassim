@@ -29,7 +29,7 @@ function ClientExplore() {
   });
 
   return (
-    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
+    <View style={[s.screen, ]}>
       <View style={s.header}>
         {isLoading && <ActivityIndicator color="#00B4FF" size="small" />}
         <Text style={[s.title, { textAlign: ta }]}>{t.topProfessionals}</Text>
@@ -93,7 +93,7 @@ function FreelancerExplore() {
   });
 
   return (
-    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
+    <View style={[s.screen, ]}>
       <View style={s.header}>
         {isLoading && <ActivityIndicator color="#FF1F8E" size="small" />}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -156,7 +156,7 @@ function SalonExplore() {
   ];
 
   return (
-    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
+    <View style={[s.screen, ]}>
       <View style={s.header}>
         <Text style={[s.title, { textAlign: ta }]}>{t.analytics}</Text>
       </View>
