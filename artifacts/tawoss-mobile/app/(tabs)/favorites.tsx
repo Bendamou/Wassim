@@ -131,7 +131,13 @@ export default function FavoritesTab() {
           ) : null
         }
         renderItem={({ item: salon }) => (
-          <View style={s.card}>
+          <Pressable
+            style={({ pressed }) => [s.card, { opacity: pressed ? 0.85 : 1 }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push(`/salon/${salon.id}` as any);
+            }}
+          >
             <View style={s.cardTop}>
               <View style={s.salonAvatar}>
                 <Text style={s.salonAvatarText}>{salon.name?.[0]?.toUpperCase()}</Text>
@@ -176,31 +182,21 @@ export default function FavoritesTab() {
                 style={({ pressed }) => [s.actionBtn, s.bookBtn, { opacity: pressed ? 0.8 : 1 }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push("/(tabs)/explore");
+                  router.push(`/salon/${salon.id}` as any);
                 }}
               >
                 <Feather name="scissors" size={14} color="#000" />
                 <Text style={s.bookBtnText}>{t.bookNow}</Text>
               </Pressable>
               <Pressable
-                style={({ pressed }) => [s.actionBtn, s.mapBtn, { opacity: pressed ? 0.8 : 1 }]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push("/(tabs)/explore");
-                }}
-              >
-                <Feather name="map" size={14} color="#00B4FF" />
-                <Text style={s.mapBtnText}>{t.viewMap}</Text>
-              </Pressable>
-              <Pressable
                 style={({ pressed }) => [s.actionBtn, s.removeBtn, { opacity: pressed ? 0.8 : 1 }]}
-                onPress={() => handleRemove(salon)}
+                onPress={e => { e.stopPropagation?.(); handleRemove(salon); }}
               >
                 <Feather name="trash-2" size={14} color="#ef4444" />
                 <Text style={s.removeBtnText}>{t.remove}</Text>
               </Pressable>
             </View>
-          </View>
+          </Pressable>
         )}
       />
     </View>

@@ -86,7 +86,14 @@ function ClientExplore() {
       </View>
 
       {salons.map((salon) => (
-        <View key={salon.id} style={s.salonCard}>
+        <Pressable
+          key={salon.id}
+          style={({ pressed }) => [s.salonCard, { opacity: pressed ? 0.85 : 1 }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push(`/salon/${salon.id}` as any);
+          }}
+        >
           <View style={s.salonAvatar}>
             <Text style={s.salonAvatarText}>{salon.name?.[0]?.toUpperCase()}</Text>
           </View>
@@ -115,7 +122,7 @@ function ClientExplore() {
             </View>
           </View>
           <HeartButton salonId={salon.id} />
-        </View>
+        </Pressable>
       ))}
 
       {salons.length === 0 && !salonsLoading && (
