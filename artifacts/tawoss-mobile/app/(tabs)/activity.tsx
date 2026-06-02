@@ -47,7 +47,7 @@ function ClientActivity() {
   });
 
   return (
-    <View style={[s.screen, ]}>
+    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
       <View style={s.header}>
         {isLoading && <ActivityIndicator color="#00B4FF" size="small" />}
         <Text style={[s.title, { textAlign: ta }]}>{t.myJobs}</Text>
@@ -57,7 +57,7 @@ function ClientActivity() {
         keyExtractor={(j) => String(j.id)}
         scrollEnabled={jobs.length > 0}
         refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#00B4FF" />}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 70 : 120, gap: 12 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 34 : 120, gap: 12 }}
         ListEmptyComponent={!isLoading ? (
           <View style={s.empty}>
             <Feather name="briefcase" size={40} color="#374151" />
@@ -151,7 +151,7 @@ function FreelancerActivity() {
   const openJobs = jobs.filter((j) => j.status === "open" && !bids.some((b) => b.jobId === j.id));
 
   return (
-    <View style={[s.screen, ]}>
+    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
       <View style={s.header}>
         {isLoading && <ActivityIndicator color="#FF1F8E" size="small" />}
         <Text style={[s.title, { textAlign: ta }]}>{t.myBids}</Text>
@@ -162,7 +162,7 @@ function FreelancerActivity() {
         keyExtractor={(b) => String(b.id)}
         scrollEnabled
         refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#FF1F8E" />}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 70 : 120, gap: 12 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 34 : 120, gap: 12 }}
         ListHeaderComponent={openJobs.length > 0 ? (
           <View style={{ marginBottom: 20 }}>
             <Text style={[s.sectionLabel, { textAlign: ta }]}>{t.availableJobs(openJobs.length)}</Text>
@@ -257,7 +257,7 @@ function SalonActivity() {
   };
 
   return (
-    <View style={[s.screen, ]}>
+    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
       <View style={s.header}>
         <Text style={[s.title, { textAlign: ta }]}>{t.chairQueueTitle(queue.length)}</Text>
       </View>
@@ -265,7 +265,7 @@ function SalonActivity() {
         data={queue}
         keyExtractor={(c: any) => String(c.id)}
         scrollEnabled={queue.length > 0}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 70 : 120, gap: 12 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 34 : 120, gap: 12 }}
         ListEmptyComponent={(
           <View style={s.empty}>
             <Feather name="users" size={40} color="#374151" />

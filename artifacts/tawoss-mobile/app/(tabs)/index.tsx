@@ -42,7 +42,7 @@ function ClientHome() {
   const statusMap = STATUS_LABEL(t);
 
   return (
-    <View style={[s.screen, ]}>
+    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
       <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#00B4FF" />}>
         <View style={s.header}>
           <View style={s.avatarBox}>
@@ -125,7 +125,7 @@ function FreelancerHome() {
   });
 
   return (
-    <View style={[s.screen, ]}>
+    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
       <View style={s.header}>
         <View style={{ alignItems: "flex-end" }}>
           <View style={s.liveRow}>
@@ -145,7 +145,7 @@ function FreelancerHome() {
         keyExtractor={(j) => String(j.id)}
         scrollEnabled={jobs.length > 0}
         refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#FF1F8E" />}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 70 : 100, gap: 12 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 34 : 100, gap: 12 }}
         ListEmptyComponent={!isLoading ? (
           <View style={[s.empty, { marginTop: 60 }]}>
             <Feather name="zap" size={40} color="#374151" />
@@ -226,8 +226,8 @@ function SalonHome() {
   };
 
   return (
-    <View style={[s.screen, ]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: Platform.OS === "web" ? 70 : 100 }}>
+    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={s.header}>
           <View style={{ alignItems: "flex-end" }}>
             <Text style={[s.userName, { textAlign: ta }]}>{t.salonDashboard}</Text>

@@ -27,25 +27,20 @@ export default function AuthWelcome() {
 
   return (
     <View style={[s.container, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
-
-      {/* ── LANGUAGE SELECTOR — always visible, above scroll ── */}
-      <View style={s.langBar}>
-        <Feather name="globe" size={16} color="#9ca3af" style={{ marginRight: 8 }} />
+      {/* Language toggle — floating top-right */}
+      <View style={s.langFab}>
+        <Feather name="globe" size={14} color="#00B4FF" />
         <TouchableOpacity
-          style={[s.langBtn, lang === "ar" && s.langBtnActive]}
+          style={[s.langPill, lang === "ar" && s.langPillActive]}
           onPress={() => { Haptics.selectionAsync(); setLang("ar"); }}
-          activeOpacity={0.75}
         >
-          {lang === "ar" && <View style={s.langDot} />}
-          <Text style={[s.langBtnText, lang === "ar" && s.langBtnTextActive]}>العربية</Text>
+          <Text style={[s.langPillText, lang === "ar" && s.langPillTextActive]}>ع</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[s.langBtn, lang === "en" && s.langBtnActive]}
+          style={[s.langPill, lang === "en" && s.langPillActive]}
           onPress={() => { Haptics.selectionAsync(); setLang("en"); }}
-          activeOpacity={0.75}
         >
-          {lang === "en" && <View style={s.langDot} />}
-          <Text style={[s.langBtnText, lang === "en" && s.langBtnTextActive]}>English</Text>
+          <Text style={[s.langPillText, lang === "en" && s.langPillTextActive]}>EN</Text>
         </TouchableOpacity>
       </View>
 
@@ -95,46 +90,17 @@ export default function AuthWelcome() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#090013" },
-
-  langBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.06)",
-    backgroundColor: "#0d001f",
+  langFab: {
+    position: "absolute", top: 56, right: 20, zIndex: 99,
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: "#130028", borderRadius: 24, borderWidth: 1.5,
+    borderColor: "rgba(0,180,255,0.45)", paddingVertical: 8, paddingHorizontal: 12,
+    shadowColor: "#00B4FF", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.4, shadowRadius: 8,
   },
-  langBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 10,
-    marginHorizontal: 4,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "transparent",
-  },
-  langBtnActive: {
-    backgroundColor: "#1a003d",
-    borderColor: "#00B4FF",
-  },
-  langDot: {
-    width: 7, height: 7, borderRadius: 4,
-    backgroundColor: "#00B4FF",
-  },
-  langBtnText: {
-    fontSize: 15,
-    fontFamily: "Cairo_600SemiBold",
-    color: "#6b7280",
-  },
-  langBtnTextActive: {
-    color: "#00B4FF",
-  },
-
+  langPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 14, borderWidth: 1.5, borderColor: "rgba(255,255,255,0.15)", backgroundColor: "transparent" },
+  langPillActive: { backgroundColor: "#00B4FF", borderColor: "#00B4FF" },
+  langPillText: { fontSize: 13, fontFamily: "Cairo_700Bold", color: "#6b7280" },
+  langPillTextActive: { color: "#000" },
   scroll: { paddingHorizontal: 24, paddingBottom: 48 },
   logoSection: { alignItems: "center", paddingTop: 20, paddingBottom: 28 },
   logoBox: { width: 68, height: 68, borderRadius: 22, alignItems: "center", justifyContent: "center", marginBottom: 14 },

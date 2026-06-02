@@ -39,8 +39,8 @@ export default function ProfileTab() {
   const color = ROLE_COLOR[user?.role ?? "client"] ?? "#00B4FF";
 
   return (
-    <View style={[s.screen, ]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: Platform.OS === "web" ? 70 : 100 }}>
+    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: Platform.OS === "web" ? 34 : 100 }}>
         <View style={s.heroSection}>
           <View style={[s.avatar, { borderColor: `${color}60`, shadowColor: color }]}>
             <Text style={[s.avatarText, { color }]}>{user?.name?.[0]?.toUpperCase() ?? "?"}</Text>

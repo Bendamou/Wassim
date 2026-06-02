@@ -1,44 +1,10 @@
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import * as Haptics from "expo-haptics";
 import { Tabs } from "expo-router";
-import { Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 
 import { useAuth } from "@/context/AuthContext";
-import { useLanguage, useStrings } from "@/context/LanguageContext";
-
-function LangToggle() {
-  const { lang, setLang } = useLanguage();
-  return (
-    <View style={lt.row}>
-      <TouchableOpacity
-        style={[lt.btn, lang === "ar" && lt.btnActive]}
-        onPress={() => { Haptics.selectionAsync(); setLang("ar"); }}
-        activeOpacity={0.7}
-      >
-        <Text style={[lt.txt, lang === "ar" && lt.txtActive]}>ع</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[lt.btn, lang === "en" && lt.btnActive]}
-        onPress={() => { Haptics.selectionAsync(); setLang("en"); }}
-        activeOpacity={0.7}
-      >
-        <Text style={[lt.txt, lang === "en" && lt.txtActive]}>EN</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-const lt = StyleSheet.create({
-  row: { flexDirection: "row", gap: 6, marginRight: 16 },
-  btn: {
-    paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14,
-    borderWidth: 1.5, borderColor: "rgba(255,255,255,0.15)",
-  },
-  btnActive: { backgroundColor: "#00B4FF", borderColor: "#00B4FF" },
-  txt: { fontSize: 13, fontFamily: "Cairo_700Bold", color: "#6b7280" },
-  txtActive: { color: "#000" },
-});
+import { useStrings } from "@/context/LanguageContext";
 
 export default function TabLayout() {
   const { user } = useAuth();
@@ -50,19 +16,10 @@ export default function TabLayout() {
 
   const activeColor = isPro ? "#FF1F8E" : isSalon ? "#9B30FF" : "#00B4FF";
 
-  const headerOptions = {
-    headerStyle: { backgroundColor: "#0d001f" },
-    headerTintColor: "#f0eeff",
-    headerTitleStyle: { fontFamily: "Cairo_700Bold", fontSize: 18 },
-    headerShadowVisible: false,
-    headerRight: () => <LangToggle />,
-    headerShown: true,
-  } as const;
-
   return (
     <Tabs
       screenOptions={{
-        ...headerOptions,
+        headerShown: false,
         tabBarActiveTintColor: activeColor,
         tabBarInactiveTintColor: "#6b7280",
         tabBarStyle: {
@@ -71,8 +28,8 @@ export default function TabLayout() {
           borderTopWidth: 1,
           borderTopColor: "rgba(255,255,255,0.08)",
           elevation: 0,
-          height: Platform.OS === "web" ? 62 : 82,
-          paddingBottom: Platform.OS === "web" ? 10 : 22,
+          height: Platform.OS === "web" ? 64 : 82,
+          paddingBottom: Platform.OS === "web" ? 8 : 24,
           paddingTop: 8,
         },
         tabBarBackground: () =>
@@ -82,7 +39,7 @@ export default function TabLayout() {
             <View style={[StyleSheet.absoluteFill, { backgroundColor: "#0a0018" }]} />
           ),
         tabBarLabelStyle: {
-          fontSize: 10,
+          fontSize: 11,
           fontFamily: "Cairo_600SemiBold",
         },
       }}
@@ -115,16 +72,6 @@ export default function TabLayout() {
           title: isPro ? t.tabMyBids : isSalon ? t.tabQueue : t.tabMyJobs,
           tabBarIcon: ({ color, size }) => (
             <Feather name="briefcase" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="favorites"
-        options={{
-          title: t.tabFavorites,
-          tabBarButton: isClient ? undefined : () => null,
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="heart" size={size} color={color} />
           ),
         }}
       />

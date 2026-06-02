@@ -23,11 +23,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     AsyncStorage.getItem("@lang").then((saved) => {
-      const next: Lang = saved === "en" ? "en" : "ar";
-      setLangState(next);
-      const shouldRTL = next === "ar";
-      I18nManager.allowRTL(shouldRTL);
-      I18nManager.forceRTL(shouldRTL);
+      if (saved === "en" || saved === "ar") setLangState(saved);
     });
   }, []);
 

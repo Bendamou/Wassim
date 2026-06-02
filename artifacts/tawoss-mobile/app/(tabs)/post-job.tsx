@@ -47,7 +47,7 @@ export default function PostJob() {
 
   return (
     <KeyboardAvoidingView
-      style={[s.container, ]}
+      style={[s.container, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
