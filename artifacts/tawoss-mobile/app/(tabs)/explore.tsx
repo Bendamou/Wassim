@@ -7,18 +7,21 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage, useStrings } from "@/context/LanguageContext";
 import { api } from "@/lib/api";
-import { ar, SVC_LABEL_AR } from "@/lib/strings";
+import { SVC_LABEL_AR } from "@/lib/strings";
 
 interface Pro { id: number; name: string; rating?: number; location?: string; isVerified: boolean; acceptedBids?: number; }
 interface Job { id: number; service: string; budget: number; location: string; status: string; bidsCount?: number; }
-
 const SVC_EMOJI: Record<string, string> = { haircut: "💇", beard: "🧔", nails: "💅", full_grooming: "✨" };
 
-// ── CLIENT ───────────────────────────────────────────────────────────────────
 function ClientExplore() {
   const { token } = useAuth();
   const insets = useSafeAreaInsets();
+  const t = useStrings();
+  const { isRTL } = useLanguage();
+  const ta = isRTL ? "right" : "left" as const;
+
   const { data: pros = [], isLoading, refetch } = useQuery<Pro[]>({
     queryKey: ["professionals"],
     queryFn: () => api("GET", "/professionals", undefined, token),
@@ -29,7 +32,7 @@ function ClientExplore() {
     <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
       <View style={s.header}>
         {isLoading && <ActivityIndicator color="#00B4FF" size="small" />}
-        <Text style={s.title}>{ar.topProfessionals}</Text>
+        <Text style={[s.title, { textAlign: ta }]}>{t.topProfessionals}</Text>
       </View>
       <FlatList
         data={pros}
@@ -40,22 +43,22 @@ function ClientExplore() {
         ListEmptyComponent={!isLoading ? (
           <View style={s.empty}>
             <Feather name="users" size={36} color="#374151" />
-            <Text style={s.emptyText}>{ar.noProfessionals}</Text>
+            <Text style={s.emptyText}>{t.noProfessionals}</Text>
           </View>
         ) : null}
         renderItem={({ item: pro }) => (
           <View style={s.card}>
             {(pro.acceptedBids ?? 0) > 0 && (
               <View style={s.statPill}>
-                <Text style={s.statPillText}>{ar.jobsCount(pro.acceptedBids!)}</Text>
+                <Text style={s.statPillText}>{t.jobsCount(pro.acceptedBids!)}</Text>
               </View>
             )}
-            <View style={{ flex: 1, alignItems: "flex-end" }}>
+            <View style={{ flex: 1, alignItems: ta === "right" ? "flex-end" : "flex-start" }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                 {pro.isVerified && <Feather name="check-circle" size={13} color="#00B4FF" />}
-                <Text style={s.proName}>{pro.name}</Text>
+                <Text style={[s.proName, { textAlign: ta }]}>{pro.name}</Text>
               </View>
-              {!!pro.location && <Text style={s.proSub}>{pro.location}</Text>}
+              {!!pro.location && <Text style={[s.proSub, { textAlign: ta }]}>{pro.location}</Text>}
               {!!pro.rating && pro.rating > 0 && (
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 }}>
                   <Text style={s.rating}>{pro.rating.toFixed(1)}</Text>
@@ -73,11 +76,15 @@ function ClientExplore() {
   );
 }
 
-// ── FREELANCER ───────────────────────────────────────────────────────────────
 function FreelancerExplore() {
   const { token } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const t = useStrings();
+  const { isRTL } = useLanguage();
+  const ta = isRTL ? "right" : "left" as const;
+  const svcMap = SVC_LABEL_AR(t);
+
   const { data: jobs = [], isLoading, refetch } = useQuery<Job[]>({
     queryKey: ["jobs"],
     queryFn: () => api("GET", "/jobs", undefined, token),
@@ -94,7 +101,7 @@ function FreelancerExplore() {
             <View style={s.liveDot} />
             <Text style={s.liveText}>{jobs.length}</Text>
           </View>
-          <Text style={s.title}>{ar.allRequests}</Text>
+          <Text style={[s.title, { textAlign: ta }]}>{t.allRequests}</Text>
         </View>
       </View>
       <FlatList
@@ -106,7 +113,7 @@ function FreelancerExplore() {
         ListEmptyComponent={!isLoading ? (
           <View style={s.empty}>
             <Feather name="zap" size={36} color="#374151" />
-            <Text style={s.emptyText}>{ar.noRequests}</Text>
+            <Text style={s.emptyText}>{t.noRequests}</Text>
           </View>
         ) : null}
         renderItem={({ item: job }) => (
@@ -116,14 +123,14 @@ function FreelancerExplore() {
           >
             <View style={{ alignItems: "flex-start" }}>
               <Text style={s.budget}>{job.budget}</Text>
-              <Text style={s.budgetSub}>{ar.mad}</Text>
+              <Text style={s.budgetSub}>{t.mad}</Text>
             </View>
-            <View style={{ flex: 1, alignItems: "flex-end" }}>
-              <Text style={s.proName}>{SVC_LABEL_AR[job.service] ?? job.service}</Text>
-              <Text style={s.proSub}>{job.location}</Text>
+            <View style={{ flex: 1, alignItems: ta === "right" ? "flex-end" : "flex-start" }}>
+              <Text style={[s.proName, { textAlign: ta }]}>{svcMap[job.service] ?? job.service}</Text>
+              <Text style={[s.proSub, { textAlign: ta }]}>{job.location}</Text>
               {(job.bidsCount ?? 0) === 0
-                ? <Text style={{ fontSize: 12, color: "#4ade80", fontFamily: "Cairo_700Bold", marginTop: 3 }}>⚡ {ar.beTheFirst}</Text>
-                : <Text style={{ fontSize: 12, color: "#FF1F8E", fontFamily: "Cairo_700Bold", marginTop: 3 }}>{ar.bidsCount(job.bidsCount!)}</Text>}
+                ? <Text style={{ fontSize: 12, color: "#4ade80", fontFamily: "Cairo_700Bold", marginTop: 3 }}>⚡ {t.beTheFirst}</Text>
+                : <Text style={{ fontSize: 12, color: "#FF1F8E", fontFamily: "Cairo_700Bold", marginTop: 3 }}>{t.bidsCount(job.bidsCount!)}</Text>}
             </View>
             <View style={s.svcIcon}>
               <Text style={{ fontSize: 20 }}>{SVC_EMOJI[job.service] ?? "✂️"}</Text>
@@ -135,34 +142,36 @@ function FreelancerExplore() {
   );
 }
 
-// ── SALON ────────────────────────────────────────────────────────────────────
 function SalonExplore() {
   const insets = useSafeAreaInsets();
+  const t = useStrings();
+  const { isRTL } = useLanguage();
+  const ta = isRTL ? "right" : "left" as const;
 
   const stats = [
-    { label: ar.todayRevenue, value: `0 ${ar.mad}`, color: "#00B4FF" },
-    { label: ar.thisWeek, value: `0 ${ar.mad}`, color: "#FF1F8E" },
-    { label: ar.chairsBusy, value: "0 / 4", color: "#9B30FF" },
-    { label: ar.avgRating, value: "–", color: "#FFDD00" },
+    { label: t.todayRevenue, value: `0 ${t.mad}`, color: "#00B4FF" },
+    { label: t.thisWeek, value: `0 ${t.mad}`, color: "#FF1F8E" },
+    { label: t.chairsBusy, value: "0 / 4", color: "#9B30FF" },
+    { label: t.avgRating, value: "–", color: "#FFDD00" },
   ];
 
   return (
     <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
       <View style={s.header}>
-        <Text style={s.title}>{ar.analytics}</Text>
+        <Text style={[s.title, { textAlign: ta }]}>{t.analytics}</Text>
       </View>
       <View style={s.analyticsGrid}>
         {stats.map((item) => (
           <View key={item.label} style={[s.analyticsCard, { borderColor: `${item.color}30` }]}>
             <Text style={[s.analyticsVal, { color: item.color }]}>{item.value}</Text>
-            <Text style={s.analyticsLabel}>{item.label}</Text>
+            <Text style={[s.analyticsLabel, { textAlign: ta }]}>{item.label}</Text>
           </View>
         ))}
       </View>
       <View style={s.empty}>
         <Feather name="bar-chart-2" size={40} color="#374151" />
-        <Text style={s.emptyText}>{ar.analyticsComingSoon}</Text>
-        <Text style={s.emptyHint}>{ar.yourEarningsHere}</Text>
+        <Text style={s.emptyText}>{t.analyticsComingSoon}</Text>
+        <Text style={s.emptyHint}>{t.yourEarningsHere}</Text>
       </View>
     </View>
   );
@@ -196,7 +205,7 @@ const s = StyleSheet.create({
   analyticsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, paddingHorizontal: 20, marginBottom: 20 },
   analyticsCard: { width: "46%", backgroundColor: "#130028", borderRadius: 18, padding: 18, borderWidth: 1 },
   analyticsVal: { fontSize: 22, fontFamily: "Cairo_700Bold" },
-  analyticsLabel: { fontSize: 12, fontFamily: "Cairo_400Regular", color: "#9ca3af", marginTop: 4, textAlign: "right" },
+  analyticsLabel: { fontSize: 12, fontFamily: "Cairo_400Regular", color: "#9ca3af", marginTop: 4 },
   empty: { alignItems: "center", gap: 12, paddingTop: 40 },
   emptyText: { fontSize: 15, fontFamily: "Cairo_500Medium", color: "#6b7280" },
   emptyHint: { fontSize: 13, fontFamily: "Cairo_400Regular", color: "#4b5563", textAlign: "center", paddingHorizontal: 40 },

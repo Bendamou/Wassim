@@ -4,10 +4,11 @@ import { Tabs } from "expo-router";
 import { Platform, StyleSheet, View } from "react-native";
 
 import { useAuth } from "@/context/AuthContext";
-import { ar } from "@/lib/strings";
+import { useStrings } from "@/context/LanguageContext";
 
 export default function TabLayout() {
   const { user } = useAuth();
+  const t = useStrings();
   const isPro = user?.role === "professional";
   const isSalon = user?.role === "salon_owner";
   const isClient = user?.role === "client";
@@ -46,7 +47,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: isSalon ? ar.tabDashboard : ar.tabHome,
+          title: isSalon ? t.tabDashboard : t.tabHome,
           tabBarIcon: ({ color, size }) => (
             <Feather name="home" size={size} color={color} />
           ),
@@ -55,7 +56,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: isPro ? ar.tabRequests : isSalon ? ar.analytics : ar.tabExplore,
+          title: isPro ? t.tabRequests : isSalon ? t.analytics : t.tabExplore,
           tabBarIcon: ({ color, size }) => (
             <Feather
               name={isPro ? "zap" : isSalon ? "bar-chart-2" : "compass"}
@@ -68,7 +69,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="activity"
         options={{
-          title: isPro ? ar.tabMyBids : isSalon ? ar.tabQueue : ar.tabMyJobs,
+          title: isPro ? t.tabMyBids : isSalon ? t.tabQueue : t.tabMyJobs,
           tabBarIcon: ({ color, size }) => (
             <Feather name="briefcase" size={size} color={color} />
           ),
@@ -77,7 +78,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="post-job"
         options={{
-          title: ar.tabPostJob,
+          title: t.tabPostJob,
           tabBarButton: isClient ? undefined : () => null,
           tabBarIcon: ({ color, size }) => (
             <Feather name="plus-circle" size={size} color={color} />
@@ -87,7 +88,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: ar.tabProfile,
+          title: t.tabProfile,
           tabBarIcon: ({ color, size }) => (
             <Feather name="user" size={size} color={color} />
           ),
