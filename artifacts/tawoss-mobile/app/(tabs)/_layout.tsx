@@ -1,10 +1,44 @@
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
+import * as Haptics from "expo-haptics";
 import { Tabs } from "expo-router";
-import { Platform, StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { useAuth } from "@/context/AuthContext";
-import { useStrings } from "@/context/LanguageContext";
+import { useLanguage, useStrings } from "@/context/LanguageContext";
+
+function LangToggle() {
+  const { lang, setLang } = useLanguage();
+  return (
+    <View style={lt.row}>
+      <TouchableOpacity
+        style={[lt.btn, lang === "ar" && lt.btnActive]}
+        onPress={() => { Haptics.selectionAsync(); setLang("ar"); }}
+        activeOpacity={0.7}
+      >
+        <Text style={[lt.txt, lang === "ar" && lt.txtActive]}>ع</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[lt.btn, lang === "en" && lt.btnActive]}
+        onPress={() => { Haptics.selectionAsync(); setLang("en"); }}
+        activeOpacity={0.7}
+      >
+        <Text style={[lt.txt, lang === "en" && lt.txtActive]}>EN</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const lt = StyleSheet.create({
+  row: { flexDirection: "row", gap: 6, marginRight: 16 },
+  btn: {
+    paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14,
+    borderWidth: 1.5, borderColor: "rgba(255,255,255,0.15)",
+  },
+  btnActive: { backgroundColor: "#00B4FF", borderColor: "#00B4FF" },
+  txt: { fontSize: 13, fontFamily: "Cairo_700Bold", color: "#6b7280" },
+  txtActive: { color: "#000" },
+});
 
 export default function TabLayout() {
   const { user } = useAuth();
@@ -16,10 +50,19 @@ export default function TabLayout() {
 
   const activeColor = isPro ? "#FF1F8E" : isSalon ? "#9B30FF" : "#00B4FF";
 
+  const headerOptions = {
+    headerStyle: { backgroundColor: "#0d001f" },
+    headerTintColor: "#f0eeff",
+    headerTitleStyle: { fontFamily: "Cairo_700Bold", fontSize: 18 },
+    headerShadowVisible: false,
+    headerRight: () => <LangToggle />,
+    headerShown: true,
+  } as const;
+
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,
+        ...headerOptions,
         tabBarActiveTintColor: activeColor,
         tabBarInactiveTintColor: "#6b7280",
         tabBarStyle: {
