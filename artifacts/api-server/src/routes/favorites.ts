@@ -6,7 +6,7 @@ import { getUserFromToken } from "./auth";
 const router = Router();
 
 router.get("/users/favorites", async (req, res) => {
-  const user = await getUserFromToken(req);
+  const user = await getUserFromToken(req.headers.authorization?.replace("Bearer ", ""));
   if (!user) { res.status(401).json({ message: "Unauthorized" }); return; }
   try {
     const rows = await db.execute(sql`
@@ -34,7 +34,7 @@ router.get("/users/favorites", async (req, res) => {
 });
 
 router.post("/users/favorites/:salonId", async (req, res) => {
-  const user = await getUserFromToken(req);
+  const user = await getUserFromToken(req.headers.authorization?.replace("Bearer ", ""));
   if (!user) { res.status(401).json({ message: "Unauthorized" }); return; }
   const salonId = parseInt(req.params.salonId);
   if (isNaN(salonId)) { res.status(400).json({ message: "Invalid salon ID" }); return; }
@@ -52,7 +52,7 @@ router.post("/users/favorites/:salonId", async (req, res) => {
 });
 
 router.delete("/users/favorites/:salonId", async (req, res) => {
-  const user = await getUserFromToken(req);
+  const user = await getUserFromToken(req.headers.authorization?.replace("Bearer ", ""));
   if (!user) { res.status(401).json({ message: "Unauthorized" }); return; }
   const salonId = parseInt(req.params.salonId);
   if (isNaN(salonId)) { res.status(400).json({ message: "Invalid salon ID" }); return; }
@@ -68,7 +68,7 @@ router.delete("/users/favorites/:salonId", async (req, res) => {
 });
 
 router.get("/users/favorites/ids", async (req, res) => {
-  const user = await getUserFromToken(req);
+  const user = await getUserFromToken(req.headers.authorization?.replace("Bearer ", ""));
   if (!user) { res.status(401).json({ message: "Unauthorized" }); return; }
   try {
     const rows = await db.execute(sql`

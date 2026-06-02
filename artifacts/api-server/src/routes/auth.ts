@@ -131,13 +131,22 @@ router.post("/auth/phone-register", async (req, res) => {
   });
 });
 
+function normalizePhone(raw: string): string {
+  const digits = raw.replace(/\s/g, "");
+  if (digits.startsWith("+")) return digits;
+  if (digits.startsWith("00")) return "+" + digits.slice(2);
+  if (digits.startsWith("0")) return "+212" + digits.slice(1);
+  return digits;
+}
+
 router.post("/auth/phone-login", async (req, res) => {
   const { phone } = req.body;
   if (!phone) {
     res.status(400).json({ message: "phone is required" });
     return;
   }
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.phone, phone)).limit(1);
+  const normalized = normalizePhone(phone);
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.phone, normalized)).limit(1);
   if (!user) {
     res.status(404).json({ message: "User not found" });
     return;
