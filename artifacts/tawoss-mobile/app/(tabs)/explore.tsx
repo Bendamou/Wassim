@@ -1,8 +1,11 @@
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
   ActivityIndicator, FlatList, Platform, Pressable,
-  RefreshControl, StyleSheet, Text, View,
+  RefreshControl, ScrollView, StyleSheet, Text,
+  ToastAndroid, TouchableOpacity, View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
@@ -10,10 +13,41 @@ import { useAuth } from "@/context/AuthContext";
 import { useLanguage, useStrings } from "@/context/LanguageContext";
 import { api } from "@/lib/api";
 import { SVC_LABEL_AR } from "@/lib/strings";
+import { useFavorites } from "@/hooks/useFavorites";
 
 interface Pro { id: number; name: string; rating?: number; location?: string; isVerified: boolean; acceptedBids?: number; }
 interface Job { id: number; service: string; budget: number; location: string; status: string; bidsCount?: number; }
+interface Salon { id: number; name: string; city?: string; address?: string; rating?: number; is_live?: boolean; free_chairs?: number; total_chairs?: number; active_claims?: number; owner_name?: string; }
 const SVC_EMOJI: Record<string, string> = { haircut: "💇", beard: "🧔", nails: "💅", full_grooming: "✨" };
+
+function HeartButton({ salonId }: { salonId: number }) {
+  const t = useStrings();
+  const { isFavorite, toggle } = useFavorites();
+  const [loading, setLoading] = useState(false);
+  const fav = isFavorite(salonId);
+
+  const handlePress = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setLoading(true);
+    try {
+      const result = await toggle(salonId);
+      if (Platform.OS === "android") {
+        ToastAndroid.show(
+          result === "added" ? t.addedToFavorites : t.removedFromFavorites,
+          ToastAndroid.SHORT
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <TouchableOpacity onPress={handlePress} style={s.heartBtn} disabled={loading}>
+      <Feather name="heart" size={18} color={fav ? "#FF1F8E" : "#4b5563"} />
+    </TouchableOpacity>
+  );
+}
 
 function ClientExplore() {
   const { token } = useAuth();
@@ -21,58 +55,113 @@ function ClientExplore() {
   const t = useStrings();
   const { isRTL } = useLanguage();
   const ta = isRTL ? "right" : "left" as const;
+  const router = useRouter();
 
-  const { data: pros = [], isLoading, refetch } = useQuery<Pro[]>({
+  const { data: salons = [], isLoading: salonsLoading, refetch: refetchSalons } = useQuery<Salon[]>({
+    queryKey: ["salons"],
+    queryFn: () => api("GET", "/salons", undefined, token),
+    enabled: !!token,
+    refetchInterval: 15000,
+  });
+
+  const { data: pros = [], isLoading: prosLoading, refetch: refetchPros } = useQuery<Pro[]>({
     queryKey: ["professionals"],
     queryFn: () => api("GET", "/professionals", undefined, token),
     enabled: !!token,
   });
 
+  const isLoading = salonsLoading || prosLoading;
+  const refetch = () => { refetchSalons(); refetchPros(); };
+
   return (
-    <View style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
+    <ScrollView
+      style={[s.screen, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}
+      showsVerticalScrollIndicator={false}
+      refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#00B4FF" />}
+      contentContainerStyle={{ paddingBottom: Platform.OS === "web" ? 34 : 110 }}
+    >
       <View style={s.header}>
         {isLoading && <ActivityIndicator color="#00B4FF" size="small" />}
-        <Text style={[s.title, { textAlign: ta }]}>{t.topProfessionals}</Text>
+        <Text style={[s.title, { textAlign: ta }]}>{t.salonsNearby}</Text>
       </View>
-      <FlatList
-        data={pros}
-        keyExtractor={(p) => String(p.id)}
-        scrollEnabled={pros.length > 0}
-        refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#00B4FF" />}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: Platform.OS === "web" ? 34 : 120, gap: 12 }}
-        ListEmptyComponent={!isLoading ? (
-          <View style={s.empty}>
-            <Feather name="users" size={36} color="#374151" />
-            <Text style={s.emptyText}>{t.noProfessionals}</Text>
+
+      {salons.map((salon) => (
+        <View key={salon.id} style={s.salonCard}>
+          <View style={s.salonAvatar}>
+            <Text style={s.salonAvatarText}>{salon.name?.[0]?.toUpperCase()}</Text>
           </View>
-        ) : null}
-        renderItem={({ item: pro }) => (
-          <View style={s.card}>
-            {(pro.acceptedBids ?? 0) > 0 && (
-              <View style={s.statPill}>
-                <Text style={s.statPillText}>{t.jobsCount(pro.acceptedBids!)}</Text>
-              </View>
-            )}
-            <View style={{ flex: 1, alignItems: ta === "right" ? "flex-end" : "flex-start" }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                {pro.isVerified && <Feather name="check-circle" size={13} color="#00B4FF" />}
-                <Text style={[s.proName, { textAlign: ta }]}>{pro.name}</Text>
-              </View>
-              {!!pro.location && <Text style={[s.proSub, { textAlign: ta }]}>{pro.location}</Text>}
-              {!!pro.rating && pro.rating > 0 && (
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 }}>
-                  <Text style={s.rating}>{pro.rating.toFixed(1)}</Text>
-                  <Feather name="star" size={12} color="#FFDD00" />
+          <View style={{ flex: 1, alignItems: ta === "right" ? "flex-end" : "flex-start" }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              {salon.is_live && (
+                <View style={s.liveSmall}>
+                  <View style={s.liveDot} />
+                </View>
+              )}
+              <Text style={[s.salonName, { textAlign: ta }]}>{salon.name}</Text>
+            </View>
+            {!!salon.city && <Text style={[s.proSub, { textAlign: ta }]}>{salon.city}</Text>}
+            <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
+              {!!salon.rating && salon.rating > 0 && (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+                  <Feather name="star" size={11} color="#FFDD00" />
+                  <Text style={s.rating}>{salon.rating.toFixed(1)}</Text>
+                </View>
+              )}
+              {(salon.free_chairs ?? 0) > 0 && (
+                <View style={s.chairBadge}>
+                  <Text style={s.chairText}>{t.chairsAvailable(Number(salon.free_chairs))}</Text>
                 </View>
               )}
             </View>
-            <View style={s.avatar}>
-              <Text style={s.avatarText}>{pro.name[0]?.toUpperCase()}</Text>
-            </View>
           </View>
-        )}
-      />
-    </View>
+          <HeartButton salonId={salon.id} />
+        </View>
+      ))}
+
+      {salons.length === 0 && !salonsLoading && (
+        <View style={[s.empty, { marginTop: 0, marginBottom: 32 }]}>
+          <Feather name="scissors" size={32} color="#374151" />
+          <Text style={s.emptyText}>{t.noProfessionals}</Text>
+        </View>
+      )}
+
+      <View style={[s.header, { marginTop: 8 }]}>
+        <Text style={[s.title, { textAlign: ta }]}>{t.topProfessionals}</Text>
+      </View>
+
+      {pros.map((pro) => (
+        <View key={pro.id} style={[s.card, { marginHorizontal: 20, marginBottom: 10 }]}>
+          {(pro.acceptedBids ?? 0) > 0 && (
+            <View style={s.statPill}>
+              <Text style={s.statPillText}>{t.jobsCount(pro.acceptedBids!)}</Text>
+            </View>
+          )}
+          <View style={{ flex: 1, alignItems: ta === "right" ? "flex-end" : "flex-start" }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              {pro.isVerified && <Feather name="check-circle" size={13} color="#00B4FF" />}
+              <Text style={[s.proName, { textAlign: ta }]}>{pro.name}</Text>
+            </View>
+            {!!pro.location && <Text style={[s.proSub, { textAlign: ta }]}>{pro.location}</Text>}
+            {!!pro.rating && pro.rating > 0 && (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 }}>
+                <Text style={s.rating}>{pro.rating.toFixed(1)}</Text>
+                <Feather name="star" size={12} color="#FFDD00" />
+              </View>
+            )}
+          </View>
+          <View style={s.avatar}>
+            <Text style={s.avatarText}>{pro.name[0]?.toUpperCase()}</Text>
+          </View>
+        </View>
+      ))}
+
+      {pros.length === 0 && !prosLoading && (
+        <View style={s.empty}>
+          <Feather name="users" size={36} color="#374151" />
+          <Text style={s.emptyText}>{t.noProfessionals}</Text>
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
@@ -186,8 +275,16 @@ export default function ExploreTab() {
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#090013" },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 20, paddingVertical: 16 },
-  title: { fontSize: 22, fontFamily: "Cairo_700Bold", color: "#f0eeff" },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 20, paddingVertical: 14 },
+  title: { fontSize: 20, fontFamily: "Cairo_700Bold", color: "#f0eeff" },
+  salonCard: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#130028", borderRadius: 18, padding: 14, marginHorizontal: 20, marginBottom: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
+  salonAvatar: { width: 46, height: 46, borderRadius: 14, backgroundColor: "rgba(155,48,255,0.15)", borderWidth: 1, borderColor: "rgba(155,48,255,0.3)", alignItems: "center", justifyContent: "center" },
+  salonAvatarText: { fontSize: 18, fontFamily: "Cairo_700Bold", color: "#9B30FF" },
+  salonName: { fontSize: 15, fontFamily: "Cairo_700Bold", color: "#f0eeff" },
+  heartBtn: { padding: 8, borderRadius: 20, backgroundColor: "rgba(255,31,142,0.08)" },
+  chairBadge: { backgroundColor: "rgba(0,180,255,0.10)", borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2 },
+  chairText: { fontSize: 11, fontFamily: "Cairo_600SemiBold", color: "#00B4FF" },
+  liveSmall: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#4ade80" },
   card: { flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: "#130028", borderRadius: 18, padding: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
   avatar: { width: 46, height: 46, borderRadius: 23, backgroundColor: "rgba(0,180,255,0.15)", borderWidth: 1, borderColor: "rgba(0,180,255,0.3)", alignItems: "center", justifyContent: "center" },
   avatarText: { fontSize: 18, fontFamily: "Cairo_700Bold", color: "#00B4FF" },

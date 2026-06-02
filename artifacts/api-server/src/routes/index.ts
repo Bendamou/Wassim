@@ -7,6 +7,7 @@ import bidsRouter from "./bids";
 import dashboardRouter from "./dashboard";
 import salonsRouter from "./salons";
 import configRouter from "./config";
+import favoritesRouter from "./favorites";
 
 const router: IRouter = Router();
 
@@ -17,6 +18,7 @@ router.use(jobsRouter);
 router.use(bidsRouter);
 router.use(dashboardRouter);
 router.use(salonsRouter);
+router.use(favoritesRouter);
 router.use(configRouter);
 
 export default router;

@@ -76,6 +76,16 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="favorites"
+        options={{
+          title: t.tabFavorites,
+          tabBarButton: isClient ? undefined : () => null,
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="heart" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="post-job"
         options={{
           title: t.tabPostJob,

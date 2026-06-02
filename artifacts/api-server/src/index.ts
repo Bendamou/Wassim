@@ -23,6 +23,15 @@ if (Number.isNaN(port) || port <= 0) {
     await db.execute(sql`ALTER TABLE chair_claims ADD COLUMN IF NOT EXISTS client_lng DOUBLE PRECISION`);
     await db.execute(sql`ALTER TABLE salons ADD COLUMN IF NOT EXISTS photos TEXT`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS portfolio TEXT`);
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS user_favorites (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        salon_id INTEGER NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        UNIQUE(user_id, salon_id)
+      )
+    `);
     logger.info("Schema migrations applied");
   } catch (err) {
     logger.warn({ err }, "Migration warning (non-fatal)");
