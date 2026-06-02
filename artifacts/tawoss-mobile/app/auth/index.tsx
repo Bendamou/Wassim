@@ -27,17 +27,18 @@ export default function AuthWelcome() {
 
   return (
     <View style={[s.container, { paddingTop: Platform.OS === "web" ? 67 : insets.top }]}>
-      {/* Language toggle — top right always */}
-      <View style={s.langRow}>
+      {/* Language toggle — floating top-right */}
+      <View style={s.langFab}>
+        <Feather name="globe" size={14} color="#00B4FF" />
         <TouchableOpacity
           style={[s.langPill, lang === "ar" && s.langPillActive]}
-          onPress={() => setLang("ar")}
+          onPress={() => { Haptics.selectionAsync(); setLang("ar"); }}
         >
           <Text style={[s.langPillText, lang === "ar" && s.langPillTextActive]}>ع</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[s.langPill, lang === "en" && s.langPillActive]}
-          onPress={() => setLang("en")}
+          onPress={() => { Haptics.selectionAsync(); setLang("en"); }}
         >
           <Text style={[s.langPillText, lang === "en" && s.langPillTextActive]}>EN</Text>
         </TouchableOpacity>
@@ -89,10 +90,16 @@ export default function AuthWelcome() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#090013" },
-  langRow: { flexDirection: "row", justifyContent: "center", gap: 8, paddingTop: 14, paddingHorizontal: 20 },
-  langPill: { paddingHorizontal: 18, paddingVertical: 7, borderRadius: 20, borderWidth: 1.5, borderColor: "rgba(255,255,255,0.15)", backgroundColor: "transparent" },
+  langFab: {
+    position: "absolute", top: 56, right: 20, zIndex: 99,
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: "#130028", borderRadius: 24, borderWidth: 1.5,
+    borderColor: "rgba(0,180,255,0.45)", paddingVertical: 8, paddingHorizontal: 12,
+    shadowColor: "#00B4FF", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.4, shadowRadius: 8,
+  },
+  langPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 14, borderWidth: 1.5, borderColor: "rgba(255,255,255,0.15)", backgroundColor: "transparent" },
   langPillActive: { backgroundColor: "#00B4FF", borderColor: "#00B4FF" },
-  langPillText: { fontSize: 14, fontFamily: "Cairo_700Bold", color: "#6b7280" },
+  langPillText: { fontSize: 13, fontFamily: "Cairo_700Bold", color: "#6b7280" },
   langPillTextActive: { color: "#000" },
   scroll: { paddingHorizontal: 24, paddingBottom: 48 },
   logoSection: { alignItems: "center", paddingTop: 20, paddingBottom: 28 },
