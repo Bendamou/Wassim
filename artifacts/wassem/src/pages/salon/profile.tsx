@@ -3,11 +3,12 @@ import { useParams, useLocation } from "wouter";
 import {
   ArrowLeft, Star, ShoppingCart, Clock, Scissors, Package,
   MessageSquare, CheckCircle, Radio, CreditCard, X, Lock,
-  Users, Zap, AlertCircle, MapPin, Navigation,
+  Users, Zap, AlertCircle, MapPin, Navigation, Heart,
 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { useFavorites } from "@/hooks/use-favorites";
 
 const API = "/api";
 
@@ -560,6 +561,19 @@ export default function SalonProfile() {
   const [hoverStar, setHoverStar] = useState(0);
   const [showClaimModal, setShowClaimModal] = useState(false);
   const [claimResult, setClaimResult] = useState<ClaimResult | null>(null);
+  const [toggling, setToggling] = useState(false);
+  const { isFavorite, toggle: toggleFav } = useFavorites();
+
+  const handleFavoriteToggle = async () => {
+    if (!user || toggling) return;
+    setToggling(true);
+    try {
+      const result = await toggleFav(Number(id));
+      toast({ title: result === "added" ? "❤️ Saved to favorites" : "Removed from favorites" });
+    } finally {
+      setToggling(false);
+    }
+  };
 
   useEffect(() => {
     fetch(`${API}/salons/${id}`)
@@ -640,6 +654,27 @@ export default function SalonProfile() {
         >
           <ArrowLeft size={20} className="text-white" />
         </button>
+
+        {/* Heart / Favorite button */}
+        {user && (
+          <button
+            onClick={handleFavoriteToggle}
+            disabled={toggling}
+            className="absolute top-12 z-10 w-10 h-10 rounded-full backdrop-blur flex items-center justify-center transition-all active:scale-90"
+            style={{
+              right: cartCount > 0 ? "calc(4rem + 12px)" : "1rem",
+              background: isFavorite(Number(id)) ? "rgba(255,31,142,0.25)" : "rgba(0,0,0,0.5)",
+              border: isFavorite(Number(id)) ? "1.5px solid rgba(255,31,142,0.6)" : "1.5px solid transparent",
+              boxShadow: isFavorite(Number(id)) ? "0 0 12px rgba(255,31,142,0.35)" : "none",
+            }}
+          >
+            <Heart
+              size={18}
+              style={{ color: isFavorite(Number(id)) ? "#FF1F8E" : "rgba(255,255,255,0.8)" }}
+              className={isFavorite(Number(id)) ? "fill-[#FF1F8E]" : ""}
+            />
+          </button>
+        )}
 
         {cartCount > 0 && (
           <div className="absolute top-12 right-4 z-10 flex items-center gap-2 bg-[#FF1F8E] rounded-full px-3 py-2">

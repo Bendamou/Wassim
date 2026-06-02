@@ -1,6 +1,6 @@
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/lib/auth";
-import { Home, Briefcase, User, LayoutDashboard, TrendingUp, DollarSign } from "lucide-react";
+import { Home, Briefcase, User, LayoutDashboard, TrendingUp, DollarSign, Heart } from "lucide-react";
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -21,9 +21,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       ]
     : isClient
     ? [
-        { href: "/",        label: "Home",    icon: Home },
-        { href: "/request", label: "Request", icon: Briefcase },
-        { href: "/profile", label: "Profile", icon: User },
+        { href: "/",           label: "Home",      icon: Home },
+        { href: "/request",    label: "Request",   icon: Briefcase },
+        { href: "/favorites",  label: "Favorites", icon: Heart },
+        { href: "/profile",    label: "Profile",   icon: User },
       ]
     : [
         { href: "/pro/requests", label: "Jobs",     icon: Briefcase },
