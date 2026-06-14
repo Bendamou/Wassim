@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { startGhostBidder } from "./lib/ghost-bidder";
+import { seedDemoData } from "./lib/seed";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 
@@ -214,6 +215,7 @@ if (Number.isNaN(port) || port <= 0) {
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS gender_pref TEXT NOT NULL DEFAULT 'all'`);
 
     logger.info("Schema bootstrap complete");
+    await seedDemoData();
   } catch (err) {
     logger.error({ err }, "Schema migration FAILED — server may not work correctly");
   }
