@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
-import { Scissors, Navigation, Zap, X, MapPin, Users, Radio, ChevronRight, Search } from "lucide-react";
+import { Scissors, Navigation, Zap, X, MapPin, Users, Radio, ChevronRight, Search, Bell } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import "leaflet/dist/leaflet.css";
 
@@ -15,7 +15,9 @@ type CityKey = (typeof CITIES)[number]["key"];
 const DEFAULT_CENTER: [number, number] = [34.6814, -1.9086];
 const DEFAULT_ZOOM = 12;
 const POLL_MS = 20_000;
+const AVAIL_POLL_MS = 15_000;
 const BANNER_TTL = 8_000;
+const AVAIL_TTL = 9_000;
 
 function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6371, r = (d: number) => (d * Math.PI) / 180;
@@ -36,6 +38,7 @@ type FlashOffer = {
   is_active: boolean; salon_name?: string; lat?: number; lng?: number;
 };
 type BannerData = FlashOffer & { distKm: number };
+type AvailBanner = { salonId: number; salonName: string; freeChairs: number; distKm: number; lat: number; lng: number };
 
 const CATEGORIES = [
   { key: "all",      label: "All",      emoji: "🔍", color: "#a855f7" },
@@ -135,6 +138,69 @@ function FlashBanner({ offer, onDismiss, onView }: { offer: BannerData; onDismis
   );
 }
 
+// ── Availability Banner ───────────────────────────────────────────────────
+function AvailabilityBanner({ avail, onDismiss, onBook }: { avail: AvailBanner; onDismiss: () => void; onBook: () => void }) {
+  const [progress, setProgress] = useState(100);
+  const startRef = useRef(Date.now());
+  const rafRef = useRef<number | null>(null);
+  useEffect(() => {
+    const tick = () => {
+      const pct = Math.max(0, 100 - ((Date.now() - startRef.current) / AVAIL_TTL) * 100);
+      setProgress(pct);
+      if (pct > 0) rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    const t = setTimeout(onDismiss, AVAIL_TTL);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); clearTimeout(t); };
+  }, [onDismiss]);
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-emerald-400/40 shadow-[0_0_40px_rgba(52,211,153,0.2)]"
+      style={{ background: "linear-gradient(135deg,#001a0d,#000f08)" }}>
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at 50% 0%,rgba(52,211,153,0.1),transparent 70%)" }} />
+      <div className="relative p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-shrink-0">
+              <div className="absolute inset-0 bg-emerald-400 rounded-xl animate-ping opacity-30" />
+              <div className="relative w-9 h-9 bg-emerald-400 rounded-xl flex items-center justify-center shadow-[0_0_14px_rgba(52,211,153,0.6)]">
+                <Bell size={18} className="text-black" />
+              </div>
+            </div>
+            <div>
+              <p className="text-emerald-300 text-[10px] font-black uppercase tracking-widest">🟢 Just Opened Up</p>
+              <p className="text-white font-black text-base leading-tight">{avail.salonName}</p>
+            </div>
+          </div>
+          <button onClick={onDismiss} className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+            <X size={14} className="text-gray-400" />
+          </button>
+        </div>
+        <div className="flex items-center gap-2 mt-3">
+          <div className="flex items-center gap-1 bg-emerald-400/20 border border-emerald-400/40 rounded-full px-2.5 py-1">
+            <Users size={11} className="text-emerald-400" />
+            <span className="text-emerald-300 font-black text-sm">{avail.freeChairs} chair{avail.freeChairs !== 1 ? "s" : ""} free</span>
+          </div>
+          {avail.distKm < 50 && (
+            <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-full px-2 py-1">
+              <MapPin size={9} className="text-gray-400" />
+              <span className="text-gray-300 text-[10px] font-bold">{fmtDist(avail.distKm)} away</span>
+            </div>
+          )}
+        </div>
+        <button onClick={onBook}
+          className="w-full mt-3 bg-emerald-400 active:scale-[0.97] text-black font-black text-sm rounded-xl py-2.5 transition-transform shadow-[0_0_12px_rgba(52,211,153,0.4)]">
+          Book Now →
+        </button>
+      </div>
+      <div className="h-1 bg-white/5">
+        <div className="h-full bg-emerald-400 transition-none" style={{ width: `${progress}%`, boxShadow: "0 0 6px rgba(52,211,153,0.6)" }} />
+      </div>
+    </div>
+  );
+}
+
 // ── Salon Card strip ──────────────────────────────────────────────────────
 function SalonCard({ salon, onPress }: { salon: Salon; onPress: () => void }) {
   const free = Number(salon.free_chairs);
@@ -196,11 +262,16 @@ export default function Home() {
   const [offers, setOffers]         = useState<FlashOffer[]>([]);
   const [geoGranted, setGeoGranted] = useState(false);
   const [userLoc, setUserLoc]       = useState<{lat:number;lng:number}|null>(null);
-  const [banner, setBanner]         = useState<BannerData|null>(null);
-  const [bannerVisible, setBannerV] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const seenRef = useRef<Set<number>>(new Set());
-  const prevRef = useRef<Set<number>>(new Set());
+  const [banner, setBanner]             = useState<BannerData|null>(null);
+  const [bannerVisible, setBannerV]     = useState(false);
+  const [availBanner, setAvailBanner]   = useState<AvailBanner|null>(null);
+  const [availVisible, setAvailVisible] = useState(false);
+  const [searchOpen, setSearchOpen]     = useState(false);
+  const seenRef        = useRef<Set<number>>(new Set());
+  const prevRef        = useRef<Set<number>>(new Set());
+  const prevChairsRef  = useRef<Map<number, number>>(new Map());  // salonId → free_chairs
+  const seenAvailRef   = useRef<Set<number>>(new Set());          // salonIds already notified
+  const availQueueRef  = useRef<AvailBanner[]>([]);               // pending notifications
 
   // ── Derived data ──────────────────────────────────────────────────────
   const visible = useMemo(() => {
@@ -258,6 +329,71 @@ export default function Home() {
     setBannerV(false);
     setTimeout(() => setBanner(null), 400);
   }, []);
+
+  // ── Availability polling ───────────────────────────────────────────────
+  const showNextAvail = useCallback((queue: AvailBanner[]) => {
+    if (!queue.length) return;
+    const next = queue[0];
+    availQueueRef.current = queue.slice(1);
+    setAvailBanner(next);
+    setTimeout(() => setAvailVisible(true), 50);
+  }, []);
+
+  const checkAvailability = useCallback(async () => {
+    try {
+      const data: Salon[] = await fetch("/api/salons").then(r => r.json());
+      if (!Array.isArray(data)) return;
+      setSalons(data);
+
+      const loc = userLoc ?? { lat: DEFAULT_CENTER[0], lng: DEFAULT_CENTER[1] };
+      const newNotifs: AvailBanner[] = [];
+
+      for (const s of data) {
+        const prev = prevChairsRef.current.get(s.id) ?? 0;
+        const curr = Number(s.free_chairs);
+        // Transitioned from 0 → >0 and not already notified this session
+        if (prev === 0 && curr > 0 && !seenAvailRef.current.has(s.id) && s.lat && s.lng) {
+          const d = haversine(loc.lat, loc.lng, Number(s.lat), Number(s.lng));
+          if (d <= 60) {
+            seenAvailRef.current.add(s.id);
+            newNotifs.push({ salonId: s.id, salonName: s.name, freeChairs: curr, distKm: d, lat: Number(s.lat), lng: Number(s.lng) });
+          }
+        }
+        prevChairsRef.current.set(s.id, curr);
+      }
+
+      // Reset seen set when a salon goes back to 0 (so next opening triggers again)
+      for (const s of data) {
+        if (Number(s.free_chairs) === 0) seenAvailRef.current.delete(s.id);
+      }
+
+      if (newNotifs.length > 0) {
+        // Sort by distance — closest first
+        newNotifs.sort((a, b) => a.distKm - b.distKm);
+        if (!availBanner) {
+          showNextAvail(newNotifs);
+        } else {
+          availQueueRef.current = [...availQueueRef.current, ...newNotifs];
+        }
+      }
+    } catch { /* silent */ }
+  }, [userLoc, availBanner, showNextAvail]);
+
+  useEffect(() => {
+    const id = setInterval(checkAvailability, AVAIL_POLL_MS);
+    return () => clearInterval(id);
+  }, [checkAvailability]);
+
+  const dismissAvailBanner = useCallback(() => {
+    setAvailVisible(false);
+    setTimeout(() => {
+      setAvailBanner(null);
+      // Show next in queue after a short gap
+      if (availQueueRef.current.length > 0) {
+        setTimeout(() => showNextAvail(availQueueRef.current), 500);
+      }
+    }, 400);
+  }, [showNextAvail]);
 
   // ── City → pan map ────────────────────────────────────────────────────
   useEffect(() => {
@@ -470,6 +606,25 @@ export default function Home() {
           }}>
           <FlashBanner offer={banner} onDismiss={dismissBanner}
             onView={() => { dismissBanner(); setLocation(`/salon/${banner.salon_id}`); }} />
+        </div>
+      )}
+
+      {/* ── Availability Banner (stacks above flash banner if both active) ── */}
+      {availBanner && (
+        <div className="absolute left-3 right-3 z-31 transition-all duration-500 ease-out"
+          style={{
+            bottom: availVisible
+              ? (banner && bannerVisible ? PANEL_H + 8 + 160 : PANEL_H + 8)
+              : PANEL_H - 40,
+            opacity: availVisible ? 1 : 0,
+            transform: availVisible ? "scale(1)" : "scale(0.96)",
+            zIndex: 31,
+          }}>
+          <AvailabilityBanner
+            avail={availBanner}
+            onDismiss={dismissAvailBanner}
+            onBook={() => { dismissAvailBanner(); setLocation(`/salon/${availBanner.salonId}`); }}
+          />
         </div>
       )}
 
