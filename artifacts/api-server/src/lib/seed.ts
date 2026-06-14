@@ -17,15 +17,16 @@ async function upsertUser(name: string, email: string, phone: string, role: stri
   return rows[0] as any;
 }
 
-async function upsertSalon(ownerId: number, name: string, description: string, address: string, lat: number, lng: number, isLive: boolean, avgPrice: number) {
+async function upsertSalon(ownerId: number, name: string, description: string, address: string, lat: number, lng: number, isLive: boolean, avgPrice: number, categories: string) {
   const rows = (await db.execute(sql`
-    INSERT INTO salons (owner_id, name, description, address, lat, lng, is_live, avg_service_price)
-    VALUES (${ownerId}, ${name}, ${description}, ${address}, ${lat}, ${lng}, ${isLive}, ${avgPrice})
+    INSERT INTO salons (owner_id, name, description, address, lat, lng, is_live, avg_service_price, categories)
+    VALUES (${ownerId}, ${name}, ${description}, ${address}, ${lat}, ${lng}, ${isLive}, ${avgPrice}, ${categories})
     ON CONFLICT DO NOTHING
     RETURNING *
   `)).rows;
   if (rows[0]) return rows[0] as any;
-  // Already existed — fetch it
+  // Already existed — fetch and update categories
+  await db.execute(sql`UPDATE salons SET categories = ${categories} WHERE owner_id = ${ownerId} AND name = ${name}`);
   const existing = (await db.execute(sql`SELECT * FROM salons WHERE owner_id = ${ownerId} AND name = ${name} LIMIT 1`)).rows;
   return existing[0] as any;
 }
@@ -34,7 +35,13 @@ export async function seedDemoData() {
   // Guard: skip if demo user already fully seeded
   const check = (await db.execute(sql`SELECT id FROM users WHERE email = 'sara@tawoss.ma' LIMIT 1`)).rows;
   const salonCheck = (await db.execute(sql`SELECT COUNT(*) AS cnt FROM salons`)).rows[0] as any;
-  if (check.length > 0 && Number(salonCheck.cnt) >= 4) return;
+  if (check.length > 0 && Number(salonCheck.cnt) >= 4) {
+    // Still update categories in case they were seeded before the column existed
+    await db.execute(sql`UPDATE salons SET categories = 'barber,hair' WHERE name LIKE '%Barbershop%' OR name LIKE '%Barber Studio%'`);
+    await db.execute(sql`UPDATE salons SET categories = 'hair,nails,skincare' WHERE name LIKE '%Beauty%'`);
+    await db.execute(sql`UPDATE salons SET categories = 'hair,nails' WHERE name LIKE '%Coiffure%'`);
+    return;
+  }
 
   logger.info("Seeding demo data for Oujda & Berkane…");
 
@@ -52,25 +59,25 @@ export async function seedDemoData() {
   const client1 = await upsertUser("Amine Idrissi", "amine@tawoss.ma", "+212612345620", "client", "Oujda",   "", true, 0);
   const client2 = await upsertUser("Omar Benkiran", "omar@tawoss.ma",  "+212612345621", "client", "Berkane", "", true, 0);
 
-  // ── Salons – Oujda (34.6814 N, -1.9086 W) ────────────────────────────────
+  // ── Salons – Oujda ────────────────────────────────────────────────────────
   const salon1 = await upsertSalon(ownerYassine.id, "Prestige Barbershop Oujda",
     "Le salon haut de gamme d'Oujda. Coupes modernes, soins barbe, ambiance premium.",
-    "Bd Mohammed V, Oujda 60000", 34.6814, -1.9086, true, 80);
+    "Bd Mohammed V, Oujda 60000", 34.6814, -1.9086, true, 80, "barber,hair");
 
   const salon2 = await upsertSalon(ownerSara.id, "Sara Beauty & Hair Oujda",
     "Salon mixte spécialisé colorations, kératine et coiffure de mariage.",
-    "Rue de Marrakech, Hay Qods, Oujda", 34.6891, -1.9120, true, 120);
+    "Rue de Marrakech, Hay Qods, Oujda", 34.6891, -1.9120, true, 120, "hair,nails,skincare");
 
-  // ── Salons – Berkane (34.9200 N, -2.3200 W) ──────────────────────────────
+  // ── Salons – Berkane ──────────────────────────────────────────────────────
   const salon3 = await upsertSalon(ownerKarim.id, "Berkane Barber Studio",
     "Studio barbier tendance à Berkane. Dégradés et rasage traditionnel au savon.",
-    "Centre Ville, Berkane 63300", 34.9200, -2.3200, true, 70);
+    "Centre Ville, Berkane 63300", 34.9200, -2.3200, true, 70, "barber,hair");
 
   const salon4 = await upsertSalon(ownerKarim.id, "Elite Coiffure Berkane",
     "Coiffeur unisexe moderne. Coupes hommes & femmes, extensions, soins capillaires.",
-    "Hay El Massira, Berkane", 34.9150, -2.3280, false, 90);
+    "Hay El Massira, Berkane", 34.9150, -2.3280, false, 90, "hair,nails");
 
-  // ── Chairs (3 per salon) ──────────────────────────────────────────────────
+  // ── Chairs ────────────────────────────────────────────────────────────────
   for (const salonId of [salon1.id, salon2.id, salon3.id, salon4.id]) {
     const existing = (await db.execute(sql`SELECT COUNT(*) AS cnt FROM chairs WHERE salon_id = ${salonId}`)).rows[0] as any;
     if (Number(existing.cnt) === 0) {

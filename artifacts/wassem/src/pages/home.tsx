@@ -1,92 +1,101 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
-import { Scissors, Navigation, Zap, X, MapPin, Star, Users, Radio, ChevronRight } from "lucide-react";
+import { Scissors, Navigation, Zap, X, MapPin, Users, Radio, ChevronRight, Search } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import "leaflet/dist/leaflet.css";
 
-// ── City definitions ──────────────────────────────────────────────────────────
+// ── City definitions ──────────────────────────────────────────────────────
 const CITIES = [
-  { key: "all",     label: "All Cities", lat: 34.80, lng: -2.11, zoom: 9 },
-  { key: "oujda",   label: "🌆 Oujda",  lat: 34.6814, lng: -1.9086, zoom: 13 },
-  { key: "berkane", label: "🏘️ Berkane", lat: 34.9200, lng: -2.3200, zoom: 13 },
+  { key: "all",     label: "All",     lat: 34.80, lng: -2.11, zoom: 9  },
+  { key: "oujda",   label: "Oujda",   lat: 34.6814, lng: -1.9086, zoom: 13 },
+  { key: "berkane", label: "Berkane", lat: 34.9200, lng: -2.3200, zoom: 13 },
 ] as const;
 type CityKey = (typeof CITIES)[number]["key"];
 
-const DEFAULT_CENTER: [number, number] = [34.6814, -1.9086]; // Oujda
+const DEFAULT_CENTER: [number, number] = [34.6814, -1.9086];
 const DEFAULT_ZOOM = 12;
-const POLL_INTERVAL_MS = 20_000;
-const BANNER_TTL_MS = 8_000;
+const POLL_MS = 20_000;
+const BANNER_TTL = 8_000;
 
-// ── Haversine distance in km ───────────────────────────────────────────────
 function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
-  const R = 6371;
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const R = 6371, r = (d: number) => (d * Math.PI) / 180;
+  const a = Math.sin(r(lat2-lat1)/2)**2 + Math.cos(r(lat1))*Math.cos(r(lat2))*Math.sin(r(lng2-lng1)/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
+function fmtDist(km: number) { return km < 1 ? `${Math.round(km*1000)} m` : `${km.toFixed(1)} km`; }
 
-function formatDist(km: number) {
-  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
-}
-
-// ── Types ──────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────
 type Salon = {
   id: number; name: string; address: string; lat: number; lng: number;
-  free_chairs: number; total_chairs: number; header_image: string;
-  categories: string; is_verified: boolean; is_live: boolean;
-  avg_service_price?: number; owner_name?: string;
+  free_chairs: number; total_chairs: number; is_live: boolean;
+  categories?: string; description?: string; avg_service_price?: number;
+  is_verified?: boolean;
 };
-
 type FlashOffer = {
   id: number; salon_id: number; title: string; discount_pct: number;
   is_active: boolean; salon_name?: string; lat?: number; lng?: number;
 };
-
 type BannerData = FlashOffer & { distKm: number };
 
 const CATEGORIES = [
-  { key: "all",      label: "All",      emoji: "🔍", gender: "all",   color: "#a855f7" },
-  { key: "barber",   label: "Barber",   emoji: "💈", gender: "men",   color: "#00B4FF" },
-  { key: "hair",     label: "Hair",     emoji: "✂️", gender: "men",   color: "#00B4FF" },
-  { key: "nails",    label: "Nails",    emoji: "💅", gender: "women", color: "#FF1F8E" },
-  { key: "skincare", label: "Skincare", emoji: "🧴", gender: "women", color: "#FF1F8E" },
-  { key: "massage",  label: "Massage",  emoji: "💆", gender: "women", color: "#FF1F8E" },
-  { key: "spa",      label: "Spa",      emoji: "🧖", gender: "women", color: "#FF1F8E" },
+  { key: "all",      label: "All",      emoji: "🔍", color: "#a855f7" },
+  { key: "barber",   label: "Barber",   emoji: "💈", color: "#00B4FF" },
+  { key: "hair",     label: "Hair",     emoji: "✂️", color: "#00B4FF" },
+  { key: "nails",    label: "Nails",    emoji: "💅", color: "#FF1F8E" },
+  { key: "skincare", label: "Skincare", emoji: "🧴", color: "#FF1F8E" },
+  { key: "massage",  label: "Massage",  emoji: "💆", color: "#FF1F8E" },
+  { key: "spa",      label: "Spa",      emoji: "🧖", color: "#FF1F8E" },
 ] as const;
 type CatKey = (typeof CATEGORIES)[number]["key"];
 
-// ── Flash Offer Banner ─────────────────────────────────────────────────────
-function FlashBanner({
-  offer, onDismiss, onView,
-}: { offer: BannerData; onDismiss: () => void; onView: () => void }) {
+// ── Smart category matcher (works even without DB `categories` field) ─────
+function matchesCategory(salon: Salon, cat: CatKey): boolean {
+  if (cat === "all") return true;
+  if (salon.categories) {
+    return salon.categories.split(",").map(c => c.trim()).includes(cat);
+  }
+  const text = `${salon.name} ${salon.description ?? ""}`.toLowerCase();
+  if (cat === "barber")   return /barber|barbier|rasage|dégradé|coupe homme|barbershop/.test(text);
+  if (cat === "hair")     return /hair|coiffure|kératine|coloration|coiffeur/.test(text);
+  if (cat === "nails")    return /nail|manucure|beauty|beauté|ongle/.test(text);
+  if (cat === "skincare") return /skin|soin|spa|beauté|facial/.test(text);
+  if (cat === "massage")  return /massage/.test(text);
+  if (cat === "spa")      return /spa|hammam/.test(text);
+  return false;
+}
+
+function matchesCity(salon: Salon, city: CityKey): boolean {
+  if (city === "all") return true;
+  const addr = `${salon.address ?? ""}`.toLowerCase();
+  return addr.includes(city);
+}
+
+function matchesSearch(salon: Salon, q: string): boolean {
+  if (!q.trim()) return true;
+  const t = `${salon.name} ${salon.address ?? ""} ${salon.description ?? ""}`.toLowerCase();
+  return q.toLowerCase().split(" ").every(word => t.includes(word));
+}
+
+// ── Flash Banner ──────────────────────────────────────────────────────────
+function FlashBanner({ offer, onDismiss, onView }: { offer: BannerData; onDismiss: () => void; onView: () => void }) {
   const [progress, setProgress] = useState(100);
   const startRef = useRef(Date.now());
   const rafRef = useRef<number | null>(null);
-
   useEffect(() => {
     const tick = () => {
-      const elapsed = Date.now() - startRef.current;
-      const pct = Math.max(0, 100 - (elapsed / BANNER_TTL_MS) * 100);
+      const pct = Math.max(0, 100 - ((Date.now()-startRef.current)/BANNER_TTL)*100);
       setProgress(pct);
       if (pct > 0) rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
-    const timer = setTimeout(onDismiss, BANNER_TTL_MS);
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      clearTimeout(timer);
-    };
+    const t = setTimeout(onDismiss, BANNER_TTL);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); clearTimeout(t); };
   }, [onDismiss]);
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-yellow-400/50 shadow-[0_0_40px_rgba(255,221,0,0.25)]"
       style={{ background: "linear-gradient(135deg,#1a1500,#0f0c00)" }}>
-      <div className="absolute inset-0 pointer-events-none"
-        style={{ background: "radial-gradient(ellipse at 50% 0%,rgba(255,221,0,0.12),transparent 70%)" }} />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 50% 0%,rgba(255,221,0,0.12),transparent 70%)" }} />
       <div className="relative p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -97,27 +106,25 @@ function FlashBanner({
               </div>
             </div>
             <div>
-              <p className="text-yellow-300 text-[10px] font-black uppercase tracking-widest leading-none">⚡ Flash Offer Nearby</p>
-              <p className="text-white font-black text-base leading-tight mt-0.5">{offer.salon_name ?? `Salon #${offer.salon_id}`}</p>
+              <p className="text-yellow-300 text-[10px] font-black uppercase tracking-widest">⚡ Flash Offer</p>
+              <p className="text-white font-black text-base leading-tight">{offer.salon_name ?? `Salon #${offer.salon_id}`}</p>
             </div>
           </div>
-          <button onClick={onDismiss} className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+          <button onClick={onDismiss} className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
             <X size={14} className="text-gray-400" />
           </button>
         </div>
-        <div className="flex items-center justify-between mt-3 gap-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="bg-yellow-400 text-black font-black text-sm px-2.5 py-1 rounded-lg shadow-[0_0_10px_rgba(255,221,0,0.5)]">
-              -{offer.discount_pct}%
-            </div>
-            <p className="text-gray-300 text-sm font-bold">{offer.title}</p>
+        <div className="flex items-center gap-2 mt-3">
+          <div className="bg-yellow-400 text-black font-black text-sm px-2.5 py-1 rounded-lg shadow-[0_0_10px_rgba(255,221,0,0.5)]">
+            -{offer.discount_pct}%
           </div>
-          <div className="flex items-center gap-1 bg-white/8 border border-white/10 rounded-full px-2.5 py-1 flex-shrink-0">
-            <MapPin size={10} className="text-yellow-400" />
-            <span className="text-yellow-300 text-[10px] font-bold">{formatDist(offer.distKm)}</span>
+          <p className="text-gray-300 text-sm font-bold flex-1 truncate">{offer.title}</p>
+          <div className="flex items-center gap-1 bg-white/8 border border-white/10 rounded-full px-2 py-1 flex-shrink-0">
+            <MapPin size={9} className="text-yellow-400" />
+            <span className="text-yellow-300 text-[10px] font-bold">{fmtDist(offer.distKm)}</span>
           </div>
         </div>
-        <button onClick={onView} className="w-full mt-3 bg-yellow-400 active:scale-[0.97] text-black font-black text-sm rounded-xl py-2.5 transition-transform shadow-[0_0_16px_rgba(255,221,0,0.4)]">
+        <button onClick={onView} className="w-full mt-3 bg-yellow-400 active:scale-[0.97] text-black font-black text-sm rounded-xl py-2.5 transition-transform">
           View Deal →
         </button>
       </div>
@@ -128,45 +135,43 @@ function FlashBanner({
   );
 }
 
-// ── Salon Card (bottom strip) ──────────────────────────────────────────────
+// ── Salon Card strip ──────────────────────────────────────────────────────
 function SalonCard({ salon, onPress }: { salon: Salon; onPress: () => void }) {
   const free = Number(salon.free_chairs);
+  const live = salon.is_live && free > 0;
   return (
-    <button
-      onClick={onPress}
-      className="flex-shrink-0 w-52 rounded-2xl overflow-hidden border transition-all active:scale-[0.97] text-left"
-      style={{ background: "#130028", borderColor: salon.is_live && free > 0 ? "rgba(0,180,255,0.4)" : "rgba(255,255,255,0.07)" }}
-    >
+    <button onClick={onPress} className="flex-shrink-0 w-48 rounded-2xl overflow-hidden border transition-all active:scale-[0.96] text-left"
+      style={{ background: "#130028", borderColor: live ? "rgba(0,180,255,0.45)" : "rgba(255,255,255,0.07)" }}>
       <div className="p-3">
-        <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="flex items-start justify-between gap-1 mb-1.5">
           <div className="flex-1 min-w-0">
-            {salon.is_live && free > 0 && (
+            {live && (
               <div className="inline-flex items-center gap-1 mb-1 bg-[#00B4FF]/15 border border-[#00B4FF]/30 rounded-full px-1.5 py-0.5">
-                <Radio size={8} className="text-[#00B4FF]" />
+                <Radio size={7} className="text-[#00B4FF]" />
                 <span className="text-[#00B4FF] text-[9px] font-bold">LIVE</span>
               </div>
             )}
-            <p className="text-white font-black text-sm leading-tight line-clamp-1">{salon.name}</p>
+            <p className="text-white font-black text-sm leading-tight line-clamp-2">{salon.name}</p>
           </div>
-          <ChevronRight size={14} className="text-gray-600 flex-shrink-0 mt-0.5" />
+          <ChevronRight size={13} className="text-gray-600 flex-shrink-0 mt-0.5" />
         </div>
         {salon.address && (
           <div className="flex items-center gap-1 mb-2">
             <MapPin size={9} className="text-gray-600 flex-shrink-0" />
-            <span className="text-gray-500 text-[10px] truncate">{salon.address}</span>
+            <span className="text-gray-500 text-[10px] truncate leading-tight">{salon.address}</span>
           </div>
         )}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {free > 0 ? (
             <div className="flex items-center gap-1 bg-[#00B4FF]/10 border border-[#00B4FF]/20 rounded-full px-1.5 py-0.5">
-              <Users size={9} className="text-[#00B4FF]" />
+              <Users size={8} className="text-[#00B4FF]" />
               <span className="text-[#00B4FF] text-[9px] font-bold">{free} free</span>
             </div>
           ) : (
-            <span className="text-gray-600 text-[10px]">No spots</span>
+            <span className="text-gray-600 text-[10px]">Full</span>
           )}
           {salon.avg_service_price && (
-            <span className="text-gray-500 text-[10px] ml-auto">{salon.avg_service_price} MAD</span>
+            <span className="text-gray-500 text-[9px] ml-auto">{salon.avg_service_price} MAD</span>
           )}
         </div>
       </div>
@@ -174,7 +179,7 @@ function SalonCard({ salon, onPress }: { salon: Salon; onPress: () => void }) {
   );
 }
 
-// ── Home Page ──────────────────────────────────────────────────────────────
+// ── Home Page ─────────────────────────────────────────────────────────────
 export default function Home() {
   const [, setLocation] = useLocation();
   const mapRef = useRef<HTMLDivElement>(null);
@@ -182,144 +187,144 @@ export default function Home() {
   const markersRef = useRef<any[]>([]);
   const { user } = useAuth();
 
-  const defaultCat: CatKey =
-    user?.gender_pref === "men" ? "barber"
-    : user?.gender_pref === "women" ? "nails"
-    : "all";
+  const defaultCat: CatKey = user?.gender_pref === "men" ? "barber" : user?.gender_pref === "women" ? "nails" : "all";
 
-  const [activeCategory, setActiveCategory] = useState<CatKey>(defaultCat);
-  const [activeCity, setActiveCity] = useState<CityKey>("all");
-  const [salons, setSalons] = useState<Salon[]>([]);
-  const [flashOffers, setFlashOffers] = useState<FlashOffer[]>([]);
+  const [cat, setCat]     = useState<CatKey>(defaultCat);
+  const [city, setCity]   = useState<CityKey>("all");
+  const [query, setQuery] = useState("");
+  const [salons, setSalons]         = useState<Salon[]>([]);
+  const [offers, setOffers]         = useState<FlashOffer[]>([]);
   const [geoGranted, setGeoGranted] = useState(false);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [freeSalons, setFreeSalons] = useState(0);
-  const [liveSalons, setLiveSalons] = useState(0);
+  const [userLoc, setUserLoc]       = useState<{lat:number;lng:number}|null>(null);
+  const [banner, setBanner]         = useState<BannerData|null>(null);
+  const [bannerVisible, setBannerV] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const seenRef = useRef<Set<number>>(new Set());
+  const prevRef = useRef<Set<number>>(new Set());
 
-  // Banner state
-  const [bannerOffer, setBannerOffer] = useState<BannerData | null>(null);
-  const [bannerVisible, setBannerVisible] = useState(false);
-  const seenOfferIdsRef = useRef<Set<number>>(new Set());
-  const prevOfferIdsRef = useRef<Set<number>>(new Set());
+  // ── Derived data ──────────────────────────────────────────────────────
+  const visible = useMemo(() => {
+    const byCat  = salons.filter(s => matchesCategory(s, cat));
+    const byCity = byCat.filter(s => matchesCity(s, city));
+    const byQ    = byCity.filter(s => matchesSearch(s, query));
+    return [...byQ].sort((a, b) => {
+      const sa = (a.is_live ? 2 : 0) + (Number(a.free_chairs) > 0 ? 1 : 0);
+      const sb = (b.is_live ? 2 : 0) + (Number(b.free_chairs) > 0 ? 1 : 0);
+      return sb - sa;
+    });
+  }, [salons, cat, city, query]);
 
-  // Load salons once
+  const liveSalons = useMemo(() => salons.filter(s => s.is_live && Number(s.free_chairs) > 0).length, [salons]);
+  const freeCount  = useMemo(() => salons.filter(s => Number(s.free_chairs) > 0).length, [salons]);
+  const activeDeals = offers.filter(o => o.is_active).length;
+
+  // ── Load salons ───────────────────────────────────────────────────────
   useEffect(() => {
-    fetch("/api/salons").then(r => r.json()).then((data: Salon[]) => {
-      setSalons(data);
-      setFreeSalons(data.filter(s => Number(s.free_chairs) > 0).length);
-      setLiveSalons(data.filter(s => s.is_live && Number(s.free_chairs) > 0).length);
-    }).catch(() => {});
+    fetch("/api/salons").then(r => r.json()).then(setSalons).catch(() => {});
   }, []);
 
-  // Fetch flash offers and detect NEW ones within 2 km
-  const fetchAndCheckOffers = useCallback(async () => {
+  // ── Flash offers ──────────────────────────────────────────────────────
+  const checkOffers = useCallback(async () => {
     try {
-      const offers: FlashOffer[] = await fetch("/api/flash-offers/active").then(r => r.json());
-      if (!Array.isArray(offers)) return;
-      setFlashOffers(offers);
-
-      const currentIds = new Set(offers.map(o => o.id));
-      const newOffers = offers.filter(
-        o => !prevOfferIdsRef.current.has(o.id) && !seenOfferIdsRef.current.has(o.id)
-      );
-      prevOfferIdsRef.current = currentIds;
-
-      if (newOffers.length === 0 || bannerOffer) return;
-
+      const data: FlashOffer[] = await fetch("/api/flash-offers/active").then(r => r.json());
+      if (!Array.isArray(data)) return;
+      setOffers(data);
+      const ids = new Set(data.map(o => o.id));
+      const newOnes = data.filter(o => !prevRef.current.has(o.id) && !seenRef.current.has(o.id));
+      prevRef.current = ids;
+      if (!newOnes.length || banner) return;
+      const loc = userLoc ?? { lat: DEFAULT_CENTER[0], lng: DEFAULT_CENTER[1] };
       let chosen: BannerData | null = null;
-      const loc = userLocation ?? { lat: DEFAULT_CENTER[0], lng: DEFAULT_CENTER[1] };
-      for (const offer of newOffers) {
-        if (!offer.lat || !offer.lng) continue;
-        const distKm = haversine(loc.lat, loc.lng, Number(offer.lat), Number(offer.lng));
-        if (distKm <= 50 && (!chosen || distKm < chosen.distKm)) {
-          chosen = { ...offer, distKm };
-        }
+      for (const o of newOnes) {
+        if (!o.lat || !o.lng) continue;
+        const d = haversine(loc.lat, loc.lng, Number(o.lat), Number(o.lng));
+        if (d <= 50 && (!chosen || d < chosen.distKm)) chosen = { ...o, distKm: d };
       }
-
       if (chosen) {
-        seenOfferIdsRef.current.add(chosen.id);
-        setBannerOffer(chosen);
-        setTimeout(() => setBannerVisible(true), 50);
+        seenRef.current.add(chosen.id);
+        setBanner(chosen);
+        setTimeout(() => setBannerV(true), 50);
       }
     } catch { /* silent */ }
-  }, [userLocation, bannerOffer]);
+  }, [userLoc, banner]);
 
   useEffect(() => {
-    fetchAndCheckOffers();
-    const id = setInterval(fetchAndCheckOffers, POLL_INTERVAL_MS);
+    checkOffers();
+    const id = setInterval(checkOffers, POLL_MS);
     return () => clearInterval(id);
-  }, [fetchAndCheckOffers]);
+  }, [checkOffers]);
 
   const dismissBanner = useCallback(() => {
-    setBannerVisible(false);
-    setTimeout(() => setBannerOffer(null), 400);
+    setBannerV(false);
+    setTimeout(() => setBanner(null), 400);
   }, []);
 
-  // ── City filter → pan map ─────────────────────────────────────────────────
+  // ── City → pan map ────────────────────────────────────────────────────
   useEffect(() => {
     const wm = (window as any).__wassemMap;
     if (!wm) return;
-    const city = CITIES.find(c => c.key === activeCity);
-    if (city) wm.map.setView([city.lat, city.lng], city.zoom, { animate: true });
-  }, [activeCity]);
+    const c = CITIES.find(c => c.key === city);
+    if (c) wm.map.setView([c.lat, c.lng], c.zoom, { animate: true });
+  }, [city]);
 
-  // ── Map markers ───────────────────────────────────────────────────────────
-  const renderMarkers = useCallback((L: any, map: any, salonList: Salon[], offers: FlashOffer[], cat: CatKey) => {
+  // ── Render markers ────────────────────────────────────────────────────
+  const renderMarkers = useCallback((L: any, map: any, salonList: Salon[], offerList: FlashOffer[], activeCat: CatKey, activeCity: CityKey, activeQuery: string) => {
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
 
-    const visible = cat === "all" ? salonList : salonList.filter(s => s.categories?.split(",").includes(cat));
-    const catDef = CATEGORIES.find(c => c.key === cat);
+    const filtered = salonList
+      .filter(s => matchesCategory(s, activeCat))
+      .filter(s => matchesCity(s, activeCity))
+      .filter(s => matchesSearch(s, activeQuery));
 
-    visible.forEach(salon => {
+    filtered.forEach(salon => {
       if (!salon.lat || !salon.lng) return;
       const free = Number(salon.free_chairs);
-      const hasFree = free > 0;
-      const activeOffer = offers.find(o => o.salon_id === salon.id && o.is_active);
-      const isLiveShop = salon.is_live && hasFree;
-      const markerColor = catDef?.gender === "women" ? "#FF1F8E" : "#00B4FF";
-      const glowColor = activeOffer ? "rgba(255,221,0,0.5)" : isLiveShop ? "rgba(0,193,255,0.6)" : hasFree ? "rgba(74,222,128,0.4)" : `${markerColor}33`;
-      const borderColor = activeOffer ? "#FFDD00" : isLiveShop ? "#00B4FF" : hasFree ? "#4ade80" : markerColor;
+      const activeOffer = offerList.find(o => o.salon_id === salon.id && o.is_active);
+      const live = salon.is_live && free > 0;
+      const glowColor = activeOffer ? "rgba(255,221,0,0.5)" : live ? "rgba(0,193,255,0.6)" : free > 0 ? "rgba(74,222,128,0.4)" : "rgba(100,100,100,0.2)";
+      const borderColor = activeOffer ? "#FFDD00" : live ? "#00B4FF" : free > 0 ? "#4ade80" : "#444";
 
       const badge = activeOffer
         ? `<div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#FFDD00;color:#000;font-weight:900;font-size:9px;padding:2px 5px;border-radius:10px;white-space:nowrap;box-shadow:0 0 8px rgba(255,221,0,0.8)">⚡ -${activeOffer.discount_pct}%</div>`
-        : isLiveShop
+        : live
         ? `<div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#00B4FF,#00ff88);color:#000;font-weight:900;font-size:8px;padding:2px 6px;border-radius:10px;white-space:nowrap;box-shadow:0 0 10px rgba(0,193,255,0.8)">● LIVE · ${free}</div>`
-        : hasFree
+        : free > 0
         ? `<div style="position:absolute;top:-8px;right:-4px;background:#4ade80;color:#000;font-weight:900;font-size:9px;padding:1px 4px;border-radius:10px">${free}</div>`
         : "";
 
       const icon = L.divIcon({
         html: `<div style="position:relative;width:48px;height:48px">
-          ${hasFree || activeOffer ? `<div style="position:absolute;inset:0;background:${glowColor};border-radius:50%;animation:ping 1.5s ease-out infinite;pointer-events:none"></div>` : ""}
+          ${free > 0 || activeOffer ? `<div style="position:absolute;inset:0;background:${glowColor};border-radius:50%;animation:ping 1.5s ease-out infinite;pointer-events:none"></div>` : ""}
           <div style="width:48px;height:48px;background:#0D0D0D;border:2.5px solid ${borderColor};border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px ${glowColor};position:relative">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="${borderColor}"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3z"/></svg>
-            ${salon.is_verified ? `<div style="position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;background:#00B4FF;border-radius:50%;border:2px solid #0A0A0A;display:flex;align-items:center;justify-content:center;font-size:8px">✓</div>` : ""}
-          </div>
-          ${badge}
+            ${salon.is_verified ? `<div style="position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;background:#00B4FF;border-radius:50%;border:2px solid #0A0A0A;font-size:8px;display:flex;align-items:center;justify-content:center">✓</div>` : ""}
+          </div>${badge}
         </div>`,
         className: "", iconSize: [48, 48], iconAnchor: [24, 24],
       });
 
-      const marker = L.marker([salon.lat, salon.lng], { icon })
-        .addTo(map)
-        .on("click", () => setLocation(`/salon/${salon.id}`));
-      markersRef.current.push(marker);
+      markersRef.current.push(
+        L.marker([salon.lat, salon.lng], { icon })
+          .addTo(map)
+          .on("click", () => setLocation(`/salon/${salon.id}`))
+      );
     });
   }, [setLocation]);
 
-  // ── Leaflet init ──────────────────────────────────────────────────────────
+  // Re-render markers whenever filters change
+  useEffect(() => {
+    const wm = (window as any).__wassemMap;
+    if (wm) renderMarkers(wm.L, wm.map, salons, offers, cat, city, query);
+  }, [salons, offers, cat, city, query, renderMarkers]);
+
+  // ── Leaflet init ──────────────────────────────────────────────────────
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
-    let map: any;
-
     import("leaflet").then(leaflet => {
       const L = leaflet.default;
       delete (L.Icon.Default.prototype as any)._getIconUrl;
-
-      map = L.map(mapRef.current!, {
-        center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, zoomControl: false, attributionControl: false,
-      });
+      const map = L.map(mapRef.current!, { center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, zoomControl: false, attributionControl: false });
       L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(map);
       mapInstanceRef.current = map;
       (window as any).__wassemMap = { L, map };
@@ -328,233 +333,208 @@ export default function Home() {
         navigator.geolocation.getCurrentPosition(pos => {
           const { latitude: lat, longitude: lng } = pos.coords;
           setGeoGranted(true);
-          setUserLocation({ lat, lng });
+          setUserLoc({ lat, lng });
           map.setView([lat, lng], 14);
-          const userIcon = L.divIcon({
+          const icon = L.divIcon({
             html: `<div style="width:40px;height:40px;background:linear-gradient(135deg,#00B4FF,#FF1F8E);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(0,193,255,0.6);border:2px solid rgba(255,255,255,0.4)"><div style="width:12px;height:12px;background:white;border-radius:50%"></div></div>`,
             className: "", iconSize: [40, 40], iconAnchor: [20, 20],
           });
-          L.marker([lat, lng], { icon: userIcon }).addTo(map);
+          L.marker([lat, lng], { icon }).addTo(map);
         }, () => {});
       }
     });
-
     return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-        delete (window as any).__wassemMap;
-        markersRef.current = [];
-      }
+      if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null; delete (window as any).__wassemMap; markersRef.current = []; }
     };
   }, []);
 
-  // Re-render markers on category / salon / offer changes
-  useEffect(() => {
-    const wm = (window as any).__wassemMap;
-    if (wm && salons.length > 0) {
-      renderMarkers(wm.L, wm.map, salons, flashOffers, activeCategory);
-    }
-  }, [salons, flashOffers, activeCategory, renderMarkers]);
-
-  const isPro = user?.role === "professional";
-  const isSalonOwner = user?.role === "salon_owner";
-
+  // ── Role redirects ────────────────────────────────────────────────────
   useEffect(() => {
     if (!user) return;
     if (user.role === "professional") setLocation("/pro/requests");
     else if (user.role === "salon_owner") setLocation("/salon/dashboard");
   }, [user, setLocation]);
-
   if (user && user.role !== "client") return null;
 
-  const activeCatDef = CATEGORIES.find(c => c.key === activeCategory);
-
-  // Filter by category first, then by city
-  const byCat = activeCategory === "all" ? salons : salons.filter(s => s.categories?.split(",").includes(activeCategory));
-  const visibleSalons = activeCity === "all"
-    ? byCat
-    : byCat.filter(s => {
-        const addr = (s.address ?? "").toLowerCase();
-        return addr.includes(activeCity);
-      });
-
-  const activeFlashCount = flashOffers.filter(o => o.is_active).length;
-
-  // Sort: live + free first, then others
-  const sortedVisible = [...visibleSalons].sort((a, b) => {
-    const aScore = (a.is_live ? 2 : 0) + (Number(a.free_chairs) > 0 ? 1 : 0);
-    const bScore = (b.is_live ? 2 : 0) + (Number(b.free_chairs) > 0 ? 1 : 0);
-    return bScore - aScore;
-  });
+  const activeCat = CATEGORIES.find(c => c.key === cat)!;
+  const PANEL_H = 252;
 
   return (
-    <div className="relative h-[100dvh] w-full overflow-hidden bg-[#090013]">
-      {/* Map */}
-      <div ref={mapRef} className="absolute inset-0 z-0" style={{ bottom: "260px" }} />
+    <div className="relative w-full bg-[#090013]" style={{ height: "100dvh" }}>
 
-      {/* Top gradient */}
-      <div className="absolute top-0 left-0 right-0 h-36 bg-gradient-to-b from-[#0A0A0A]/95 to-transparent z-10 pointer-events-none" />
+      {/* ── Map ── */}
+      <div ref={mapRef} className="absolute inset-0 z-0" style={{ bottom: PANEL_H }} />
 
-      {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-12">
-        {/* Logo row */}
-        <div className="flex items-center justify-between mb-3">
+      {/* Top fade */}
+      <div className="absolute top-0 left-0 right-0 z-10 pointer-events-none"
+        style={{ height: 140, background: "linear-gradient(to bottom,rgba(9,0,19,0.97) 0%,rgba(9,0,19,0) 100%)" }} />
+
+      {/* ── Header ── */}
+      <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-safe-top" style={{ paddingTop: "max(env(safe-area-inset-top,0px), 44px)" }}>
+
+        {/* Logo + status row */}
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00B4FF] to-[#FF1F8E] flex items-center justify-center shadow-[0_0_15px_rgba(0,193,255,0.5)] overflow-hidden">
-              <img src="/tawoss-logo.png" alt="Tawoss" className="w-7 h-7 object-contain" />
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#00B4FF] to-[#FF1F8E] flex items-center justify-center shadow-[0_0_12px_rgba(0,193,255,0.5)] overflow-hidden">
+              <img src="/tawoss-logo.png" alt="" className="w-6 h-6 object-contain" />
             </div>
-            <span className="text-white font-black text-xl">TAWOSS</span>
+            <span className="text-white font-black text-lg tracking-tight">TAWOSS</span>
           </div>
-          <div className="flex items-center gap-2">
-            {activeFlashCount > 0 && (
-              <div className="flex items-center gap-1 bg-yellow-500/20 border border-yellow-500/40 rounded-full px-2.5 py-1">
-                <Zap size={11} className="text-yellow-400" />
-                <span className="text-yellow-400 text-[10px] font-bold">{activeFlashCount} deals</span>
+          <div className="flex items-center gap-1.5">
+            {activeDeals > 0 && (
+              <div className="flex items-center gap-1 bg-yellow-500/20 border border-yellow-500/40 rounded-full px-2 py-1">
+                <Zap size={10} className="text-yellow-400" />
+                <span className="text-yellow-400 text-[10px] font-bold">{activeDeals}</span>
               </div>
             )}
             {liveSalons > 0 && (
-              <div className="flex items-center gap-1 bg-[#00B4FF]/15 border border-[#00B4FF]/40 rounded-full px-2.5 py-1">
+              <div className="flex items-center gap-1 bg-[#00B4FF]/15 border border-[#00B4FF]/40 rounded-full px-2 py-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#00B4FF] animate-pulse" />
                 <span className="text-[#00B4FF] text-[10px] font-bold">{liveSalons} live</span>
               </div>
             )}
-            <div className="bg-black/60 backdrop-blur border border-white/10 rounded-full px-2.5 py-1 flex items-center gap-1">
-              <Navigation size={10} className={geoGranted ? "text-[#00B4FF]" : "text-gray-600"} />
+            <div className="bg-black/60 backdrop-blur border border-white/10 rounded-full px-2 py-1 flex items-center gap-1">
+              <Navigation size={9} className={geoGranted ? "text-[#00B4FF]" : "text-gray-600"} />
               <span className="text-gray-400 text-[10px] font-bold">{geoGranted ? "Near you" : "Morocco"}</span>
             </div>
           </div>
         </div>
 
-        {/* City filter pills */}
-        <div className="flex gap-2 mb-2.5">
-          {CITIES.map(city => {
-            const isActive = activeCity === city.key;
+        {/* Search bar */}
+        <div className={`flex items-center gap-2 mb-2 transition-all duration-200 ${searchOpen ? "opacity-100" : "opacity-100"}`}>
+          <div className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2"
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <Search size={13} className="text-gray-500 flex-shrink-0" />
+            <input
+              type="text"
+              placeholder="Search salons…"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              className="flex-1 bg-transparent text-white text-sm placeholder:text-gray-600 outline-none min-w-0"
+            />
+            {query && (
+              <button onClick={() => setQuery("")} className="flex-shrink-0">
+                <X size={13} className="text-gray-500" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* City + Category pills — single scrollable row */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {/* City pills */}
+          {CITIES.map(c => {
+            const on = city === c.key;
             return (
-              <button
-                key={city.key}
-                onClick={() => setActiveCity(city.key)}
-                className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-black transition-all"
+              <button key={c.key} onClick={() => setCity(c.key)}
+                className="flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-black transition-all"
                 style={{
-                  background: isActive ? "rgba(155,48,255,0.25)" : "rgba(255,255,255,0.05)",
-                  border: `1.5px solid ${isActive ? "#9B30FF" : "rgba(255,255,255,0.1)"}`,
-                  color: isActive ? "#c084fc" : "#555",
-                  boxShadow: isActive ? "0 0 12px rgba(155,48,255,0.35)" : "none",
-                }}
-              >
-                {city.label}
+                  background: on ? "rgba(155,48,255,0.25)" : "rgba(255,255,255,0.05)",
+                  border: `1.5px solid ${on ? "#9B30FF" : "rgba(255,255,255,0.1)"}`,
+                  color: on ? "#c084fc" : "#555",
+                  boxShadow: on ? "0 0 10px rgba(155,48,255,0.3)" : "none",
+                }}>
+                {c.key === "oujda" ? "🌆 " : c.key === "berkane" ? "🏘️ " : ""}{c.label}
               </button>
             );
           })}
-        </div>
-
-        {/* Category ribbon */}
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {CATEGORIES.map(cat => {
-            const isActive = activeCategory === cat.key;
+          {/* Divider */}
+          <div className="flex-shrink-0 w-px bg-white/10 my-1" />
+          {/* Category pills */}
+          {CATEGORIES.map(c => {
+            const on = cat === c.key;
             return (
-              <button
-                key={cat.key}
-                onClick={() => setActiveCategory(cat.key)}
-                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold transition-all"
+              <button key={c.key} onClick={() => setCat(c.key)}
+                className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full border text-[11px] font-bold transition-all"
                 style={{
-                  background: isActive ? `${cat.color}25` : "rgba(255,255,255,0.05)",
-                  borderColor: isActive ? cat.color : "rgba(255,255,255,0.1)",
-                  color: isActive ? cat.color : "#666",
-                  boxShadow: isActive ? `0 0 10px ${cat.color}40` : "none",
-                }}
-              >
-                <span>{cat.emoji}</span>
-                <span>{cat.label}</span>
+                  background: on ? `${c.color}22` : "rgba(255,255,255,0.05)",
+                  borderColor: on ? c.color : "rgba(255,255,255,0.1)",
+                  color: on ? c.color : "#555",
+                  boxShadow: on ? `0 0 8px ${c.color}40` : "none",
+                }}>
+                <span>{c.emoji}</span>
+                <span>{c.label}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Flash Offer Banner */}
-      {bannerOffer && (
-        <div
-          className="absolute left-4 right-4 z-30 transition-all duration-500 ease-out"
+      {/* ── Flash Banner (above panel) ── */}
+      {banner && (
+        <div className="absolute left-3 right-3 z-30 transition-all duration-500 ease-out"
           style={{
-            bottom: bannerVisible ? "272px" : "200px",
+            bottom: bannerVisible ? PANEL_H + 8 : PANEL_H - 40,
             opacity: bannerVisible ? 1 : 0,
-            transform: bannerVisible ? "translateY(0) scale(1)" : "translateY(40px) scale(0.95)",
-          }}
-        >
-          <FlashBanner
-            offer={bannerOffer}
-            onDismiss={dismissBanner}
-            onView={() => { dismissBanner(); setLocation(`/salon/${bannerOffer.salon_id}`); }}
-          />
+            transform: bannerVisible ? "scale(1)" : "scale(0.96)",
+          }}>
+          <FlashBanner offer={banner} onDismiss={dismissBanner}
+            onView={() => { dismissBanner(); setLocation(`/salon/${banner.salon_id}`); }} />
         </div>
       )}
 
-      {/* ── Bottom Panel ─────────────────────────────────────────────────── */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 bg-[#090013] border-t border-white/5" style={{ height: "260px" }}>
+      {/* ── Bottom Panel ── */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 bg-[#090013] border-t border-white/5"
+        style={{ height: PANEL_H, paddingBottom: "env(safe-area-inset-bottom,0px)" }}>
 
-        {/* Salon cards strip */}
-        <div className="px-4 pt-3 pb-2">
+        {/* Salon count + cards strip */}
+        <div className="px-4 pt-3">
+          {/* Count row */}
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold" style={{ color: activeCatDef?.color ?? "#888" }}>
-              {activeCatDef?.emoji} {sortedVisible.length} salon{sortedVisible.length !== 1 ? "s" : ""}
-              {activeCity !== "all" ? ` in ${CITIES.find(c => c.key === activeCity)?.label.replace(/[^a-zA-Z ]/g, "").trim()}` : " nearby"}
+            <span className="text-[11px] font-bold" style={{ color: activeCat.color }}>
+              {activeCat.emoji} {visible.length} salon{visible.length !== 1 ? "s" : ""}
+              {city !== "all" ? ` · ${CITIES.find(c => c.key === city)!.label}` : ""}
+              {query ? ` · "${query}"` : ""}
             </span>
-            {freeSalons > 0 && (
+            {freeCount > 0 && (
               <div className="flex items-center gap-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                <span className="text-green-400 text-[10px] font-bold">{freeSalons} with free spots</span>
+                <span className="text-green-400 text-[10px] font-bold">{freeCount} open</span>
               </div>
             )}
           </div>
 
-          {sortedVisible.length === 0 ? (
-            <div className="flex items-center justify-center h-16 rounded-xl border border-white/5"
+          {/* Cards */}
+          {visible.length === 0 ? (
+            <div className="h-16 flex items-center justify-center rounded-xl border border-white/5"
               style={{ background: "rgba(255,255,255,0.02)" }}>
-              <p className="text-gray-600 text-sm">No salons found for this filter</p>
+              <p className="text-gray-600 text-xs">
+                {query ? `No salons matching "${query}"` : `No ${cat !== "all" ? cat : ""} salons here yet`}
+              </p>
             </div>
           ) : (
             <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide">
-              {sortedVisible.map(salon => (
-                <SalonCard key={salon.id} salon={salon} onPress={() => setLocation(`/salon/${salon.id}`)} />
-              ))}
+              {visible.map(s => <SalonCard key={s.id} salon={s} onPress={() => setLocation(`/salon/${s.id}`)} />)}
             </div>
           )}
         </div>
 
-        {/* CTA button */}
-        <div className="px-4">
-          {isSalonOwner ? (
-            <button
-              onClick={() => setLocation("/salon/dashboard")}
-              className="w-full bg-gradient-to-r from-[#00B4FF] to-[#FF1F8E] active:scale-[0.97] text-black font-black text-base rounded-2xl py-3.5 transition-all shadow-[0_0_25px_rgba(0,193,255,0.4)] flex items-center justify-center gap-2"
-            >
+        {/* CTA */}
+        <div className="px-4 mt-2">
+          {user?.role === "salon_owner" ? (
+            <button onClick={() => setLocation("/salon/dashboard")}
+              className="w-full bg-gradient-to-r from-[#00B4FF] to-[#FF1F8E] active:scale-[0.97] text-black font-black text-base rounded-2xl py-3 transition-all">
               🏠 Manage My Salon
             </button>
-          ) : isPro ? (
-            <button
-              onClick={() => setLocation("/pro/requests")}
-              className="w-full bg-[#FF1F8E] active:scale-[0.97] text-black font-black text-base rounded-2xl py-3.5 transition-all shadow-[0_0_25px_rgba(255,0,255,0.4)] flex items-center justify-center gap-2"
-            >
+          ) : user?.role === "professional" ? (
+            <button onClick={() => setLocation("/pro/requests")}
+              className="w-full bg-[#FF1F8E] active:scale-[0.97] text-black font-black text-base rounded-2xl py-3 transition-all">
               ✂️ See Nearby Requests
             </button>
           ) : (
             <div className="flex gap-2">
-              <button
-                onClick={() => setLocation("/request")}
-                className="flex-1 active:scale-[0.97] text-black font-black text-base rounded-2xl py-3.5 transition-all flex items-center justify-center gap-2"
+              <button onClick={() => setLocation("/request")}
+                className="flex-1 active:scale-[0.97] text-black font-black text-base rounded-2xl py-3 transition-all flex items-center justify-center gap-1.5"
                 style={{
-                  background: activeCatDef?.gender === "women" ? "#FF1F8E" : "#00B4FF",
-                  boxShadow: activeCatDef?.gender === "women" ? "0 0 20px rgba(255,0,255,0.4)" : "0 0 20px rgba(0,193,255,0.4)",
-                }}
-              >
-                {activeCatDef?.gender === "women" ? "💅 Book Beauty" : "💈 Request Service"}
+                  background: activeCat.color === "#FF1F8E" ? "#FF1F8E" : "#00B4FF",
+                  boxShadow: activeCat.color === "#FF1F8E" ? "0 0 18px rgba(255,31,142,0.4)" : "0 0 18px rgba(0,193,255,0.4)",
+                }}>
+                <Scissors size={15} />
+                {cat === "barber" ? "Book Barber" : cat === "nails" ? "Book Nails" : cat === "hair" ? "Book Hair" : "Book Service"}
               </button>
-              <button
-                onClick={() => setLocation("/request-multi")}
-                className="px-4 active:scale-[0.97] rounded-2xl border border-white/10 text-gray-400 font-bold text-sm transition-all"
-                style={{ background: "rgba(255,255,255,0.04)" }}
-              >
+              <button onClick={() => setLocation("/request-multi")}
+                className="px-4 active:scale-[0.97] rounded-2xl border border-white/10 text-gray-400 font-bold text-sm"
+                style={{ background: "rgba(255,255,255,0.04)" }}>
                 Multi
               </button>
             </div>
