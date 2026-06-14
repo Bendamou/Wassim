@@ -212,6 +212,7 @@ if (Number.isNaN(port) || port <= 0) {
     await db.execute(sql`ALTER TABLE chair_claims ADD COLUMN IF NOT EXISTS client_lng DOUBLE PRECISION`);
     await db.execute(sql`ALTER TABLE salons ADD COLUMN IF NOT EXISTS photos TEXT`);
     await db.execute(sql`ALTER TABLE salons ADD COLUMN IF NOT EXISTS categories TEXT`);
+    await db.execute(sql`ALTER TABLE salons ADD COLUMN IF NOT EXISTS header_image TEXT`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS portfolio TEXT`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS gender_pref TEXT NOT NULL DEFAULT 'all'`);
 

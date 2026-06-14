@@ -39,7 +39,7 @@ type Salon = {
   free_chairs: number; total_chairs: number; is_live: boolean;
   active_claims?: number; next_expiry?: string | null;
   categories?: string; description?: string; avg_service_price?: number;
-  is_verified?: boolean;
+  is_verified?: boolean; header_image?: string | null; photos?: string | null;
 };
 type FlashOffer = {
   id: number; salon_id: number; title: string; discount_pct: number;
@@ -210,39 +210,75 @@ function AvailabilityBanner({ avail, onDismiss, onBook }: { avail: AvailBanner; 
 }
 
 // ── Salon Card strip ──────────────────────────────────────────────────────
-function SalonCard({ salon, onPress }: { salon: Salon; onPress: () => void }) {
+function SalonCard({ salon, onPress, tag }: { salon: Salon; onPress: () => void; tag?: { label: string; color: string } }) {
   const free = Number(salon.free_chairs);
   const live = salon.is_live && free > 0;
+  const full = free === 0;
+  const borderColor = tag ? "rgba(250,204,21,0.55)" : live ? "rgba(0,180,255,0.45)" : "rgba(255,255,255,0.07)";
+
   return (
-    <button onClick={onPress} className="flex-shrink-0 w-48 rounded-2xl overflow-hidden border transition-all active:scale-[0.96] text-left"
-      style={{ background: "#130028", borderColor: live ? "rgba(0,180,255,0.45)" : "rgba(255,255,255,0.07)" }}>
-      <div className="p-3">
-        <div className="flex items-start justify-between gap-1 mb-1.5">
-          <div className="flex-1 min-w-0">
-            {live && (
-              <div className="inline-flex items-center gap-1 mb-1 bg-[#00B4FF]/15 border border-[#00B4FF]/30 rounded-full px-1.5 py-0.5">
-                <Radio size={7} className="text-[#00B4FF]" />
-                <span className="text-[#00B4FF] text-[9px] font-bold">LIVE</span>
-              </div>
-            )}
-            <p className="text-white font-black text-sm leading-tight line-clamp-2">{salon.name}</p>
-          </div>
-          <ChevronRight size={13} className="text-gray-600 flex-shrink-0 mt-0.5" />
+    <button onClick={onPress}
+      className="flex-shrink-0 w-52 rounded-2xl overflow-hidden border transition-all active:scale-[0.96] text-left"
+      style={{ background: "#130028", borderColor }}>
+
+      {/* ── Photo header ── */}
+      {salon.header_image ? (
+        <div className="relative w-full h-[72px] overflow-hidden">
+          <img
+            src={`${salon.header_image}?w=420&h=144&fit=crop&q=70`}
+            alt={salon.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+          {/* gradient overlay */}
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom,transparent 30%,rgba(19,0,40,0.85) 100%)" }} />
+          {/* tag badge */}
+          {tag && (
+            <div className="absolute top-1.5 left-1.5 flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black"
+              style={{ background: tag.color, color: "#000" }}>
+              {tag.label}
+            </div>
+          )}
+          {/* live badge */}
+          {live && (
+            <div className="absolute top-1.5 right-1.5 flex items-center gap-1 bg-[#00B4FF]/90 rounded-full px-1.5 py-0.5">
+              <Radio size={7} className="text-black" />
+              <span className="text-black text-[8px] font-black">LIVE</span>
+            </div>
+          )}
+          {/* full pill */}
+          {full && (
+            <div className="absolute bottom-1.5 right-1.5 bg-black/70 text-gray-400 text-[8px] font-bold px-1.5 py-0.5 rounded-full">
+              Full
+            </div>
+          )}
         </div>
+      ) : (
+        /* no photo — minimal top strip */
+        <div className="w-full h-8 flex items-center justify-between px-3"
+          style={{ background: live ? "rgba(0,180,255,0.1)" : "rgba(255,255,255,0.03)" }}>
+          {tag && <span className="text-[9px] font-black" style={{ color: tag.color }}>{tag.label}</span>}
+          {live && <div className="flex items-center gap-1"><Radio size={7} className="text-[#00B4FF]" /><span className="text-[#00B4FF] text-[8px] font-black">LIVE</span></div>}
+        </div>
+      )}
+
+      {/* ── Info ── */}
+      <div className="p-2.5">
+        <p className="text-white font-black text-[13px] leading-tight line-clamp-1 mb-1">{salon.name}</p>
         {salon.address && (
-          <div className="flex items-center gap-1 mb-2">
-            <MapPin size={9} className="text-gray-600 flex-shrink-0" />
-            <span className="text-gray-500 text-[10px] truncate leading-tight">{salon.address}</span>
+          <div className="flex items-center gap-1 mb-1.5">
+            <MapPin size={8} className="text-gray-600 flex-shrink-0" />
+            <span className="text-gray-500 text-[9px] truncate">{salon.address}</span>
           </div>
         )}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-1.5">
           {free > 0 ? (
             <div className="flex items-center gap-1 bg-[#00B4FF]/10 border border-[#00B4FF]/20 rounded-full px-1.5 py-0.5">
               <Users size={8} className="text-[#00B4FF]" />
               <span className="text-[#00B4FF] text-[9px] font-bold">{free} free</span>
             </div>
           ) : (
-            <span className="text-gray-600 text-[10px]">Full</span>
+            <span className="text-gray-600 text-[9px]">Full</span>
           )}
           {salon.avg_service_price && (
             <span className="text-gray-500 text-[9px] ml-auto">{salon.avg_service_price} MAD</span>
@@ -296,6 +332,17 @@ export default function Home() {
   const liveSalons = useMemo(() => salons.filter(s => s.is_live && Number(s.free_chairs) > 0).length, [salons]);
   const freeCount  = useMemo(() => salons.filter(s => Number(s.free_chairs) > 0).length, [salons]);
   const activeDeals = offers.filter(o => o.is_active).length;
+
+  // ── Smart suggestion: nearest open salon when all visible are full ─────
+  const suggestedSalon = useMemo(() => {
+    const anyOpen = visible.some(s => Number(s.free_chairs) > 0 && s.is_live);
+    if (anyOpen || !salons.length) return null; // already have an open option in view
+    const loc = userLoc ?? { lat: DEFAULT_CENTER[0], lng: DEFAULT_CENTER[1] };
+    return salons
+      .filter(s => Number(s.free_chairs) > 0 && s.is_live && s.lat && s.lng)
+      .map(s => ({ ...s, _dist: haversine(loc.lat, loc.lng, Number(s.lat), Number(s.lng)) }))
+      .sort((a, b) => a._dist - b._dist)[0] ?? null;
+  }, [visible, salons, userLoc]);
 
   // ── Load salons ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -685,6 +732,15 @@ export default function Home() {
             </div>
           ) : (
             <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide">
+              {/* Smart suggestion — pinned first when all visible salons are full */}
+              {suggestedSalon && (
+                <SalonCard
+                  key={`suggest-${suggestedSalon.id}`}
+                  salon={suggestedSalon}
+                  onPress={() => setLocation(`/salon/${suggestedSalon.id}`)}
+                  tag={{ label: "⭐ Nearest Open", color: "#facc15" }}
+                />
+              )}
               {visible.map(s => <SalonCard key={s.id} salon={s} onPress={() => setLocation(`/salon/${s.id}`)} />)}
             </div>
           )}

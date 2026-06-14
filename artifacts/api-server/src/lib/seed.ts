@@ -17,16 +17,17 @@ async function upsertUser(name: string, email: string, phone: string, role: stri
   return rows[0] as any;
 }
 
-async function upsertSalon(ownerId: number, name: string, description: string, address: string, lat: number, lng: number, isLive: boolean, avgPrice: number, categories: string) {
+async function upsertSalon(ownerId: number, name: string, description: string, address: string, lat: number, lng: number, isLive: boolean, avgPrice: number, categories: string, headerImage: string, photos: string[]) {
+  const photosJson = JSON.stringify(photos);
   const rows = (await db.execute(sql`
-    INSERT INTO salons (owner_id, name, description, address, lat, lng, is_live, avg_service_price, categories)
-    VALUES (${ownerId}, ${name}, ${description}, ${address}, ${lat}, ${lng}, ${isLive}, ${avgPrice}, ${categories})
+    INSERT INTO salons (owner_id, name, description, address, lat, lng, is_live, avg_service_price, categories, header_image, photos)
+    VALUES (${ownerId}, ${name}, ${description}, ${address}, ${lat}, ${lng}, ${isLive}, ${avgPrice}, ${categories}, ${headerImage}, ${photosJson})
     ON CONFLICT DO NOTHING
     RETURNING *
   `)).rows;
   if (rows[0]) return rows[0] as any;
-  // Already existed — fetch and update categories
-  await db.execute(sql`UPDATE salons SET categories = ${categories} WHERE owner_id = ${ownerId} AND name = ${name}`);
+  // Already existed — update enriched fields
+  await db.execute(sql`UPDATE salons SET categories = ${categories}, header_image = ${headerImage}, photos = ${photosJson} WHERE owner_id = ${ownerId} AND name = ${name}`);
   const existing = (await db.execute(sql`SELECT * FROM salons WHERE owner_id = ${ownerId} AND name = ${name} LIMIT 1`)).rows;
   return existing[0] as any;
 }
@@ -36,10 +37,11 @@ export async function seedDemoData() {
   const check = (await db.execute(sql`SELECT id FROM users WHERE email = 'sara@tawoss.ma' LIMIT 1`)).rows;
   const salonCheck = (await db.execute(sql`SELECT COUNT(*) AS cnt FROM salons`)).rows[0] as any;
   if (check.length > 0 && Number(salonCheck.cnt) >= 4) {
-    // Still update categories in case they were seeded before the column existed
-    await db.execute(sql`UPDATE salons SET categories = 'barber,hair' WHERE name LIKE '%Barbershop%' OR name LIKE '%Barber Studio%'`);
-    await db.execute(sql`UPDATE salons SET categories = 'hair,nails,skincare' WHERE name LIKE '%Beauty%'`);
-    await db.execute(sql`UPDATE salons SET categories = 'hair,nails' WHERE name LIKE '%Coiffure%'`);
+    // Update enriched fields for salons seeded before these columns existed
+    await db.execute(sql`UPDATE salons SET categories = 'barber,hair', header_image = 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70', photos = '["https://images.unsplash.com/photo-1585747860715-2ba37e788b70","https://images.unsplash.com/photo-1503951914875-452162b0f3f1","https://images.unsplash.com/photo-1605497788044-5a32c7078486"]' WHERE name LIKE '%Barbershop%'`);
+    await db.execute(sql`UPDATE salons SET categories = 'hair,nails,skincare', header_image = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e', photos = '["https://images.unsplash.com/photo-1522337360788-8b13dee7a37e","https://images.unsplash.com/photo-1570172619644-dfd03ed5d881","https://images.unsplash.com/photo-1621905251189-08b45d6a269e"]' WHERE name LIKE '%Beauty%'`);
+    await db.execute(sql`UPDATE salons SET categories = 'barber,hair', header_image = 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a', photos = '["https://images.unsplash.com/photo-1599351431202-1e0f0137899a","https://images.unsplash.com/photo-1503951914875-452162b0f3f1","https://images.unsplash.com/photo-1585747860715-2ba37e788b70"]' WHERE name LIKE '%Barber Studio%'`);
+    await db.execute(sql`UPDATE salons SET categories = 'hair,nails', header_image = 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881', photos = '["https://images.unsplash.com/photo-1570172619644-dfd03ed5d881","https://images.unsplash.com/photo-1516975080664-ed2fc6a32937","https://images.unsplash.com/photo-1522337360788-8b13dee7a37e"]' WHERE name LIKE '%Coiffure%'`);
     return;
   }
 
@@ -59,23 +61,33 @@ export async function seedDemoData() {
   const client1 = await upsertUser("Amine Idrissi", "amine@tawoss.ma", "+212612345620", "client", "Oujda",   "", true, 0);
   const client2 = await upsertUser("Omar Benkiran", "omar@tawoss.ma",  "+212612345621", "client", "Berkane", "", true, 0);
 
+  const UNS = "https://images.unsplash.com";
+
   // ── Salons – Oujda ────────────────────────────────────────────────────────
   const salon1 = await upsertSalon(ownerYassine.id, "Prestige Barbershop Oujda",
     "Le salon haut de gamme d'Oujda. Coupes modernes, soins barbe, ambiance premium.",
-    "Bd Mohammed V, Oujda 60000", 34.6814, -1.9086, true, 80, "barber,hair");
+    "Bd Mohammed V, Oujda 60000", 34.6814, -1.9086, true, 80, "barber,hair",
+    `${UNS}/photo-1585747860715-2ba37e788b70`,
+    [`${UNS}/photo-1585747860715-2ba37e788b70`, `${UNS}/photo-1503951914875-452162b0f3f1`, `${UNS}/photo-1605497788044-5a32c7078486`]);
 
   const salon2 = await upsertSalon(ownerSara.id, "Sara Beauty & Hair Oujda",
     "Salon mixte spécialisé colorations, kératine et coiffure de mariage.",
-    "Rue de Marrakech, Hay Qods, Oujda", 34.6891, -1.9120, true, 120, "hair,nails,skincare");
+    "Rue de Marrakech, Hay Qods, Oujda", 34.6891, -1.9120, true, 120, "hair,nails,skincare",
+    `${UNS}/photo-1522337360788-8b13dee7a37e`,
+    [`${UNS}/photo-1522337360788-8b13dee7a37e`, `${UNS}/photo-1570172619644-dfd03ed5d881`, `${UNS}/photo-1621905251189-08b45d6a269e`]);
 
   // ── Salons – Berkane ──────────────────────────────────────────────────────
   const salon3 = await upsertSalon(ownerKarim.id, "Berkane Barber Studio",
     "Studio barbier tendance à Berkane. Dégradés et rasage traditionnel au savon.",
-    "Centre Ville, Berkane 63300", 34.9200, -2.3200, true, 70, "barber,hair");
+    "Centre Ville, Berkane 63300", 34.9200, -2.3200, true, 70, "barber,hair",
+    `${UNS}/photo-1599351431202-1e0f0137899a`,
+    [`${UNS}/photo-1599351431202-1e0f0137899a`, `${UNS}/photo-1503951914875-452162b0f3f1`, `${UNS}/photo-1585747860715-2ba37e788b70`]);
 
   const salon4 = await upsertSalon(ownerKarim.id, "Elite Coiffure Berkane",
     "Coiffeur unisexe moderne. Coupes hommes & femmes, extensions, soins capillaires.",
-    "Hay El Massira, Berkane", 34.9150, -2.3280, false, 90, "hair,nails");
+    "Hay El Massira, Berkane", 34.9150, -2.3280, false, 90, "hair,nails",
+    `${UNS}/photo-1570172619644-dfd03ed5d881`,
+    [`${UNS}/photo-1570172619644-dfd03ed5d881`, `${UNS}/photo-1516975080664-ed2fc6a32937`, `${UNS}/photo-1522337360788-8b13dee7a37e`]);
 
   // ── Chairs ────────────────────────────────────────────────────────────────
   for (const salonId of [salon1.id, salon2.id, salon3.id, salon4.id]) {
