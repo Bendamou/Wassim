@@ -1,10 +1,19 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useLocation } from "wouter";
-import { Scissors, Navigation, Zap, X, MapPin } from "lucide-react";
+import { Scissors, Navigation, Zap, X, MapPin, Star, Users, Radio, ChevronRight } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import "leaflet/dist/leaflet.css";
 
-const CASABLANCA: [number, number] = [33.5731, -7.5898];
+// ── City definitions ──────────────────────────────────────────────────────────
+const CITIES = [
+  { key: "all",     label: "All Cities", lat: 34.80, lng: -2.11, zoom: 9 },
+  { key: "oujda",   label: "🌆 Oujda",  lat: 34.6814, lng: -1.9086, zoom: 13 },
+  { key: "berkane", label: "🏘️ Berkane", lat: 34.9200, lng: -2.3200, zoom: 13 },
+] as const;
+type CityKey = (typeof CITIES)[number]["key"];
+
+const DEFAULT_CENTER: [number, number] = [34.6814, -1.9086]; // Oujda
+const DEFAULT_ZOOM = 12;
 const POLL_INTERVAL_MS = 20_000;
 const BANNER_TTL_MS = 8_000;
 
@@ -29,6 +38,7 @@ type Salon = {
   id: number; name: string; address: string; lat: number; lng: number;
   free_chairs: number; total_chairs: number; header_image: string;
   categories: string; is_verified: boolean; is_live: boolean;
+  avg_service_price?: number; owner_name?: string;
 };
 
 type FlashOffer = {
@@ -75,15 +85,11 @@ function FlashBanner({
   return (
     <div className="relative overflow-hidden rounded-2xl border border-yellow-400/50 shadow-[0_0_40px_rgba(255,221,0,0.25)]"
       style={{ background: "linear-gradient(135deg,#1a1500,#0f0c00)" }}>
-      {/* Glow pulse overlay */}
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: "radial-gradient(ellipse at 50% 0%,rgba(255,221,0,0.12),transparent 70%)" }} />
-
       <div className="relative p-4">
-        {/* Header row */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
-            {/* Pulsing lightning badge */}
             <div className="relative flex-shrink-0">
               <div className="absolute inset-0 bg-yellow-400 rounded-xl animate-ping opacity-40" />
               <div className="relative w-9 h-9 bg-yellow-400 rounded-xl flex items-center justify-center shadow-[0_0_14px_rgba(255,221,0,0.7)]">
@@ -91,55 +97,80 @@ function FlashBanner({
               </div>
             </div>
             <div>
-              <p className="text-yellow-300 text-[10px] font-black uppercase tracking-widest leading-none">
-                ⚡ Flash Offer Nearby
-              </p>
-              <p className="text-white font-black text-base leading-tight mt-0.5">
-                {offer.salon_name ?? `Salon #${offer.salon_id}`}
-              </p>
+              <p className="text-yellow-300 text-[10px] font-black uppercase tracking-widest leading-none">⚡ Flash Offer Nearby</p>
+              <p className="text-white font-black text-base leading-tight mt-0.5">{offer.salon_name ?? `Salon #${offer.salon_id}`}</p>
             </div>
           </div>
-          <button
-            onClick={onDismiss}
-            className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0"
-          >
+          <button onClick={onDismiss} className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
             <X size={14} className="text-gray-400" />
           </button>
         </div>
-
-        {/* Offer details row */}
         <div className="flex items-center justify-between mt-3 gap-3">
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Discount badge */}
             <div className="bg-yellow-400 text-black font-black text-sm px-2.5 py-1 rounded-lg shadow-[0_0_10px_rgba(255,221,0,0.5)]">
               -{offer.discount_pct}%
             </div>
             <p className="text-gray-300 text-sm font-bold">{offer.title}</p>
           </div>
-          {/* Distance pill */}
           <div className="flex items-center gap-1 bg-white/8 border border-white/10 rounded-full px-2.5 py-1 flex-shrink-0">
             <MapPin size={10} className="text-yellow-400" />
             <span className="text-yellow-300 text-[10px] font-bold">{formatDist(offer.distKm)}</span>
           </div>
         </div>
-
-        {/* CTA */}
-        <button
-          onClick={onView}
-          className="w-full mt-3 bg-yellow-400 active:scale-[0.97] text-black font-black text-sm rounded-xl py-2.5 transition-transform shadow-[0_0_16px_rgba(255,221,0,0.4)]"
-        >
+        <button onClick={onView} className="w-full mt-3 bg-yellow-400 active:scale-[0.97] text-black font-black text-sm rounded-xl py-2.5 transition-transform shadow-[0_0_16px_rgba(255,221,0,0.4)]">
           View Deal →
         </button>
       </div>
-
-      {/* Progress bar */}
       <div className="h-1 bg-white/5">
-        <div
-          className="h-full bg-yellow-400 transition-none"
-          style={{ width: `${progress}%`, boxShadow: "0 0 6px rgba(255,221,0,0.7)" }}
-        />
+        <div className="h-full bg-yellow-400 transition-none" style={{ width: `${progress}%`, boxShadow: "0 0 6px rgba(255,221,0,0.7)" }} />
       </div>
     </div>
+  );
+}
+
+// ── Salon Card (bottom strip) ──────────────────────────────────────────────
+function SalonCard({ salon, onPress }: { salon: Salon; onPress: () => void }) {
+  const free = Number(salon.free_chairs);
+  return (
+    <button
+      onClick={onPress}
+      className="flex-shrink-0 w-52 rounded-2xl overflow-hidden border transition-all active:scale-[0.97] text-left"
+      style={{ background: "#130028", borderColor: salon.is_live && free > 0 ? "rgba(0,180,255,0.4)" : "rgba(255,255,255,0.07)" }}
+    >
+      <div className="p-3">
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="flex-1 min-w-0">
+            {salon.is_live && free > 0 && (
+              <div className="inline-flex items-center gap-1 mb-1 bg-[#00B4FF]/15 border border-[#00B4FF]/30 rounded-full px-1.5 py-0.5">
+                <Radio size={8} className="text-[#00B4FF]" />
+                <span className="text-[#00B4FF] text-[9px] font-bold">LIVE</span>
+              </div>
+            )}
+            <p className="text-white font-black text-sm leading-tight line-clamp-1">{salon.name}</p>
+          </div>
+          <ChevronRight size={14} className="text-gray-600 flex-shrink-0 mt-0.5" />
+        </div>
+        {salon.address && (
+          <div className="flex items-center gap-1 mb-2">
+            <MapPin size={9} className="text-gray-600 flex-shrink-0" />
+            <span className="text-gray-500 text-[10px] truncate">{salon.address}</span>
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          {free > 0 ? (
+            <div className="flex items-center gap-1 bg-[#00B4FF]/10 border border-[#00B4FF]/20 rounded-full px-1.5 py-0.5">
+              <Users size={9} className="text-[#00B4FF]" />
+              <span className="text-[#00B4FF] text-[9px] font-bold">{free} free</span>
+            </div>
+          ) : (
+            <span className="text-gray-600 text-[10px]">No spots</span>
+          )}
+          {salon.avg_service_price && (
+            <span className="text-gray-500 text-[10px] ml-auto">{salon.avg_service_price} MAD</span>
+          )}
+        </div>
+      </div>
+    </button>
   );
 }
 
@@ -157,20 +188,19 @@ export default function Home() {
     : "all";
 
   const [activeCategory, setActiveCategory] = useState<CatKey>(defaultCat);
+  const [activeCity, setActiveCity] = useState<CityKey>("all");
   const [salons, setSalons] = useState<Salon[]>([]);
   const [flashOffers, setFlashOffers] = useState<FlashOffer[]>([]);
   const [geoGranted, setGeoGranted] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [nearbyCount] = useState(0);
   const [freeSalons, setFreeSalons] = useState(0);
+  const [liveSalons, setLiveSalons] = useState(0);
 
   // Banner state
   const [bannerOffer, setBannerOffer] = useState<BannerData | null>(null);
   const [bannerVisible, setBannerVisible] = useState(false);
   const seenOfferIdsRef = useRef<Set<number>>(new Set());
   const prevOfferIdsRef = useRef<Set<number>>(new Set());
-
-  const [liveSalons, setLiveSalons] = useState(0);
 
   // Load salons once
   useEffect(() => {
@@ -189,24 +219,19 @@ export default function Home() {
       setFlashOffers(offers);
 
       const currentIds = new Set(offers.map(o => o.id));
-
-      // Find IDs that weren't in the previous poll and haven't been shown yet
       const newOffers = offers.filter(
         o => !prevOfferIdsRef.current.has(o.id) && !seenOfferIdsRef.current.has(o.id)
       );
-
       prevOfferIdsRef.current = currentIds;
 
       if (newOffers.length === 0 || bannerOffer) return;
 
-      // Pick the closest new offer within 2 km (or any if no geo)
       let chosen: BannerData | null = null;
-      const loc = userLocation ?? { lat: CASABLANCA[0], lng: CASABLANCA[1] };
-
+      const loc = userLocation ?? { lat: DEFAULT_CENTER[0], lng: DEFAULT_CENTER[1] };
       for (const offer of newOffers) {
         if (!offer.lat || !offer.lng) continue;
         const distKm = haversine(loc.lat, loc.lng, Number(offer.lat), Number(offer.lng));
-        if (distKm <= 2 && (!chosen || distKm < chosen.distKm)) {
+        if (distKm <= 50 && (!chosen || distKm < chosen.distKm)) {
           chosen = { ...offer, distKm };
         }
       }
@@ -214,13 +239,11 @@ export default function Home() {
       if (chosen) {
         seenOfferIdsRef.current.add(chosen.id);
         setBannerOffer(chosen);
-        // Small delay before animating in so CSS transition fires
         setTimeout(() => setBannerVisible(true), 50);
       }
     } catch { /* silent */ }
   }, [userLocation, bannerOffer]);
 
-  // Initial load + polling
   useEffect(() => {
     fetchAndCheckOffers();
     const id = setInterval(fetchAndCheckOffers, POLL_INTERVAL_MS);
@@ -231,6 +254,14 @@ export default function Home() {
     setBannerVisible(false);
     setTimeout(() => setBannerOffer(null), 400);
   }, []);
+
+  // ── City filter → pan map ─────────────────────────────────────────────────
+  useEffect(() => {
+    const wm = (window as any).__wassemMap;
+    if (!wm) return;
+    const city = CITIES.find(c => c.key === activeCity);
+    if (city) wm.map.setView([city.lat, city.lng], city.zoom, { animate: true });
+  }, [activeCity]);
 
   // ── Map markers ───────────────────────────────────────────────────────────
   const renderMarkers = useCallback((L: any, map: any, salonList: Salon[], offers: FlashOffer[], cat: CatKey) => {
@@ -250,10 +281,9 @@ export default function Home() {
       const glowColor = activeOffer ? "rgba(255,221,0,0.5)" : isLiveShop ? "rgba(0,193,255,0.6)" : hasFree ? "rgba(74,222,128,0.4)" : `${markerColor}33`;
       const borderColor = activeOffer ? "#FFDD00" : isLiveShop ? "#00B4FF" : hasFree ? "#4ade80" : markerColor;
 
-      const isLive = salon.is_live;
       const badge = activeOffer
         ? `<div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#FFDD00;color:#000;font-weight:900;font-size:9px;padding:2px 5px;border-radius:10px;white-space:nowrap;box-shadow:0 0 8px rgba(255,221,0,0.8)">⚡ -${activeOffer.discount_pct}%</div>`
-        : isLive && hasFree
+        : isLiveShop
         ? `<div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#00B4FF,#00ff88);color:#000;font-weight:900;font-size:8px;padding:2px 6px;border-radius:10px;white-space:nowrap;box-shadow:0 0 10px rgba(0,193,255,0.8)">● LIVE · ${free}</div>`
         : hasFree
         ? `<div style="position:absolute;top:-8px;right:-4px;background:#4ade80;color:#000;font-weight:900;font-size:9px;padding:1px 4px;border-radius:10px">${free}</div>`
@@ -278,7 +308,7 @@ export default function Home() {
     });
   }, [setLocation]);
 
-  // ── Leaflet init ───────────────────────────────────────────────────────────
+  // ── Leaflet init ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
     let map: any;
@@ -288,7 +318,7 @@ export default function Home() {
       delete (L.Icon.Default.prototype as any)._getIconUrl;
 
       map = L.map(mapRef.current!, {
-        center: CASABLANCA, zoom: 13, zoomControl: false, attributionControl: false,
+        center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, zoomControl: false, attributionControl: false,
       });
       L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(map);
       mapInstanceRef.current = map;
@@ -330,7 +360,6 @@ export default function Home() {
   const isPro = user?.role === "professional";
   const isSalonOwner = user?.role === "salon_owner";
 
-  // Redirect non-clients away from the client map immediately
   useEffect(() => {
     if (!user) return;
     if (user.role === "professional") setLocation("/pro/requests");
@@ -340,19 +369,36 @@ export default function Home() {
   if (user && user.role !== "client") return null;
 
   const activeCatDef = CATEGORIES.find(c => c.key === activeCategory);
-  const visibleSalons = activeCategory === "all" ? salons : salons.filter(s => s.categories?.split(",").includes(activeCategory));
+
+  // Filter by category first, then by city
+  const byCat = activeCategory === "all" ? salons : salons.filter(s => s.categories?.split(",").includes(activeCategory));
+  const visibleSalons = activeCity === "all"
+    ? byCat
+    : byCat.filter(s => {
+        const addr = (s.address ?? "").toLowerCase();
+        return addr.includes(activeCity);
+      });
+
   const activeFlashCount = flashOffers.filter(o => o.is_active).length;
+
+  // Sort: live + free first, then others
+  const sortedVisible = [...visibleSalons].sort((a, b) => {
+    const aScore = (a.is_live ? 2 : 0) + (Number(a.free_chairs) > 0 ? 1 : 0);
+    const bScore = (b.is_live ? 2 : 0) + (Number(b.free_chairs) > 0 ? 1 : 0);
+    return bScore - aScore;
+  });
 
   return (
     <div className="relative h-[100dvh] w-full overflow-hidden bg-[#090013]">
       {/* Map */}
-      <div ref={mapRef} className="absolute inset-0 z-0" style={{ bottom: "216px" }} />
+      <div ref={mapRef} className="absolute inset-0 z-0" style={{ bottom: "260px" }} />
 
       {/* Top gradient */}
-      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[#0A0A0A]/95 to-transparent z-10 pointer-events-none" />
+      <div className="absolute top-0 left-0 right-0 h-36 bg-gradient-to-b from-[#0A0A0A]/95 to-transparent z-10 pointer-events-none" />
 
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-12">
+        {/* Logo row */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00B4FF] to-[#FF1F8E] flex items-center justify-center shadow-[0_0_15px_rgba(0,193,255,0.5)] overflow-hidden">
@@ -373,20 +419,36 @@ export default function Home() {
                 <span className="text-[#00B4FF] text-[10px] font-bold">{liveSalons} live</span>
               </div>
             )}
-            {freeSalons > 0 && liveSalons === 0 && (
-              <div className="flex items-center gap-1 bg-green-500/20 border border-green-500/40 rounded-full px-2.5 py-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                <span className="text-green-400 text-[10px] font-bold">{freeSalons} open</span>
-              </div>
-            )}
             <div className="bg-black/60 backdrop-blur border border-white/10 rounded-full px-2.5 py-1 flex items-center gap-1">
               <Navigation size={10} className={geoGranted ? "text-[#00B4FF]" : "text-gray-600"} />
-              <span className="text-gray-400 text-[10px] font-bold">{geoGranted ? "Near you" : "Casablanca"}</span>
+              <span className="text-gray-400 text-[10px] font-bold">{geoGranted ? "Near you" : "Morocco"}</span>
             </div>
           </div>
         </div>
 
-        {/* Category Ribbon */}
+        {/* City filter pills */}
+        <div className="flex gap-2 mb-2.5">
+          {CITIES.map(city => {
+            const isActive = activeCity === city.key;
+            return (
+              <button
+                key={city.key}
+                onClick={() => setActiveCity(city.key)}
+                className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-black transition-all"
+                style={{
+                  background: isActive ? "rgba(155,48,255,0.25)" : "rgba(255,255,255,0.05)",
+                  border: `1.5px solid ${isActive ? "#9B30FF" : "rgba(255,255,255,0.1)"}`,
+                  color: isActive ? "#c084fc" : "#555",
+                  boxShadow: isActive ? "0 0 12px rgba(155,48,255,0.35)" : "none",
+                }}
+              >
+                {city.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Category ribbon */}
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {CATEGORIES.map(cat => {
             const isActive = activeCategory === cat.key;
@@ -410,12 +472,12 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Flash Offer Banner ── */}
+      {/* Flash Offer Banner */}
       {bannerOffer && (
         <div
           className="absolute left-4 right-4 z-30 transition-all duration-500 ease-out"
           style={{
-            bottom: bannerVisible ? "228px" : "160px",
+            bottom: bannerVisible ? "272px" : "200px",
             opacity: bannerVisible ? 1 : 0,
             transform: bannerVisible ? "translateY(0) scale(1)" : "translateY(40px) scale(0.95)",
           }}
@@ -428,58 +490,74 @@ export default function Home() {
         </div>
       )}
 
-      {/* Bottom Panel */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 bg-[#090013] border-t border-white/5" style={{ height: "216px" }}>
-        <div className="flex flex-col items-center justify-center h-full px-5 gap-3">
-          <div className="flex items-center gap-3 text-xs">
-            <span className="font-bold" style={{ color: activeCatDef?.color ?? "#888" }}>
-              {activeCatDef?.emoji} {visibleSalons.length} {activeCatDef?.label !== "All" ? activeCatDef?.label : ""} salon{visibleSalons.length !== 1 ? "s" : ""} nearby
+      {/* ── Bottom Panel ─────────────────────────────────────────────────── */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 bg-[#090013] border-t border-white/5" style={{ height: "260px" }}>
+
+        {/* Salon cards strip */}
+        <div className="px-4 pt-3 pb-2">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold" style={{ color: activeCatDef?.color ?? "#888" }}>
+              {activeCatDef?.emoji} {sortedVisible.length} salon{sortedVisible.length !== 1 ? "s" : ""}
+              {activeCity !== "all" ? ` in ${CITIES.find(c => c.key === activeCity)?.label.replace(/[^a-zA-Z ]/g, "").trim()}` : " nearby"}
             </span>
-            {freeSalons > 0 && activeCategory === "all" && (
-              <>
-                <span className="text-gray-700">·</span>
-                <div className="flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                  <span className="text-green-400 font-bold">{freeSalons} with free spots</span>
-                </div>
-              </>
+            {freeSalons > 0 && (
+              <div className="flex items-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                <span className="text-green-400 text-[10px] font-bold">{freeSalons} with free spots</span>
+              </div>
             )}
           </div>
 
+          {sortedVisible.length === 0 ? (
+            <div className="flex items-center justify-center h-16 rounded-xl border border-white/5"
+              style={{ background: "rgba(255,255,255,0.02)" }}>
+              <p className="text-gray-600 text-sm">No salons found for this filter</p>
+            </div>
+          ) : (
+            <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide">
+              {sortedVisible.map(salon => (
+                <SalonCard key={salon.id} salon={salon} onPress={() => setLocation(`/salon/${salon.id}`)} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* CTA button */}
+        <div className="px-4">
           {isSalonOwner ? (
             <button
               onClick={() => setLocation("/salon/dashboard")}
-              className="w-full max-w-sm bg-gradient-to-r from-[#00B4FF] to-[#FF1F8E] active:scale-[0.97] text-black font-black text-lg rounded-2xl py-4 transition-all shadow-[0_0_25px_rgba(0,193,255,0.4)] flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-[#00B4FF] to-[#FF1F8E] active:scale-[0.97] text-black font-black text-base rounded-2xl py-3.5 transition-all shadow-[0_0_25px_rgba(0,193,255,0.4)] flex items-center justify-center gap-2"
             >
               🏠 Manage My Salon
             </button>
           ) : isPro ? (
             <button
               onClick={() => setLocation("/pro/requests")}
-              className="w-full max-w-sm bg-[#FF1F8E] active:scale-[0.97] text-black font-black text-lg rounded-2xl py-4 transition-all shadow-[0_0_25px_rgba(255,0,255,0.4)] flex items-center justify-center gap-2"
+              className="w-full bg-[#FF1F8E] active:scale-[0.97] text-black font-black text-base rounded-2xl py-3.5 transition-all shadow-[0_0_25px_rgba(255,0,255,0.4)] flex items-center justify-center gap-2"
             >
               ✂️ See Nearby Requests
             </button>
           ) : (
-            <button
-              onClick={() => setLocation("/request")}
-              className="w-full max-w-sm active:scale-[0.97] text-black font-black text-lg rounded-2xl py-4 transition-all flex items-center justify-center gap-2"
-              style={{
-                background: activeCatDef?.gender === "women" ? "#FF1F8E" : "#00B4FF",
-                boxShadow: activeCatDef?.gender === "women" ? "0 0 25px rgba(255,0,255,0.5)" : "0 0 25px rgba(0,193,255,0.5)",
-              }}
-            >
-              {activeCatDef?.gender === "women" ? "💅 Book Beauty Service" : "💈 Request Service"}
-            </button>
-          )}
-
-          {!isSalonOwner && !isPro && (
-            <button
-              onClick={() => setLocation("/request-multi")}
-              className="text-gray-600 text-xs hover:text-gray-400 transition-colors"
-            >
-              Or <span className="underline">book multiple services</span> at once →
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setLocation("/request")}
+                className="flex-1 active:scale-[0.97] text-black font-black text-base rounded-2xl py-3.5 transition-all flex items-center justify-center gap-2"
+                style={{
+                  background: activeCatDef?.gender === "women" ? "#FF1F8E" : "#00B4FF",
+                  boxShadow: activeCatDef?.gender === "women" ? "0 0 20px rgba(255,0,255,0.4)" : "0 0 20px rgba(0,193,255,0.4)",
+                }}
+              >
+                {activeCatDef?.gender === "women" ? "💅 Book Beauty" : "💈 Request Service"}
+              </button>
+              <button
+                onClick={() => setLocation("/request-multi")}
+                className="px-4 active:scale-[0.97] rounded-2xl border border-white/10 text-gray-400 font-bold text-sm transition-all"
+                style={{ background: "rgba(255,255,255,0.04)" }}
+              >
+                Multi
+              </button>
+            </div>
           )}
         </div>
       </div>
