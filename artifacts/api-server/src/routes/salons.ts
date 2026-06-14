@@ -17,7 +17,8 @@ router.get("/salons", async (req, res) => {
         u.avatar AS owner_avatar,
         COUNT(c.id) FILTER (WHERE c.status = 'available') AS free_chairs,
         COUNT(c.id) AS total_chairs,
-        COUNT(cc.id) FILTER (WHERE cc.status IN ('pending','confirmed')) AS active_claims
+        COUNT(cc.id) FILTER (WHERE cc.status IN ('pending','confirmed')) AS active_claims,
+        MIN(cc.expires_at) FILTER (WHERE cc.status IN ('pending','confirmed') AND cc.expires_at > now()) AS next_expiry
       FROM salons s
       LEFT JOIN users u ON u.id = s.owner_id
       LEFT JOIN chairs c ON c.salon_id = s.id

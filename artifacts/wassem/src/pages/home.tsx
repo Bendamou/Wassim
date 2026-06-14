@@ -25,11 +25,19 @@ function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 function fmtDist(km: number) { return km < 1 ? `${Math.round(km*1000)} m` : `${km.toFixed(1)} km`; }
+function fmtCountdown(iso: string | null | undefined): { label: string; mins: number } | null {
+  if (!iso) return null;
+  const diffMs = new Date(iso).getTime() - Date.now();
+  if (diffMs <= 0) return null;
+  const mins = Math.ceil(diffMs / 60_000);
+  return { label: mins < 1 ? "< 1 min" : `${mins} min`, mins };
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────
 type Salon = {
   id: number; name: string; address: string; lat: number; lng: number;
   free_chairs: number; total_chairs: number; is_live: boolean;
+  active_claims?: number; next_expiry?: string | null;
   categories?: string; description?: string; avg_service_price?: number;
   is_verified?: boolean;
 };
@@ -421,6 +429,9 @@ export default function Home() {
       const glowColor = activeOffer ? "rgba(255,221,0,0.5)" : live ? "rgba(0,193,255,0.6)" : free > 0 ? "rgba(74,222,128,0.4)" : "rgba(100,100,100,0.2)";
       const borderColor = activeOffer ? "#FFDD00" : live ? "#00B4FF" : free > 0 ? "#4ade80" : "#444";
 
+      const countdown = fmtCountdown(salon.next_expiry);
+      const activeClaims = Number(salon.active_claims ?? 0);
+
       const badge = activeOffer
         ? `<div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#FFDD00;color:#000;font-weight:900;font-size:9px;padding:2px 5px;border-radius:10px;white-space:nowrap;box-shadow:0 0 8px rgba(255,221,0,0.8)">⚡ -${activeOffer.discount_pct}%</div>`
         : live
@@ -429,15 +440,21 @@ export default function Home() {
         ? `<div style="position:absolute;top:-8px;right:-4px;background:#4ade80;color:#000;font-weight:900;font-size:9px;padding:1px 4px;border-radius:10px">${free}</div>`
         : "";
 
+      // Countdown badge — sits below the marker when chairs are claimed
+      const timerBadge = (activeClaims > 0 && countdown)
+        ? `<div style="position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:2px;background:${countdown.mins <= 5 ? "#f97316" : countdown.mins <= 10 ? "#eab308" : "#6b7280"};color:#000;font-weight:900;font-size:8px;padding:2px 5px;border-radius:8px;white-space:nowrap;box-shadow:0 0 8px ${countdown.mins <= 5 ? "rgba(249,115,22,0.7)" : countdown.mins <= 10 ? "rgba(234,179,8,0.5)" : "rgba(0,0,0,0.3)"}">⏱ ${countdown.label}</div>`
+        : "";
+
+      const iconSize: [number, number] = timerBadge ? [48, 72] : [48, 48];
       const icon = L.divIcon({
-        html: `<div style="position:relative;width:48px;height:48px">
-          ${free > 0 || activeOffer ? `<div style="position:absolute;inset:0;background:${glowColor};border-radius:50%;animation:ping 1.5s ease-out infinite;pointer-events:none"></div>` : ""}
+        html: `<div style="position:relative;width:48px;height:${timerBadge ? 72 : 48}px">
+          ${free > 0 || activeOffer ? `<div style="position:absolute;top:0;left:0;width:48px;height:48px;background:${glowColor};border-radius:50%;animation:ping 1.5s ease-out infinite;pointer-events:none"></div>` : ""}
           <div style="width:48px;height:48px;background:#0D0D0D;border:2.5px solid ${borderColor};border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px ${glowColor};position:relative">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="${borderColor}"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3z"/></svg>
             ${salon.is_verified ? `<div style="position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;background:#00B4FF;border-radius:50%;border:2px solid #0A0A0A;font-size:8px;display:flex;align-items:center;justify-content:center">✓</div>` : ""}
-          </div>${badge}
+          </div>${badge}${timerBadge}
         </div>`,
-        className: "", iconSize: [48, 48], iconAnchor: [24, 24],
+        className: "", iconSize, iconAnchor: [24, 24],
       });
 
       markersRef.current.push(
@@ -452,6 +469,15 @@ export default function Home() {
   useEffect(() => {
     const wm = (window as any).__wassemMap;
     if (wm) renderMarkers(wm.L, wm.map, salons, offers, cat, city, query);
+  }, [salons, offers, cat, city, query, renderMarkers]);
+
+  // 30-second countdown tick — keeps ⏱ badges accurate without a full poll
+  useEffect(() => {
+    const id = setInterval(() => {
+      const wm = (window as any).__wassemMap;
+      if (wm) renderMarkers(wm.L, wm.map, salons, offers, cat, city, query);
+    }, 30_000);
+    return () => clearInterval(id);
   }, [salons, offers, cat, city, query, renderMarkers]);
 
   // ── Leaflet init ──────────────────────────────────────────────────────
