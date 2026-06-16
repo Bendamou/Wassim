@@ -3,6 +3,7 @@ import {
   Scissors, Plus, TrendingUp, Users, Star,
   Package, Radio, DollarSign, Clock, AlertTriangle, CheckCircle, X,
   Zap, ChevronDown, ChevronUp, Navigation, Edit3, Camera,
+  Share2, Copy, Check, QrCode,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -438,6 +439,88 @@ function SwipeToFinish({ onFinish, loading }: { onFinish: () => void; loading: b
   );
 }
 
+// ── Dashboard Share / QR Panel ─────────────────────────────────────────────
+function DashboardSharePanel({ salonId, salonName }: { salonId: number; salonName: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const publicUrl = `${window.location.origin}/salon/${salonId}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(publicUrl)}&bgcolor=0D0020&color=00B4FF&margin=12&format=png`;
+
+  const handleCopy = async () => {
+    try { await navigator.clipboard.writeText(publicUrl); } catch {}
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleNativeShare = async () => {
+    if (navigator.share) await navigator.share({ title: salonName, url: publicUrl }).catch(() => {});
+  };
+
+  return (
+    <div className="px-4 mb-5">
+      <button
+        onClick={() => setExpanded(e => !e)}
+        className="w-full flex items-center justify-between rounded-2xl px-4 py-3.5 border transition-all"
+        style={{
+          background: expanded ? "rgba(0,180,255,0.07)" : "rgba(255,255,255,0.03)",
+          borderColor: expanded ? "rgba(0,180,255,0.35)" : "rgba(255,255,255,0.08)",
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-[#00B4FF]/15 flex items-center justify-center">
+            <QrCode size={18} className="text-[#00B4FF]" />
+          </div>
+          <div className="text-left">
+            <p className="text-white font-black text-sm">Share Your Salon</p>
+            <p className="text-gray-500 text-[10px]">QR code · link · print it at your front desk</p>
+          </div>
+        </div>
+        {expanded ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
+      </button>
+
+      {expanded && (
+        <div className="mt-2 rounded-2xl border border-[#00B4FF]/15 p-5 flex flex-col items-center gap-4"
+          style={{ background: "rgba(0,180,255,0.04)" }}>
+
+          {/* QR code */}
+          <div className="rounded-2xl overflow-hidden border border-[#00B4FF]/25 shadow-[0_0_24px_rgba(0,180,255,0.12)]">
+            <img src={qrUrl} alt="Salon QR code" width={200} height={200} className="block" />
+          </div>
+          <p className="text-[#00B4FF] font-bold text-xs tracking-wide -mt-1">{salonName}</p>
+
+          {/* Link row */}
+          <div className="w-full flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5">
+            <span className="flex-1 text-gray-400 text-[10px] truncate font-mono">{publicUrl}</span>
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-bold transition-all shrink-0"
+              style={{ background: copied ? "rgba(74,222,128,0.15)" : "rgba(0,180,255,0.15)", color: copied ? "#4ade80" : "#00B4FF" }}
+            >
+              {copied ? <Check size={11} /> : <Copy size={11} />}
+              {copied ? "Copied!" : "Copy"}
+            </button>
+          </div>
+
+          <p className="text-gray-600 text-[10px] text-center">
+            Print this QR code and stick it at your front desk — clients scan it to see your live chairs and book instantly.
+          </p>
+
+          {typeof navigator.share === "function" && (
+            <button
+              onClick={handleNativeShare}
+              className="w-full flex items-center justify-center gap-2 rounded-2xl py-3 font-black text-black text-sm"
+              style={{ background: "linear-gradient(90deg,#00B4FF,#FF1F8E)" }}
+            >
+              <Share2 size={15} />
+              Share via…
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main Dashboard ─────────────────────────────────────────────────────────
 export default function SalonDashboard() {
   const { user, token } = useAuth();
@@ -668,6 +751,9 @@ export default function SalonDashboard() {
 
       {/* ── LOST REVENUE ESTIMATOR ── */}
       <RevenueEstimator salon={salon} freeChairs={freeChairs} />
+
+      {/* ── SHARE / QR PANEL ── */}
+      <DashboardSharePanel salonId={salon.id} salonName={salon.name} />
 
       {/* Stats row */}
       <div className="grid grid-cols-4 gap-2 px-4 mb-5">

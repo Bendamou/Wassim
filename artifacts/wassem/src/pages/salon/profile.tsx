@@ -4,6 +4,7 @@ import {
   ArrowLeft, Star, ShoppingCart, Clock, Scissors, Package,
   MessageSquare, CheckCircle, Radio, CreditCard, X, Lock,
   Users, Zap, AlertCircle, MapPin, Navigation, Heart, ChevronLeft, ChevronRight,
+  Share2, Copy, Check,
 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import { useAuth } from "@/lib/auth";
@@ -177,6 +178,85 @@ function Lightbox({ photos, initialIdx, onClose }: { photos: string[]; initialId
           <div key={i} onClick={() => setIdx(i)} className="rounded-full cursor-pointer transition-all"
             style={{ width: i === idx ? 24 : 7, height: 7, background: i === idx ? "#fff" : "rgba(255,255,255,0.35)" }} />
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Share Modal ────────────────────────────────────────────────────────────
+function ShareModal({ salonId, salonName, onClose }: { salonId: number; salonName: string; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const publicUrl = `${window.location.origin}/salon/${salonId}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(publicUrl)}&bgcolor=0D0020&color=00B4FF&margin=12&format=png`;
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* fallback: select text */
+    }
+  };
+
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      await navigator.share({ title: salonName, url: publicUrl }).catch(() => {});
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[300] flex items-end justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      <div
+        className="relative w-full max-w-sm rounded-t-3xl px-6 pt-6 pb-10 flex flex-col items-center gap-5"
+        style={{ background: "linear-gradient(160deg,#1a0035 0%,#090013 100%)", border: "1px solid rgba(0,180,255,0.15)", borderBottom: 0 }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Handle */}
+        <div className="w-10 h-1 rounded-full bg-white/20 absolute top-3" />
+
+        <button onClick={onClose} className="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+          <X size={16} className="text-white" />
+        </button>
+
+        <p className="text-white font-black text-lg mt-2">Share this Salon</p>
+        <p className="text-gray-400 text-xs text-center -mt-3 leading-relaxed">
+          Clients can scan this QR code at the front desk or open the link directly.
+        </p>
+
+        {/* QR Code */}
+        <div className="rounded-2xl overflow-hidden border border-[#00B4FF]/25 shadow-[0_0_30px_rgba(0,180,255,0.15)]">
+          <img src={qrUrl} alt="QR code" width={220} height={220} className="block" />
+        </div>
+
+        {/* Salon name under QR */}
+        <p className="text-[#00B4FF] font-bold text-sm tracking-wide -mt-2">{salonName}</p>
+
+        {/* Link row */}
+        <div className="w-full flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5">
+          <span className="flex-1 text-gray-400 text-[11px] truncate font-mono">{publicUrl}</span>
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all"
+            style={{ background: copied ? "rgba(74,222,128,0.15)" : "rgba(0,180,255,0.15)", color: copied ? "#4ade80" : "#00B4FF" }}
+          >
+            {copied ? <Check size={12} /> : <Copy size={12} />}
+            {copied ? "Copied!" : "Copy"}
+          </button>
+        </div>
+
+        {/* Native share (mobile) */}
+        {typeof navigator.share === "function" && (
+          <button
+            onClick={handleNativeShare}
+            className="w-full flex items-center justify-center gap-2 rounded-2xl py-3 font-black text-black text-sm"
+            style={{ background: "linear-gradient(90deg,#00B4FF,#FF1F8E)" }}
+          >
+            <Share2 size={16} />
+            Share via…
+          </button>
+        )}
       </div>
     </div>
   );
@@ -767,6 +847,7 @@ export default function SalonProfile() {
   };
 
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
 
   if (!salon) {
     return (
@@ -801,6 +882,11 @@ export default function SalonProfile() {
 
   return (
     <div className="min-h-[100dvh] bg-[#090013] pb-36">
+      {/* ── Share Modal ── */}
+      {shareOpen && (
+        <ShareModal salonId={salon.id} salonName={salon.name} onClose={() => setShareOpen(false)} />
+      )}
+
       {/* ── Full-screen Lightbox ── */}
       {lightboxIdx !== null && (
         <Lightbox
@@ -830,6 +916,14 @@ export default function SalonProfile() {
           className="absolute top-12 left-4 z-10 w-10 h-10 rounded-full bg-black/50 backdrop-blur flex items-center justify-center"
         >
           <ArrowLeft size={20} className="text-white" />
+        </button>
+
+        {/* Share button — always visible */}
+        <button
+          onClick={() => setShareOpen(true)}
+          className="absolute top-12 left-16 z-10 w-10 h-10 rounded-full bg-black/50 backdrop-blur flex items-center justify-center"
+        >
+          <Share2 size={17} className="text-white" />
         </button>
 
         {/* Heart / Favorite button */}
