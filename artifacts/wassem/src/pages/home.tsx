@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { Scissors, Navigation, Zap, X, MapPin, Users, Radio, ChevronRight, Search, Bell } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import "leaflet/dist/leaflet.css";
@@ -50,11 +50,12 @@ type AvailBanner = { salonId: number; salonName: string; freeChairs: number; dis
 
 const CATEGORIES = [
   { key: "all",      label: "All",      emoji: "🔍", color: "#a855f7" },
+  { key: "mens",     label: "Men's",    emoji: "👨", color: "#00B4FF" },
+  { key: "womens",   label: "Women's",  emoji: "👩", color: "#FF1F8E" },
   { key: "barber",   label: "Barber",   emoji: "💈", color: "#00B4FF" },
   { key: "hair",     label: "Hair",     emoji: "✂️", color: "#00B4FF" },
   { key: "nails",    label: "Nails",    emoji: "💅", color: "#FF1F8E" },
   { key: "skincare", label: "Skincare", emoji: "🧴", color: "#FF1F8E" },
-  { key: "massage",  label: "Massage",  emoji: "💆", color: "#FF1F8E" },
   { key: "spa",      label: "Spa",      emoji: "🧖", color: "#FF1F8E" },
 ] as const;
 type CatKey = (typeof CATEGORIES)[number]["key"];
@@ -62,15 +63,28 @@ type CatKey = (typeof CATEGORIES)[number]["key"];
 // ── Smart category matcher (works even without DB `categories` field) ─────
 function matchesCategory(salon: Salon, cat: CatKey): boolean {
   if (cat === "all") return true;
-  if (salon.categories) {
-    return salon.categories.split(",").map(c => c.trim()).includes(cat);
-  }
+
+  const cats = salon.categories
+    ? salon.categories.split(",").map(c => c.trim())
+    : [];
   const text = `${salon.name} ${salon.description ?? ""}`.toLowerCase();
+
+  // Umbrella filters
+  if (cat === "mens") {
+    if (cats.length > 0) return cats.includes("barber") || (cats.includes("hair") && !cats.some(c => ["nails","skincare","spa"].includes(c)));
+    return /barber|barbier|rasage|dégradé|coupe homme|barbershop/.test(text);
+  }
+  if (cat === "womens") {
+    if (cats.length > 0) return cats.some(c => ["nails","skincare","spa","massage"].includes(c));
+    return /nail|manucure|skin|soin|spa|beauté|ongle|coloration|kératine|coiffeur femme/.test(text);
+  }
+
+  // Specific category filters
+  if (cats.length > 0) return cats.includes(cat);
   if (cat === "barber")   return /barber|barbier|rasage|dégradé|coupe homme|barbershop/.test(text);
   if (cat === "hair")     return /hair|coiffure|kératine|coloration|coiffeur/.test(text);
   if (cat === "nails")    return /nail|manucure|beauty|beauté|ongle/.test(text);
   if (cat === "skincare") return /skin|soin|spa|beauté|facial/.test(text);
-  if (cat === "massage")  return /massage/.test(text);
   if (cat === "spa")      return /spa|hammam/.test(text);
   return false;
 }
@@ -292,12 +306,16 @@ function SalonCard({ salon, onPress, tag }: { salon: Salon; onPress: () => void;
 // ── Home Page ─────────────────────────────────────────────────────────────
 export default function Home() {
   const [, setLocation] = useLocation();
+  const search = useSearch();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const { user } = useAuth();
 
-  const defaultCat: CatKey = user?.gender_pref === "men" ? "barber" : user?.gender_pref === "women" ? "nails" : "all";
+  const urlCat = new URLSearchParams(search).get("cat") as CatKey | null;
+  const defaultCat: CatKey = urlCat && CATEGORIES.some(c => c.key === urlCat)
+    ? urlCat
+    : user?.gender_pref === "men" ? "mens" : user?.gender_pref === "women" ? "womens" : "all";
 
   const [cat, setCat]     = useState<CatKey>(defaultCat);
   const [city, setCity]   = useState<CityKey>("all");
