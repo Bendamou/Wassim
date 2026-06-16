@@ -766,6 +766,8 @@ export default function SalonProfile() {
     }
   };
 
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+
   if (!salon) {
     return (
       <div className="min-h-[100dvh] bg-[#090013] flex items-center justify-center">
@@ -796,8 +798,6 @@ export default function SalonProfile() {
       return salon.header_image ? [salon.header_image] : [];
     }
   })();
-
-  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
   return (
     <div className="min-h-[100dvh] bg-[#090013] pb-36">
