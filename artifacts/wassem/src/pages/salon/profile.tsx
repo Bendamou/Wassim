@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useLocation } from "wouter";
 import {
   ArrowLeft, Star, ShoppingCart, Clock, Scissors, Package,
   MessageSquare, CheckCircle, Radio, CreditCard, X, Lock,
-  Users, Zap, AlertCircle, MapPin, Navigation, Heart,
+  Users, Zap, AlertCircle, MapPin, Navigation, Heart, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import { useAuth } from "@/lib/auth";
@@ -18,7 +18,7 @@ type Product = { id: number; name: string; description: string; price: number; p
 type Review = { id: number; client_name: string; client_avatar: string; rating: number; comment: string; photo_url: string; created_at: string };
 type Salon = {
   id: number; name: string; description: string; address: string; lat: number; lng: number;
-  header_image: string; owner_name: string; owner_avatar: string;
+  header_image: string; photos: string | null; owner_name: string; owner_avatar: string;
   free_chairs: number; total_chairs: number; is_live: boolean;
   avg_service_price: number;
   chairs: Chair[]; services: Service[]; products: Product[];
@@ -29,6 +29,158 @@ type ClaimResult = {
   id: number; salon_name: string; queue_position: number;
   deposit_amount: number; card_last4: string; expires_at: string;
 };
+
+// ── Photo Gallery Carousel ─────────────────────────────────────────────────
+function PhotoCarousel({
+  photos,
+  alt,
+  onOpenLightbox,
+}: {
+  photos: string[];
+  alt: string;
+  onOpenLightbox: (idx: number) => void;
+}) {
+  const [idx, setIdx] = useState(0);
+  const startX = useRef(0);
+  const dragging = useRef(false);
+
+  const prev = useCallback(() => setIdx(i => (i - 1 + photos.length) % photos.length), [photos.length]);
+  const next = useCallback(() => setIdx(i => (i + 1) % photos.length), [photos.length]);
+
+  const onPointerDown = (e: React.PointerEvent) => { startX.current = e.clientX; dragging.current = true; };
+  const onPointerUp   = (e: React.PointerEvent) => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    const dx = e.clientX - startX.current;
+    if (Math.abs(dx) > 40) dx < 0 ? next() : prev();
+  };
+
+  return (
+    <div
+      className="relative w-full h-full select-none cursor-pointer overflow-hidden"
+      onPointerDown={onPointerDown}
+      onPointerUp={onPointerUp}
+      onClick={() => onOpenLightbox(idx)}
+    >
+      {photos.map((url, i) => (
+        <img
+          key={url}
+          src={`${url}?w=800&h=576&fit=crop&q=80`}
+          alt={`${alt} ${i + 1}`}
+          draggable={false}
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-400"
+          style={{ opacity: i === idx ? 1 : 0 }}
+          loading={i === 0 ? "eager" : "lazy"}
+        />
+      ))}
+
+      {/* Arrows — only show if >1 photo */}
+      {photos.length > 1 && (
+        <>
+          <button
+            onClick={e => { e.stopPropagation(); prev(); }}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-black/50 backdrop-blur flex items-center justify-center"
+          >
+            <ChevronLeft size={16} className="text-white" />
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); next(); }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-black/50 backdrop-blur flex items-center justify-center"
+          >
+            <ChevronRight size={16} className="text-white" />
+          </button>
+
+          {/* Dots */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
+            {photos.map((_, i) => (
+              <button
+                key={i}
+                onClick={e => { e.stopPropagation(); setIdx(i); }}
+                className="rounded-full transition-all"
+                style={{
+                  width: i === idx ? 20 : 6,
+                  height: 6,
+                  background: i === idx ? "#fff" : "rgba(255,255,255,0.4)",
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Counter pill */}
+          <div className="absolute top-3 right-3 z-10 bg-black/60 backdrop-blur rounded-full px-2 py-0.5 text-white text-[10px] font-bold">
+            {idx + 1} / {photos.length}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Full-screen Lightbox ───────────────────────────────────────────────────
+function Lightbox({ photos, initialIdx, onClose }: { photos: string[]; initialIdx: number; onClose: () => void }) {
+  const [idx, setIdx] = useState(initialIdx);
+  const startX = useRef(0);
+
+  const prev = () => setIdx(i => (i - 1 + photos.length) % photos.length);
+  const next = () => setIdx(i => (i + 1) % photos.length);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] bg-black flex items-center justify-center"
+      onPointerDown={e => { startX.current = e.clientX; }}
+      onPointerUp={e => {
+        const dx = e.clientX - startX.current;
+        if (Math.abs(dx) > 40) dx < 0 ? next() : prev();
+      }}
+    >
+      {/* Close */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/10 backdrop-blur flex items-center justify-center"
+      >
+        <X size={20} className="text-white" />
+      </button>
+
+      {/* Image */}
+      <img
+        src={`${photos[idx]}?w=1600&h=1200&fit=crop&q=90`}
+        alt={`Photo ${idx + 1}`}
+        className="max-w-full max-h-full object-contain"
+        draggable={false}
+      />
+
+      {/* Arrows */}
+      {photos.length > 1 && (
+        <>
+          <button onClick={prev} className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 backdrop-blur flex items-center justify-center">
+            <ChevronLeft size={22} className="text-white" />
+          </button>
+          <button onClick={next} className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 backdrop-blur flex items-center justify-center">
+            <ChevronRight size={22} className="text-white" />
+          </button>
+        </>
+      )}
+
+      {/* Counter */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5">
+        {photos.map((_, i) => (
+          <div key={i} onClick={() => setIdx(i)} className="rounded-full cursor-pointer transition-all"
+            style={{ width: i === idx ? 24 : 7, height: 7, background: i === idx ? "#fff" : "rgba(255,255,255,0.35)" }} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function StarRow({ rating, size = 16 }: { rating: number; size?: number }) {
   return (
@@ -635,18 +787,43 @@ export default function SalonProfile() {
   const queueCount = salon.activeClaims?.length ?? 0;
   const isClient = user?.role === "client";
 
+  // ── Parse photos JSON array ────────────────────────────────────────────
+  const salonPhotos: string[] = (() => {
+    try {
+      const arr = JSON.parse(salon.photos ?? "[]");
+      return Array.isArray(arr) && arr.length ? arr : salon.header_image ? [salon.header_image] : [];
+    } catch {
+      return salon.header_image ? [salon.header_image] : [];
+    }
+  })();
+
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+
   return (
     <div className="min-h-[100dvh] bg-[#090013] pb-36">
+      {/* ── Full-screen Lightbox ── */}
+      {lightboxIdx !== null && (
+        <Lightbox
+          photos={salonPhotos}
+          initialIdx={lightboxIdx}
+          onClose={() => setLightboxIdx(null)}
+        />
+      )}
+
       {/* Cinematic Header */}
       <div className="relative h-72 overflow-hidden">
-        {salon.header_image ? (
-          <img src={salon.header_image} alt={salon.name} className="w-full h-full object-cover" />
+        {salonPhotos.length > 0 ? (
+          <PhotoCarousel
+            photos={salonPhotos}
+            alt={salon.name}
+            onOpenLightbox={idx => setLightboxIdx(idx)}
+          />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-[#00B4FF]/20 via-[#0A0A0A] to-[#FF1F8E]/20 flex items-center justify-center">
             <Scissors size={80} className="text-white/5" />
           </div>
         )}
-        <div className={`absolute inset-0 bg-gradient-to-b ${grad}`} />
+        <div className={`absolute inset-0 bg-gradient-to-b ${grad} pointer-events-none`} />
 
         <button
           onClick={() => history.back()}
